@@ -1,0 +1,8 @@
+#+TITLE: configuration for elisp
+* auto wrap code in elisp mode
+  #+BEGIN_SRC elisp
+    (add-hook 'emacs-lisp-mode-hook #'(lambda ()
+                                        (interactive)
+                                        (outline-minor-mode 1)
+                                        (outline-hide-body)))
+  #+END_SRC

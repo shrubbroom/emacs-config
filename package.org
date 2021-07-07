@@ -1,0 +1,23 @@
+#+TITLE: package configuration
+* Mepla
+** set up package source
+  #+BEGIN_SRC elisp
+    (setq package-enable-at-startup nil)
+    (setq package-archives '(("gnu" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/gnu/")
+                             ("melpa" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/melpa/")
+                             ("melpa-stable" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/melpa-stable/")
+                             ("org" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/org/")))
+    (package-initialize)
+  #+END_SRC
+** define a function for automatically install package
+   #+BEGIN_SRC elisp
+     (defun init/ensure-package (pkg)
+       "ensure that package is installed"
+       (unless (package-installed-p pkg)
+         (package-refresh-contents)
+         (package-install pkg)))
+   #+END_SRC
+** install leaf
+   #+BEGIN_SRC elisp
+     (init/ensure-package 'leaf)
+   #+END_SRC

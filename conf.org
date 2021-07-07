@@ -1,0 +1,73 @@
+#+TITLE: configuration to optimize emacs
+* set threshold time for gc
+  #+BEGIN_SRC elisp
+    (setq gc-cons-threshold 100000000)
+    (defvar init/idle-gc-timer
+      (run-with-idle-timer 20
+                           t
+                           'garbage-collect))
+  #+END_SRC
+* export custom file
+  #+BEGIN_SRC elisp
+    (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+    (load custom-file)
+  #+END_SRC
+* small tips
+** use 4 spaces instead of tab
+  #+BEGIN_SRC elisp
+    (setq-default indent-tabs-mode nil)
+  #+END_SRC
+** save cursor position in file
+   #+BEGIN_SRC elisp
+     (save-place-mode)
+   #+END_SRC
+** revert buffer in daemon-client mode
+   #+BEGIN_SRC elisp
+     (advice-add #'save-buffers-kill-terminal :before
+                 (lambda (&optional args)
+                   (interactive) (setq client-revert-bufferp (current-buffer))))
+     (defun client-revert-buffer ()
+       "revert the buffer if client-revert-bufferp is defined and its buffer still lives"
+       (interactive)
+       (if (and (boundp 'client-revert-bufferp) (buffer-live-p client-revert-bufferp))
+           (switch-to-buffer client-revert-bufferp)))
+     (add-hook 'server-after-make-frame-hook 'client-revert-buffer)
+   #+END_SRC
+* actions
+** toggle sudo
+   #+BEGIN_SRC elisp
+     (defun toggle-sudo-in-current-buffer ()
+       (interactive)
+       (if (buffer-file-name)
+           (let ((sudo-buffer (current-buffer)))
+             (progn
+               (find-file (concat "/sudo:root@localhost:/" (buffer-file-name)))
+               (kill-buffer sudo-buffer)))))
+   #+END_SRC
+* undo system
+** set up package
+  #+BEGIN_SRC elisp
+    (init/ensure-package 'undo-tree)
+    (global-undo-tree-mode)
+  #+END_SRC
+** set evil undo system
+  #+BEGIN_SRC elisp
+    (setq evil-undo-system 'undo-tree)
+  #+END_SRC
+** key bindings
+  #+BEGIN_SRC elisp
+    (evil-leader/set-key
+      "/" 'undo-tree-visualize)
+    (evil-define-key '(normal visual) 'global
+        "u" 'evil-undo
+        ;; replace redo with "U"
+        (kbd "C-r") nil
+        "U" 'evil-redo)
+    (define-key undo-tree-visualizer-mode-map (kbd "j") nil)
+      (define-key undo-tree-visualizer-mode-map (kbd "k") nil)
+      (evil-define-key '(normal motion) undo-tree-visualizer-mode-map
+        (kbd "j") 'undo-tree-visualize-redo
+        (kbd "k") 'undo-tree-visualize-undo
+        (kbd "h") 'undo-tree-visualize-switch-branch-left
+        (kbd "l") 'undo-tree-visualize-switch-branch-right)
+  #+END_SRC

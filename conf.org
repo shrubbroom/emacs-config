@@ -77,7 +77,7 @@
       (defun init/find-init ()
         (interactive) (find-file "~/.config/emacs/init.el"))
     #+END_SRC
-**** Keybinding
+    Keybinding
      #+BEGIN_SRC emacs-lisp
        (eval-after-load 'evil-leader
          (evil-leader/set-key "ee" 'init/find-init))
@@ -87,7 +87,7 @@
       (defun init/find-conf ()
         (interactive) (find-file "~/.config/emacs/conf.org"))
     #+END_SRC
-**** Keybinding
+    Keybinding
      #+BEGIN_SRC emacs-lisp
        (eval-after-load 'evil-leader
          (evil-leader/set-key "ef" 'init/find-conf))
@@ -107,14 +107,15 @@
               ("Zathura" (shell-command (concat "za " "\"" (buffer-file-name) "\""))))
           (message "The buffer is not a file")))
     #+END_SRC
-**** Keybinding
+    Keybinding
      #+BEGIN_SRC emacs-lisp
        (eval-after-load 'evil-leader
          (evil-leader/set-key "x" 'init/open-file-in-external-application))
      #+END_SRC
 ** Evil system
-   First install packages. ~evil-surround~ is used for extra surrounding actions. and ~evil-collection~ is installed for ~evil~ in ~magit~, etc.
+   First install packages. ~evil-surround~ is used for extra surrounding actions. and ~evil-collection~ is installed for ~evil~ in ~magit~, etc. Also see [[https://github.com/emacs-evil/evil-collection/issues/60][issue of evil-collection]].
     #+BEGIN_SRC emacs-lisp
+      (setq evil-want-keybinding nil)
       (init/ensure-package 'evil)
       (init/ensure-package 'evil-leader)
       (init/ensure-package 'evil-surround)
@@ -122,28 +123,27 @@
     #+END_SRC
 *** Basic configurations
     First setup hooks, I enable ~evil-mode~ globally.
-     #+BEGIN_SRC emacs-lisp
-       (add-hook 'after-init-hook 'evil-mode)
-       (global-evil-leader-mode)
-       (evil-leader/set-leader "<SPC>")
-       (global-evil-surround-mode 1)
-     #+END_SRC
-     Set appearance for cursor.
-     #+BEGIN_SRC emacs-lisp
-       (setq-default evil-visual-state-cursor '(hbar . 5))
-       (setq-default evil-insert-state-cursor '(bar "#98BC37"))
-       (setq-default evil-normal-state-cursor '(box "orange"))
-     #+END_SRC
-     Select searching module in evil.
-     #+BEGIN_SRC emacs-lisp
-       (evil-select-search-module 'evil-search-module 'evil-search)
-     #+END_SRC
-     Set up ~evil-collection~
-     #+BEGIN_SRC emacs-lisp
-       (setq evil-collection-company-use-tng nil
-             evil-want-keybinding nil)
-       (evil-collection-init)
-     #+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (add-hook 'after-init-hook 'evil-mode)
+      (global-evil-leader-mode)
+      (evil-leader/set-leader "<SPC>")
+      (global-evil-surround-mode 1)
+    #+END_SRC
+    Set appearance for cursor.
+    #+BEGIN_SRC emacs-lisp
+      (setq-default evil-visual-state-cursor '(hbar . 5))
+      (setq-default evil-insert-state-cursor '(bar "#98BC37"))
+      (setq-default evil-normal-state-cursor '(box "orange"))
+    #+END_SRC
+    Select searching module in evil.
+    #+BEGIN_SRC emacs-lisp
+      (evil-select-search-module 'evil-search-module 'evil-search)
+    #+END_SRC
+    Set up ~evil-collection~
+    #+BEGIN_SRC emacs-lisp
+      (setq evil-collection-company-use-tng nil)
+      (evil-collection-init)
+    #+END_SRC
 *** Key bindings
 **** Buffer and windows
      #+BEGIN_SRC emacs-lisp
@@ -691,6 +691,12 @@
       (push 'company-files company-backends)
     #+END_SRC
 *** Frontend
+    ~company-posframe~ performs poorly in ~pgtk~ branch, I block it here.
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (init/ensure-package 'company-posframe)
+      (company-posframe-mode 1)
+      (setq posframe-mouse-banish nil)
+    #+END_SRC
 *** Snippet
     Install ~yasnippet~.
     #+BEGIN_SRC emacs-lisp
@@ -718,6 +724,47 @@
       (set-face-attribute 'header-line nil
                           :background (face-background 'default))
     #+END_SRC
+** Verilog
+   Require built in ~verilog-mode~.
+   #+BEGIN_SRC emacs-lisp
+     (require 'verilog-mode)
+   #+END_SRC
+   Build completion system with ~ctags~ and ~company-keywords~.
+   #+BEGIN_SRC emacs-lisp
+     (setq verilog-imenu-generic-expression
+           '(("*Outputs*" "^\\s-*\\(output\\)\\s-+\\(reg\\|wire\\|logic\\|\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 4)
+             ("*Inputs*" "^\\s-*\\(input\\)\\s-+\\(reg\\|wire\\|logic\\|\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 4)
+             (nil "^\\s-*\\(?:m\\(?:odule\\|acromodule\\)\\|p\\(?:rimitive\\|rogram\\|ackage\\)\\)\\s-+\\([a-zA-Z0-9_.:]+\\)" 1)
+             ("*Wires*" "^\\s-*\\(wire\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 3)
+             ("*Regs*" "^\\s-*\\(reg\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 3)
+             ("*Parameters*" "^\\s-*\\(parameter\\)\\s-+\\([A-Za-z0-9_]+\\)" 2)
+             ("*Instances*" "^\\s-*\\(?1:[A-Za-z0-9_]+\\)\\s-+\\1" 1)
+             ("*Classes*" "^\\s-*\\(?:\\(?:virtual\\|interface\\)\\s-+\\)?class\\s-+\\([A-Za-z_][A-Za-z0-9_]+\\)" 1)
+             ("*Tasks*" "^\\s-*\\(?:\\(?:static\\|pure\\|virtual\\|local\\|protected\\)\\s-+\\)*task\\s-+\\(?:\\(?:static\\|automatic\\)\\s-+\\)?\\([A-Za-z_][A-Za-z0-9_:]+\\)" 1)
+             ("*Functions*" "^\\s-*\\(?:\\(?:static\\|pure\\|virtual\\|local\\|protected\\)\\s-+\\)*function\\s-+\\(?:\\(?:static\\|automatic\\)\\s-+\\)?\\(?:\\w+\\s-+\\)?\\(?:\\(?:un\\)signed\\s-+\\)?\\([A-Za-z_][A-Za-z0-9_:]+\\)" 1)
+             ("*Interfaces*" "^\\s-*interface\\s-+\\([a-zA-Z_0-9]+\\)" 1)
+             ("*Types*" "^\\s-*typedef\\s-+.*\\s-+\\([a-zA-Z_0-9]+\\)\\s-*;" 1)))
+     (require 'company-keywords)
+     (add-to-list 'company-keywords-alist (cons 'verilog-mode verilog-keywords))
+     (defun init/regenerate-tags ()
+       (interactive)
+       (if (and (boundp projectile-project-root)
+                (projectile-project-root))
+           (call-process-shell-command (concat "cd \"" (projectile-project-root) "\"; and ctags --languages=Verilog -e -R ./")
+                                       nil
+                                       0)))
+     (setq tags-revert-without-query 1)
+     (add-hook 'verilog-mode-hook (lambda ()
+                                    (make-local-variable 'company-backends)
+                                    (setq company-backends '((company-keywords
+                                                              company-etags
+                                                              )))
+                                    (company-mode)
+                                    (make-local-variable 'after-save-hook)
+                                    (add-hook 'after-save-hook 'init/regenerate-tags)))
+   #+END_SRC
+** Python
+   I use ~yapf~ and ~pyright~ to format and complete.
 ** Emacs-Lisp
    Use ~paredit~ in ~elisp-mode~
    #+BEGIN_SRC emacs-lisp
@@ -725,6 +772,8 @@
      (add-hook 'scheme-mode-hook 'paredit-mode)
      (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
    #+END_SRC
+* Documentation
+** IM module
 * Extra features
 ** Set up clipboard in terminal
    #+BEGIN_SRC emacs-lisp

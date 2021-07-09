@@ -113,29 +113,36 @@
          (evil-leader/set-key "x" 'init/open-file-in-external-application))
      #+END_SRC
 ** Evil system
-*** Basic evil packages
+   First install packages. ~evil-surround~ is used for extra surrounding actions. and ~evil-collection~ is installed for ~evil~ in ~magit~, etc.
     #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'evil)
       (init/ensure-package 'evil-leader)
       (init/ensure-package 'evil-surround)
+      (init/ensure-package 'evil-collection)
     #+END_SRC
 *** Basic configurations
-**** Set up hooks
+    First setup hooks, I enable ~evil-mode~ globally.
      #+BEGIN_SRC emacs-lisp
        (add-hook 'after-init-hook 'evil-mode)
        (global-evil-leader-mode)
        (evil-leader/set-leader "<SPC>")
        (global-evil-surround-mode 1)
      #+END_SRC
-**** Appearance
+     Set appearance for cursor.
      #+BEGIN_SRC emacs-lisp
        (setq-default evil-visual-state-cursor '(hbar . 5))
        (setq-default evil-insert-state-cursor '(bar "#98BC37"))
        (setq-default evil-normal-state-cursor '(box "orange"))
      #+END_SRC
-**** Select searching module
+     Select searching module in evil.
      #+BEGIN_SRC emacs-lisp
        (evil-select-search-module 'evil-search-module 'evil-search)
+     #+END_SRC
+     Set up ~evil-collection~
+     #+BEGIN_SRC emacs-lisp
+       (setq evil-collection-company-use-tng nil
+             evil-want-keybinding nil)
+       (evil-collection-init)
      #+END_SRC
 *** Key bindings
 **** Buffer and windows
@@ -709,7 +716,7 @@
     Make the headline look uniform.
     #+BEGIN_SRC emacs-lisp
       (set-face-attribute 'header-line nil
-                            :background (face-background 'default))
+                          :background (face-background 'default))
     #+END_SRC
 ** Emacs-Lisp
    Use ~paredit~ in ~elisp-mode~
@@ -718,7 +725,6 @@
      (add-hook 'scheme-mode-hook 'paredit-mode)
      (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
    #+END_SRC
-* Documentation
 * Extra features
 ** Set up clipboard in terminal
    #+BEGIN_SRC emacs-lisp

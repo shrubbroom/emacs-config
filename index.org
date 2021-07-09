@@ -1,1 +1,0 @@
-#+TITLE: index for a minimal emacs configuration

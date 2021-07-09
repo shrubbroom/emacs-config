@@ -1,16 +1,22 @@
 #+TITLE: Configuration for Emacs
+#+PROPERTY: header-args :results silent :tangle conf.el
+
 * Infrastructure
+** Fire up packages!
+   #+BEGIN_SRC emacs-lisp
+     (package-initialize)
+   #+END_SRC
 ** Default behaviors
 *** Use 4 spaces instead of tab
-   #+BEGIN_SRC elisp
+   #+BEGIN_SRC emacs-lisp
      (setq-default indent-tabs-mode nil)
    #+END_SRC
 *** Save cursor position in file
-    #+BEGIN_SRC elisp
+    #+BEGIN_SRC emacs-lisp
       (save-place-mode)
     #+END_SRC
 *** Revert buffer in daemon-client mode
-    #+BEGIN_SRC elisp
+    #+BEGIN_SRC emacs-lisp
       (advice-add #'save-buffers-kill-terminal :before
                   (lambda (&optional args)
                     (interactive) (setq client-revert-bufferp (current-buffer))))
@@ -21,45 +27,79 @@
             (switch-to-buffer client-revert-bufferp)))
       (add-hook 'server-after-make-frame-hook 'client-revert-buffer)
     #+END_SRC
-** User define actions
-*** Toggle sudo
-    #+BEGIN_SRC elisp
-      (defun toggle-sudo-in-current-buffer ()
-        (interactive)
-        (if (buffer-file-name)
-            (let ((sudo-buffer (current-buffer)))
-              (progn
-                (find-file (concat "/sudo:root@localhost:/" (buffer-file-name)))
-                (kill-buffer sudo-buffer)))))
+*** Set frame title
+    #+BEGIN_SRC emacs-lisp
+      (setq frame-title-format '(:eval
+                                 (buffer-name)))
     #+END_SRC
+*** Disable visuble warning
+    #+BEGIN_SRC emacs-lisp
+      (setq inhibit-splash-screen t)
+      (setq visible-bell nil
+            ring-bell-function 'ignore)
+      #+END_SRC
+*** Setup initial buffer
+    #+BEGIN_SRC emacs-lisp
+      (setq-default initial-scratch-message
+                    (concat ";; start up cost: " (emacs-init-time) "\n\n"))
+    #+END_SRC
+*** Use y/n instead of yes/no
+    #+BEGIN_SRC emacs-lisp
+      (fset 'yes-or-no-p 'y-or-n-p)
+    #+END_SRC
+*** Disable annoying "#.$FILENAME#"
+    #+BEGIN_SRC emacs-lisp
+      (setq make-backup-files nil)
+    #+END_SRC
+** User defined actions
+   User defined actions begin with ~init-~.
+*** Auto install packages
+   #+BEGIN_SRC emacs-lisp
+     (defun init/ensure-package (pkg)
+       "ensure that package is installed"
+       (unless (package-installed-p pkg)
+         (package-refresh-contents)
+         (package-install pkg))
+       (require pkg))
+   #+END_SRC
+*** Toggle sudo in a buffer
+   #+BEGIN_SRC emacs-lisp
+     (defun toggle-sudo-in-current-buffer ()
+       (interactive)
+       (if (buffer-file-name)
+           (let ((sudo-buffer (current-buffer)))
+             (progn
+               (find-file (concat "/sudo:root@localhost:/" (buffer-file-name)))
+               (kill-buffer sudo-buffer)))))
+   #+END_SRC
 ** Evil system
 *** Basic evil packages
-    #+BEGIN_SRC elisp
+    #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'evil)
       (init/ensure-package 'evil-leader)
       (init/ensure-package 'evil-surround)
     #+END_SRC
 *** Basic configurations
 **** Set up hooks
-    #+BEGIN_SRC elisp
-      (add-hook 'after-init-hook 'evil-mode)
-      (global-evil-leader-mode)
-      (evil-leader/set-key "<SPC>")
-      (global-evil-surround-mode 1)
-    #+END_SRC
+     #+BEGIN_SRC emacs-lisp
+       (add-hook 'after-init-hook 'evil-mode)
+       (global-evil-leader-mode)
+       (evil-leader/set-leader "<SPC>")
+       (global-evil-surround-mode 1)
+     #+END_SRC
 **** Appearance
-     #+BEGIN_SRC elisp
+     #+BEGIN_SRC emacs-lisp
        (setq-default evil-visual-state-cursor '(hbar . 5))
        (setq-default evil-insert-state-cursor '(bar "#98BC37"))
        (setq-default evil-normal-state-cursor '(box "orange"))
      #+END_SRC
 **** Select searching module
-     #+BEGIN_SRC elisp
+     #+BEGIN_SRC emacs-lisp
        (evil-select-search-module 'evil-search-module 'evil-search)
      #+END_SRC
 *** Key bindings
 **** Buffer and windows
-     #+BEGIN_SRC elisp
+     #+BEGIN_SRC emacs-lisp
        (evil-leader/set-key
          "f" 'find-file
          "b" 'switch-to-buffer
@@ -77,7 +117,7 @@
          )
      #+END_SRC
 **** Basic motions
-     #+BEGIN_SRC elisp
+     #+BEGIN_SRC emacs-lisp
        (define-key evil-motion-state-map
          [remap evil-next-line]
          'evil-next-visual-line)
@@ -86,13 +126,13 @@
          'evil-previous-visual-line)
      #+END_SRC
 **** Basic edits
-     #+BEGIN_SRC elisp
+     #+BEGIN_SRC emacs-lisp
        (evil-define-key '(visual) evil-surround-mode-map
          "s" 'evil-surround-region)
      #+END_SRC
 *** Issues
     This issue is related to [[https://github.com/hlissner/doom-emacs/issues/2493][local variables in folder]].
-    #+BEGIN_SRC elisp
+    #+BEGIN_SRC emacs-lisp
       (advice-add #'turn-on-evil-mode :before
                   (lambda (&optional args)
                     (when (eq major-mode 'fundamental-mode)
@@ -100,21 +140,20 @@
     #+END_SRC
 ** Undo system
 *** Set up package
-    #+BEGIN_SRC elisp
+    #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'undo-tree)
       (global-undo-tree-mode)
     #+END_SRC
 *** Set evil undo system
-    #+BEGIN_SRC elisp
+    #+BEGIN_SRC emacs-lisp
       (setq evil-undo-system 'undo-tree)
     #+END_SRC
 *** Key bindings
-    #+BEGIN_SRC elisp
+    #+BEGIN_SRC emacs-lisp
       (evil-leader/set-key
         "/" 'undo-tree-visualize)
       (evil-define-key '(normal visual) 'global
         "u" 'evil-undo
-        ;; replace redo with "U"
         (kbd "C-r") nil
         "U" 'evil-redo)
       (define-key undo-tree-visualizer-mode-map (kbd "j") nil)
@@ -128,63 +167,69 @@
 
 ** Navigation & Searching system
 *** Basic packages
-    #+BEGIN_SRC elisp
+    #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'ivy)
       (init/ensure-package 'swiper)
       (init/ensure-package 'counsel)
+      (init/ensure-package 'smex)
     #+END_SRC
 *** Configure ivy
 **** Hook at startup
-    #+BEGIN_SRC elisp
-      (add-hook 'after-init-hook 'ivy-mode)
-    #+END_SRC
+     #+BEGIN_SRC emacs-lisp
+       (add-hook 'after-init-hook 'ivy-mode)
+     #+END_SRC
 **** Default variables
-     #+BEGIN_SRC elisp
-      (setq-default ivy-use-virtual-buffers t
-                    ivy-virtual-abbreviate 'fullpath
-                    ivy-count-format ""
-                    projectile-completion-system 'ivy
-                    ivy-magic-tilde nil
-                    ivy-dynamic-exhibit-delay-ms 150
-                    ivy-use-selectable-prompt t)
-    #+END_SRC
+     #+BEGIN_SRC emacs-lisp
+       (setq-default ivy-use-virtual-buffers t
+                     ivy-virtual-abbreviate 'fullpath
+                     ivy-count-format ""
+                     projectile-completion-system 'ivy
+                     ivy-magic-tilde nil
+                     ivy-dynamic-exhibit-delay-ms 150
+                     ivy-use-selectable-prompt t)
+     #+END_SRC
 **** Issues
-    Enable `escape` as quit in ivy
-    #+BEGIN_SRC elisp
-      (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
-    #+END_SRC
+     Enable `escape` as quit in ivy
+     #+BEGIN_SRC emacs-lisp
+       (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
+     #+END_SRC
 *** Configure swiper
-   Only keybinding is required
-   #+BEGIN_SRC elisp
-     (global-set-key "\C-s" 'swiper)
-   #+END_SRC
+    Only keybinding is required
+    #+BEGIN_SRC emacs-lisp
+      (global-set-key "\C-s" 'swiper)
+    #+END_SRC
 *** Configure counsel
 **** Hook at startup
-     #+BEGIN_SRC elisp
+     #+BEGIN_SRC emacs-lisp
        (add-hook 'after-init-hook 'counsel-mode)
      #+END_SRC
 **** Default variables
-     #+BEGIN_SRC elisp
+     #+BEGIN_SRC emacs-lisp
        (setq-default counsel-mode-override-describe-bindings t
                      ivy-initial-inputs-alist '((Man-completion-table . "^")
                                                 (woman . "^")))
      #+END_SRC
 
 **** Keybinding
-     #+BEGIN_SRC elisp
+     #+BEGIN_SRC emacs-lisp
        (global-set-key (kbd "M-x") 'counsel-M-x)
      #+END_SRC
 
+*** Configure smex
+    ~smex~ is required for history look-up
+    #+BEGIN_SRC emacs-lisp
+      (smex-initialize)
+    #+END_SRC
 ** Helping System
 *** Basic packages
-    #+BEGIN_SRC elisp
+    #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'which-key)
       (init/ensure-package 'winum)
       (init/ensure-package 'helpful)
       (init/ensure-package 'hydra)
     #+END_SRC
 *** Configurations
-    #+BEGIN_SRC elisp
+    #+BEGIN_SRC emacs-lisp
       (which-key-mode 1)
       (setq winum-auto-setup-mode-line nil)
       (add-hook 'after-init-hook 'winum-mode)
@@ -194,12 +239,390 @@
       (global-set-key (kbd "C-h d") #'helpful-at-point)
     #+END_SRC
 * Look and feel
+** Fonts
+   Use Sarasa Mono SC as default font
+   #+BEGIN_SRC emacs-lisp
+     (add-to-list 'default-frame-alist
+                  '(font . "Sarasa Mono SC-14"))
+   #+END_SRC
+*** Complex EN-ZH font configuration :blocked:
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (defun init/set-fonts ()
+        (interactive)
+        (if (display-graphic-p)
+            (progn
+              (set-face-attribute 'default nil :font (format "%s:pixelsize=%d" "Lotion" 24))
+              (dolist (charset '(kana han symbol cjk-misc bopomofo))
+                (set-fontset-font (frame-parameter nil 'font)
+                                  charset
+                                  (font-spec :family "LXGW WenKai" :size 24))))))
+      (defun init/init-fonts (frame)
+        (with-selected-frame frame
+          (if (display-graphic-p)
+              (init/set-fonts))))
+      (if (not (daemonp))
+          (init/set-fonts)
+        (add-hook 'after-make-frame-functions #'init/init-fonts))
+    #+END_SRC
+** Smooth scrolling
+   #+BEGIN_SRC emacs-lisp
+     (setq scroll-margin 0)
+     (setq scroll-step 1)
+     (setq scroll-conservatively 101)
+     (setq scroll-up-aggressively 0.01)
+     (setq scroll-down-aggressively 0.01)
+     (setq auto-window-vscroll nil)
+     (setq fast-but-imprecise-scrolling nil)
+     (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+     (setq mouse-wheel-progressive-speed nil)
+     ;; Horizontal Scroll
+     (setq hscroll-step 1)
+     (setq hscroll-margin 0)
+   #+END_SRC
+** Theme
+*** Issues
+   We need to advice the theme changer so that theme can be completely changed in runtime.
+   #+BEGIN_SRC emacs-lisp
+     (defcustom load-theme-before-hook nil
+       "Functions to run before load theme."
+       :type 'hook)
+     (defcustom load-theme-after-hook nil
+       "Functions to run after load theme."
+       :type 'hook)
+     (defun load-theme-hook-wrapper (origin-func theme &rest args)
+       "A wrapper of hooks around `load-theme'."
+       (mapc #'disable-theme custom-enabled-themes)
+       (run-hook-with-args 'load-theme-before-hook theme)
+       (apply origin-func theme args)
+       (run-hook-with-args 'load-theme-after-hook theme))
+     (advice-add 'load-theme :around #'load-theme-hook-wrapper)
+   #+END_SRC
+*** Setup theme
+   Install [[https://github.com/kuanyui/moe-theme.el][moe-theme]].
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'moe-theme)
+   #+END_SRC
+   Setup theme.
+   #+BEGIN_SRC emacs-lisp
+     (load-theme 'moe-dark 1)
+   #+END_SRC
+*** Small modification to fringe color
+    #+BEGIN_SRC emacs-lisp
+      (defun init/tone-down-fringes ()
+        (set-face-attribute 'fringe nil
+                            :foreground (face-foreground 'default)
+                            :background (face-background 'default)))
+      (init/tone-down-fringes)
+    #+END_SRC
+** Icon
+   Set up all-the-icons
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'all-the-icons)
+    #+END_SRC
+    I do not manually install the fonts of ~all-the-icons~. System package manager (~pacman~) maintains the font.
+** Modeline
+*** Install package
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'doom-modeline)
+    #+END_SRC
+*** Set variables
+    #+BEGIN_SRC emacs-lisp
+      (setq doom-modeline-buffer-file-name-style 'buffer-name
+            doom-modeline-project-detection 'projectile
+            doom-modeline-icon nil
+            doom-modeline-unicode-fallback t
+            doom-modeline-height 1
+            doom-modeline-mu4e t)
+      (display-time-mode)
+      (column-number-mode)
+    #+END_SRC
+*** Fireup modeline
+    #+BEGIN_SRC emacs-lisp
+      (doom-modeline-mode 1)
+    #+END_SRC
+** Tabs
+*** Install package
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'centaur-tabs)
+    #+END_SRC
+*** Set variables
+    #+BEGIN_SRC emacs-lisp
+      (setq centaur-tabs-set-modified-marker t
+              centaur-tabs-modified-marker "*"
+              centaur-tabs-gray-out-icons 'buffer
+              centaur-tabs-set-icons t
+              ;; centaur-tabs-plain-icons t
+              x-underline-at-descent-line t
+              ;; centaur-tabs-set-bar
+              centaur-tabs-style "bar"
+              centaur-tabs-show-navigation-buttons nil)
+    #+END_SRC
+*** Set color for tabs
+    #+BEGIN_SRC emacs-lisp
+      (defun init/centaur-tabs-set-color ()
+        (set-face-attribute 'tab-bar-tab nil
+                            :background (face-background 'mode-line))
+        (set-face-attribute 'tab-bar-tab-inactive nil
+                            :background "#3D3C3D"
+                            )
+        (set-face-attribute 'tab-bar nil
+                            :background (face-background 'default))
+        (set-face-attribute 'tab-line nil
+                            :background (face-background 'tab-bar-tab-inactive))
+        (set-face-attribute 'centaur-tabs-unselected nil
+                            :background (face-background 'tab-bar-tab-inactive))
+        (set-face-attribute 'centaur-tabs-selected nil
+                            :background (face-background 'default)
+                            :foreground (face-foreground 'centaur-tabs-unselected))
+        (set-face-attribute 'centaur-tabs-selected-modified nil
+                            :background (face-background 'default)
+                            :foreground (face-foreground 'centaur-tabs-unselected)
+                            )
+        (set-face-attribute 'centaur-tabs-unselected-modified nil
+                            :background (face-background 'tab-bar-tab-inactive)
+                            :foreground (face-foreground 'centaur-tabs-unselected)
+                            )
+        (set-face-attribute 'centaur-tabs-active-bar-face nil
+                            :background "DarkOrange"
+                            :foreground "DarkOrange"
+                            :overline "DarkOrange")
+        (set-face-attribute 'centaur-tabs-default nil
+                            :background (face-background 'centaur-tabs-unselected))
+        (centaur-tabs-headline-match))
+    #+END_SRC
+*** Display tabs in daemon mode
+    #+BEGIN_SRC emacs-lisp
+      (if (not (daemonp))
+          (progn
+            (centaur-tabs-mode)
+            (init/centaur-tabs-set-color)
+            )
+        (defun centaur-tabs-daemon-mode (frame)
+          (unless (and (featurep 'centaur-tabs) (centaur-tabs-mode-on-p))
+            (run-at-time nil nil (lambda ()
+                                   (centaur-tabs-mode)
+                                   (init/centaur-tabs-set-color)
+                                   ))))
+        (add-hook 'after-make-frame-functions #'centaur-tabs-daemon-mode))
+    #+END_SRC
+*** Hide tabs in specific buffer
+    Hide tabs in ~ediff, flycheck, ...~
+    #+BEGIN_SRC emacs-lisp
+      (defun init/show-tabbar-p(&optional buf redisplay)
+        (let ((show t))
+          (with-current-buffer (or buf (current-buffer))
+            (cond
+             ((char-equal ?\  (aref (buffer-name) 0))
+              (setq show nil))
+             ((member (buffer-name) '("*Ediff Control Panel*"
+                                      "\*Flycheck error messages\*"
+                                      "\*org-latex-impatient\*"
+                                      "\*Gofmt Errors\*"))
+              (setq show nil))
+             (t t))
+            (unless show
+              ;; (kill-local-variable 'header-line-format)
+              (setq header-line-format nil)
+              (when redisplay (redisplay t)))
+            show)))
+      (defun init/hide-tab-p(buf)
+        (not (init/show-tabbar-p buf t)))
+      (setq centaur-tabs-hide-tab-function #'init/hide-tab-p)
+    #+END_SRC
+*** Group tabs
+    #+BEGIN_SRC emacs-lisp
+      (defun centaur-tabs-buffer-groups ()
+        "`centaur-tabs-buffer-groups' control buffers' group rules.
+          Group centaur-tabs with mode if buffer is derived from `eshell-mode' `emacs-lisp-mode' `dired-mode' `org-mode' `magit-mode'.
+          All buffer name start with * will group to \"Emacs\".
+          Other buffer group by `centaur-tabs-get-group-name' with project name."
+        (list
+         (cond
+          ((and (buffer-file-name)
+                (string-match (rx (= 3 (seq (one-or-more num) "."))
+                                  (one-or-more num))
+                              (buffer-file-name)))
+           (match-string 0 (buffer-file-name)))
+          ((string-match (rx (= 3 (seq (one-or-more num) "."))
+                             (one-or-more num))
+                         (buffer-name))
+           (match-string 0 (buffer-name)))
+          ((or (string-match "mu4e" (buffer-name))
+               (memq major-mode '(
+                                  'mu4e-main-mode
+                                  'mu4e-headers-mode
+                                  'mu4e-view-mode
+                                  'mu4e-compose-mode
+                                  )))
+           "Mu4e")
+          ((memq major-mode '(
+                              telega-root-mode
+                              telega-chat-mode
+                              ))
+           "Telega")
+          ((string-match "vterm" (buffer-name))
+           "Vterm")
+          ((string-match "TAGS" (buffer-name))
+           "Tags")
+          ((and (buffer-file-name)
+                (> (length (buffer-file-name)) 32)
+                (string-equal "~/home/shrubbroom/.config/emacs/"
+                              (substring (buffer-file-name) 0 31))
+                (derived-mode-p 'emacs-lisp-mode))
+           "Config")
+          ((or (string-equal "*" (substring (buffer-name) 0 1))
+               (memq major-mode '(magit-process-mode
+                                  magit-status-mode
+                                  magit-diff-mode
+                                  magit-log-mode
+                                  magit-file-mode
+                                  magit-blob-mode
+                                  magit-blame-mode
+                                  )))
+           "Emacs")
+          ((derived-mode-p 'eshell-mode)
+           "EShell")
+          ((derived-mode-p 'emacs-lisp-mode)
+           "Elisp")
+          ((derived-mode-p 'dired-mode)
+           "Dired")
+          ((memq major-mode '(org-mode org-agenda-mode diary-mode))
+           "OrgMode")
+          (t
+           (centaur-tabs-get-group-name (current-buffer))))))
+    #+END_SRC
+*** Hydra for tabs
+    #+BEGIN_SRC emacs-lisp
+      (defhydra centaur-fast-switch (:hint nil)
+        "
+       ^^^^Fast Move             ^^^^Tab                    ^^Search            ^^Misc
+      -^^^^--------------------+-^^^^---------------------+-^^----------------+-^^---------------------------
+         ^_h_^   prev group    | _0_^^       select first | _g_ search group  | _C-S-k_ kill others in group
+       _k_   _j_  switch tab   | _$_^^       select last  | ^^                | ^^
+         ^_l_^   next group    | _C-k_/_C-j_ move current | ^^                | ^^
+      -^^^^--------------------+-^^^^---------------------+-^^----------------+-^^---------------------------
+      "
+        ("k" centaur-tabs-backward-tab)
+        ("h" centaur-tabs-forward-group)
+        ("l" centaur-tabs-backward-group)
+        ("j" centaur-tabs-forward-tab)
+        ("0" centaur-tabs-select-beg-tab)
+        ("$" centaur-tabs-select-end-tab)
+        ;; ("f" centaur-tabs-ace-jump)
+        ("C-k" centaur-tabs-move-current-tab-to-left)
+        ("C-j" centaur-tabs-move-current-tab-to-right)
+        ("g" centaur-tabs-counsel-switch-group)
+        ("C-S-k" centaur-tabs-kill-other-buffers-in-current-group)
+        ("q" nil "quit"))
+    #+END_SRC
+    Then set keybindings.
+    #+BEGIN_SRC emacs-lisp
+      (define-key evil-normal-state-map "t" 'centaur-fast-switch/body)
+    #+END_SRC
+** Line number
+*** Install package
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'linum-relative)
+     #+END_SRC
+*** Set appearance
+    #+BEGIN_SRC emacs-lisp
+      (setq linum-relative-current-symbol "")
+      (defun match-number-line-backgroud-color ()
+        (interactive)
+        (set-face-background 'linum (face-attribute 'default :background) nil))
+      (add-hook 'linum-before-numbering-hook
+                #'(lambda ()
+                    (interactive)
+                    (set-face-background 'linum (face-attribute 'default :background) nil)
+                    (set-face-attribute 'linum
+                                        nil
+                                        :weight 'light
+                                        :height (face-attribute 'default :height))
+                    (set-face-attribute 'linum-relative-current-face
+                                        nil
+                                        :weight 'bold
+                                        :height (face-attribute 'default :height))))
+    #+END_SRC
+*** Add hooks
+    #+BEGIN_SRC emacs-lisp
+      (add-hook 'prog-mode-hook 'linum-relative-mode)
+    #+END_SRC
+** Side bar :blocked:
+*** Install treemacs
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (init/ensure-package 'treemacs)
+      (require 'speedbar)
+    #+END_SRC
+*** Keybindings
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (evil-leader/set-key
+          "t" 'treemacs
+          "0" 'treemacs-select-window
+          "-" 'speedbar-get-focus)
+      (define-key treemacs-mode-map
+          [?\t] #'treemacs-TAB-action)
+      (evil-define-key '(normal) treemacs-mode-map
+          [?\t] #'treemacs-TAB-action
+          (kbd "RET") #'treemacs-RET-action
+          )
+      (define-key speedbar-mode-map
+          (kbd "<tab>") #'speedbar-toggle-line-expansion)
+      (define-key speedbar-mode-map
+          [?\t] #'speedbar-toggle-line-expansion)
+    #+END_SRC
+*** Appearance
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (set-face-attribute 'treemacs-file-face nil :family "Sarasa Mono SC" :height 130)
+      (set-face-attribute 'treemacs-directory-face nil :family "Sarasa Mono SC" :height 130)
+      (set-face-attribute 'treemacs-root-face nil :family "Sarasa Mono SC" :height 130)
+      (set-face-attribute 'treemacs-git-added-face nil :family "Sarasa Mono SC" :height 130)
+      (set-face-attribute 'treemacs-git-modified-face nil :family "Sarasa Mono SC" :height 130)
+      (set-face-attribute 'treemacs-git-renamed-face nil :family "Sarasa Mono SC" :height 130)
+      (set-face-attribute 'treemacs-git-conflict-face nil :family "Sarasa Mono SC" :height 130)
+      (set-face-attribute 'treemacs-git-ignored-face nil :family "Sarasa Mono SC" :height 130)
+      (set-face-attribute 'treemacs-git-unmodified-face nil :family "Sarasa Mono SC" :height 130)
+      (set-face-attribute 'treemacs-git-untracked-face nil :family "Sarasa Mono SC" :height 130)
+      (set-face-attribute 'treemacs-tags-face nil :family "Sarasa Mono SC" :height 130)
+      (treemacs-toggle-fixed-width)
+      (setq-default treemacs--width-is-locked nil
+                    treemacs-width 20)
+    #+END_SRC
+** Extra features
+*** Rich ivy
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'ivy-rich)
+      (init/ensure-package 'all-the-icons-ivy-rich)
+      (ivy-rich-mode 1)
+      (all-the-icons-ivy-rich-mode 1)
+      (setq ivy-rich-parse-remote-buffer nil)
+    #+END_SRC
+*** Brackets
+**** Look
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'rainbow-delimiters)
+      (init/ensure-package 'highlight-parentheses)
+    #+END_SRC
+**** Smart parens
+     #+BEGIN_SRC emacs-lisp
+       (init/ensure-package 'smartparens)
+       (add-hook 'after-init-hook 'smartparens-global-mode)
+       (sp-pair "(" nil :unless '(sp-point-before-word-p))
+       (sp-pair "[" nil :unless '(sp-point-before-word-p))
+       (sp-pair "{" nil :unless '(sp-point-before-word-p))
+       (sp-pair "\"" nil :unless '(sp-point-before-word-p))
+       (sp-pair "\'" nil :unless '(sp-point-before-word-p))
+       (sp-pair "`" nil :actions :rem)
+     #+END_SRC
+*** Display HEX/RGB color
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'rainbow-mode)
+    #+END_SRC
 * Languages
 * Documentation
 * Extra features
 ** Set up clipboard in terminal
-    #+BEGIN_SRC elisp
-      (init/ensure-package 'xclip)
-      (xclip-mode 1)
-    #+END_SRC
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'xclip)
+     (xclip-mode 1)
+   #+END_SRC
 

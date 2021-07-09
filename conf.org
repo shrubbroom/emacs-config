@@ -1,73 +1,205 @@
-#+TITLE: configuration to optimize emacs
-* set threshold time for gc
-  #+BEGIN_SRC elisp
-    (setq gc-cons-threshold 100000000)
-    (defvar init/idle-gc-timer
-      (run-with-idle-timer 20
-                           t
-                           'garbage-collect))
-  #+END_SRC
-* export custom file
-  #+BEGIN_SRC elisp
-    (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-    (load custom-file)
-  #+END_SRC
-* small tips
-** use 4 spaces instead of tab
-  #+BEGIN_SRC elisp
-    (setq-default indent-tabs-mode nil)
-  #+END_SRC
-** save cursor position in file
+#+TITLE: Configuration for Emacs
+* Infrastructure
+** Default behaviors
+*** Use 4 spaces instead of tab
    #+BEGIN_SRC elisp
-     (save-place-mode)
+     (setq-default indent-tabs-mode nil)
    #+END_SRC
-** revert buffer in daemon-client mode
-   #+BEGIN_SRC elisp
-     (advice-add #'save-buffers-kill-terminal :before
-                 (lambda (&optional args)
-                   (interactive) (setq client-revert-bufferp (current-buffer))))
-     (defun client-revert-buffer ()
-       "revert the buffer if client-revert-bufferp is defined and its buffer still lives"
-       (interactive)
-       (if (and (boundp 'client-revert-bufferp) (buffer-live-p client-revert-bufferp))
-           (switch-to-buffer client-revert-bufferp)))
-     (add-hook 'server-after-make-frame-hook 'client-revert-buffer)
-   #+END_SRC
-* actions
-** toggle sudo
-   #+BEGIN_SRC elisp
-     (defun toggle-sudo-in-current-buffer ()
-       (interactive)
-       (if (buffer-file-name)
-           (let ((sudo-buffer (current-buffer)))
-             (progn
-               (find-file (concat "/sudo:root@localhost:/" (buffer-file-name)))
-               (kill-buffer sudo-buffer)))))
-   #+END_SRC
-* undo system
-** set up package
-  #+BEGIN_SRC elisp
-    (init/ensure-package 'undo-tree)
-    (global-undo-tree-mode)
-  #+END_SRC
-** set evil undo system
-  #+BEGIN_SRC elisp
-    (setq evil-undo-system 'undo-tree)
-  #+END_SRC
-** key bindings
-  #+BEGIN_SRC elisp
-    (evil-leader/set-key
-      "/" 'undo-tree-visualize)
-    (evil-define-key '(normal visual) 'global
+*** Save cursor position in file
+    #+BEGIN_SRC elisp
+      (save-place-mode)
+    #+END_SRC
+*** Revert buffer in daemon-client mode
+    #+BEGIN_SRC elisp
+      (advice-add #'save-buffers-kill-terminal :before
+                  (lambda (&optional args)
+                    (interactive) (setq client-revert-bufferp (current-buffer))))
+      (defun client-revert-buffer ()
+        "revert the buffer if client-revert-bufferp is defined and its buffer still lives"
+        (interactive)
+        (if (and (boundp 'client-revert-bufferp) (buffer-live-p client-revert-bufferp))
+            (switch-to-buffer client-revert-bufferp)))
+      (add-hook 'server-after-make-frame-hook 'client-revert-buffer)
+    #+END_SRC
+** User define actions
+*** Toggle sudo
+    #+BEGIN_SRC elisp
+      (defun toggle-sudo-in-current-buffer ()
+        (interactive)
+        (if (buffer-file-name)
+            (let ((sudo-buffer (current-buffer)))
+              (progn
+                (find-file (concat "/sudo:root@localhost:/" (buffer-file-name)))
+                (kill-buffer sudo-buffer)))))
+    #+END_SRC
+** Evil system
+*** Basic evil packages
+    #+BEGIN_SRC elisp
+      (init/ensure-package 'evil)
+      (init/ensure-package 'evil-leader)
+      (init/ensure-package 'evil-surround)
+    #+END_SRC
+*** Basic configurations
+**** Set up hooks
+    #+BEGIN_SRC elisp
+      (add-hook 'after-init-hook 'evil-mode)
+      (global-evil-leader-mode)
+      (evil-leader/set-key "<SPC>")
+      (global-evil-surround-mode 1)
+    #+END_SRC
+**** Appearance
+     #+BEGIN_SRC elisp
+       (setq-default evil-visual-state-cursor '(hbar . 5))
+       (setq-default evil-insert-state-cursor '(bar "#98BC37"))
+       (setq-default evil-normal-state-cursor '(box "orange"))
+     #+END_SRC
+**** Select searching module
+     #+BEGIN_SRC elisp
+       (evil-select-search-module 'evil-search-module 'evil-search)
+     #+END_SRC
+*** Key bindings
+**** Buffer and windows
+     #+BEGIN_SRC elisp
+       (evil-leader/set-key
+         "f" 'find-file
+         "b" 'switch-to-buffer
+         "k" 'kill-current-buffer
+         "s" 'save-buffer
+         "0" 'winum-select-window-0
+         "1" 'winum-select-window-1
+         "2" 'winum-select-window-2
+         "3" 'winum-select-window-3
+         "4" 'winum-select-window-4
+         "5" 'winum-select-window-5
+         "w1" 'delete-other-windows
+         "w-" 'split-window-below
+         "w/" 'split-window-right
+         )
+     #+END_SRC
+**** Basic motions
+     #+BEGIN_SRC elisp
+       (define-key evil-motion-state-map
+         [remap evil-next-line]
+         'evil-next-visual-line)
+       (define-key evil-motion-state-map
+         [remap evil-previous-line]
+         'evil-previous-visual-line)
+     #+END_SRC
+**** Basic edits
+     #+BEGIN_SRC elisp
+       (evil-define-key '(visual) evil-surround-mode-map
+         "s" 'evil-surround-region)
+     #+END_SRC
+*** Issues
+    This issue is related to [[https://github.com/hlissner/doom-emacs/issues/2493][local variables in folder]].
+    #+BEGIN_SRC elisp
+      (advice-add #'turn-on-evil-mode :before
+                  (lambda (&optional args)
+                    (when (eq major-mode 'fundamental-mode)
+                      (hack-local-variables))))
+    #+END_SRC
+** Undo system
+*** Set up package
+    #+BEGIN_SRC elisp
+      (init/ensure-package 'undo-tree)
+      (global-undo-tree-mode)
+    #+END_SRC
+*** Set evil undo system
+    #+BEGIN_SRC elisp
+      (setq evil-undo-system 'undo-tree)
+    #+END_SRC
+*** Key bindings
+    #+BEGIN_SRC elisp
+      (evil-leader/set-key
+        "/" 'undo-tree-visualize)
+      (evil-define-key '(normal visual) 'global
         "u" 'evil-undo
         ;; replace redo with "U"
         (kbd "C-r") nil
         "U" 'evil-redo)
-    (define-key undo-tree-visualizer-mode-map (kbd "j") nil)
+      (define-key undo-tree-visualizer-mode-map (kbd "j") nil)
       (define-key undo-tree-visualizer-mode-map (kbd "k") nil)
       (evil-define-key '(normal motion) undo-tree-visualizer-mode-map
         (kbd "j") 'undo-tree-visualize-redo
         (kbd "k") 'undo-tree-visualize-undo
         (kbd "h") 'undo-tree-visualize-switch-branch-left
         (kbd "l") 'undo-tree-visualize-switch-branch-right)
-  #+END_SRC
+    #+END_SRC
+
+** Navigation & Searching system
+*** Basic packages
+    #+BEGIN_SRC elisp
+      (init/ensure-package 'ivy)
+      (init/ensure-package 'swiper)
+      (init/ensure-package 'counsel)
+    #+END_SRC
+*** Configure ivy
+**** Hook at startup
+    #+BEGIN_SRC elisp
+      (add-hook 'after-init-hook 'ivy-mode)
+    #+END_SRC
+**** Default variables
+     #+BEGIN_SRC elisp
+      (setq-default ivy-use-virtual-buffers t
+                    ivy-virtual-abbreviate 'fullpath
+                    ivy-count-format ""
+                    projectile-completion-system 'ivy
+                    ivy-magic-tilde nil
+                    ivy-dynamic-exhibit-delay-ms 150
+                    ivy-use-selectable-prompt t)
+    #+END_SRC
+**** Issues
+    Enable `escape` as quit in ivy
+    #+BEGIN_SRC elisp
+      (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
+    #+END_SRC
+*** Configure swiper
+   Only keybinding is required
+   #+BEGIN_SRC elisp
+     (global-set-key "\C-s" 'swiper)
+   #+END_SRC
+*** Configure counsel
+**** Hook at startup
+     #+BEGIN_SRC elisp
+       (add-hook 'after-init-hook 'counsel-mode)
+     #+END_SRC
+**** Default variables
+     #+BEGIN_SRC elisp
+       (setq-default counsel-mode-override-describe-bindings t
+                     ivy-initial-inputs-alist '((Man-completion-table . "^")
+                                                (woman . "^")))
+     #+END_SRC
+
+**** Keybinding
+     #+BEGIN_SRC elisp
+       (global-set-key (kbd "M-x") 'counsel-M-x)
+     #+END_SRC
+
+** Helping System
+*** Basic packages
+    #+BEGIN_SRC elisp
+      (init/ensure-package 'which-key)
+      (init/ensure-package 'winum)
+      (init/ensure-package 'helpful)
+      (init/ensure-package 'hydra)
+    #+END_SRC
+*** Configurations
+    #+BEGIN_SRC elisp
+      (which-key-mode 1)
+      (setq winum-auto-setup-mode-line nil)
+      (add-hook 'after-init-hook 'winum-mode)
+      (setq counsel-describe-function-function #'helpful-callable
+            counsel-describe-variable-function #'helpful-variable)
+      (global-set-key (kbd "C-h k") #'helpful-key)
+      (global-set-key (kbd "C-h d") #'helpful-at-point)
+    #+END_SRC
+* Look and feel
+* Languages
+* Documentation
+* Extra features
+** Set up clipboard in terminal
+    #+BEGIN_SRC elisp
+      (init/ensure-package 'xclip)
+      (xclip-mode 1)
+    #+END_SRC
+

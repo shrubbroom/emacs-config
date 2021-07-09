@@ -764,7 +764,25 @@
                                     (add-hook 'after-save-hook 'init/regenerate-tags)))
    #+END_SRC
 ** Python
-   I use ~yapf~ and ~pyright~ to format and complete.
+   I have a base virtual environment of python in ~~/.Environment/py_venv/base~.
+   #+BEGIN_SRC emacs-lisp
+   (init/ensure-package 'pyvenv)
+   (add-hook 'python-mode-hook #'(lambda () (pyvenv-activate "~/.Environment/py_venv/base")))
+   #+END_SRC
+   ~yapf~ and ~pyright~ are used to format and complete.
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'lsp-pyright)
+     (defun lsp-pyright-format-buffer ()
+       (interactive)
+       (when (and (executable-find "yapf") buffer-file-name)
+         (call-process "yapf" nil nil nil "-i" buffer-file-name)))
+     (add-hook 'python-mode-hook
+               #'(lambda ()
+                   (lsp)
+                   (add-hook 'after-save-hook #'lsp-pyright-format-buffer t t)))
+     (when (executable-find "python3")
+       (setq lsp-pyright-python-executable-cmd "python3"))
+   #+END_SRC
 ** Emacs-Lisp
    Use ~paredit~ in ~elisp-mode~
    #+BEGIN_SRC emacs-lisp
@@ -774,6 +792,20 @@
    #+END_SRC
 * Documentation
 ** IM module
+   Use ~smart-input-method~ as auto IM switcher.
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'sis)
+     (sis-ism-lazyman-config
+      "1"
+      "2"
+      'fcitx5)
+     (sis-global-cursor-color-mode t)
+     (sis-global-respect-mode t)
+     (sis-global-context-mode t)
+     (sis-global-inline-mode t)
+     (setq sis-inline-tighten-head-rule 0
+           sis-inline-tighten-tail-rule 1)
+   #+END_SRC
 * Extra features
 ** Set up clipboard in terminal
    #+BEGIN_SRC emacs-lisp

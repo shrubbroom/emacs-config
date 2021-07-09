@@ -8,9 +8,9 @@
    #+END_SRC
 ** Default behaviors
 *** Use 4 spaces instead of tab
-   #+BEGIN_SRC emacs-lisp
-     (setq-default indent-tabs-mode nil)
-   #+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (setq-default indent-tabs-mode nil)
+    #+END_SRC
 *** Save cursor position in file
     #+BEGIN_SRC emacs-lisp
       (save-place-mode)
@@ -37,7 +37,7 @@
       (setq inhibit-splash-screen t)
       (setq visible-bell nil
             ring-bell-function 'ignore)
-      #+END_SRC
+    #+END_SRC
 *** Setup initial buffer
     #+BEGIN_SRC emacs-lisp
       (setq-default initial-scratch-message
@@ -47,31 +47,71 @@
     #+BEGIN_SRC emacs-lisp
       (fset 'yes-or-no-p 'y-or-n-p)
     #+END_SRC
-*** Disable annoying "#.$FILENAME#"
+*** Disable annoying ~#.$FILENAME#~
     #+BEGIN_SRC emacs-lisp
       (setq make-backup-files nil)
     #+END_SRC
 ** User defined actions
-   User defined actions begin with ~init-~.
+   User defined actions begin with ~init~.
 *** Auto install packages
-   #+BEGIN_SRC emacs-lisp
-     (defun init/ensure-package (pkg)
-       "ensure that package is installed"
-       (unless (package-installed-p pkg)
-         (package-refresh-contents)
-         (package-install pkg))
-       (require pkg))
-   #+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (defun init/ensure-package (pkg)
+        "ensure that package is installed"
+        (unless (package-installed-p pkg)
+          (package-refresh-contents)
+          (package-install pkg))
+        (require pkg))
+    #+END_SRC
 *** Toggle sudo in a buffer
-   #+BEGIN_SRC emacs-lisp
-     (defun toggle-sudo-in-current-buffer ()
-       (interactive)
-       (if (buffer-file-name)
-           (let ((sudo-buffer (current-buffer)))
-             (progn
-               (find-file (concat "/sudo:root@localhost:/" (buffer-file-name)))
-               (kill-buffer sudo-buffer)))))
-   #+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (defun toggle-sudo-in-current-buffer ()
+        (interactive)
+        (if (buffer-file-name)
+            (let ((sudo-buffer (current-buffer)))
+              (progn
+                (find-file (concat "/sudo:root@localhost:/" (buffer-file-name)))
+                (kill-buffer sudo-buffer)))))
+    #+END_SRC
+*** Find ~init.el~
+    #+BEGIN_SRC emacs-lisp
+      (defun init/find-init ()
+        (interactive) (find-file "~/.config/emacs/init.el"))
+    #+END_SRC
+**** Keybinding
+     #+BEGIN_SRC emacs-lisp
+       (eval-after-load 'evil-leader
+         (evil-leader/set-key "ee" 'init/find-init))
+     #+END_SRC
+*** Find ~conf.org~
+    #+BEGIN_SRC emacs-lisp
+      (defun init/find-conf ()
+        (interactive) (find-file "~/.config/emacs/conf.org"))
+    #+END_SRC
+**** Keybinding
+     #+BEGIN_SRC emacs-lisp
+       (eval-after-load 'evil-leader
+         (evil-leader/set-key "ef" 'init/find-conf))
+     #+END_SRC
+*** Open file in external applications
+    #+BEGIN_SRC emacs-lisp
+      (defun init/open-file-in-external-application (&optional args)
+        (interactive)
+        (ivy-read "App: "
+                  '("Thunar" "Code" "Zathura")
+                  :action #'open-file-in-external-application-action))
+      (defun open-file-in-external-application-action (arg)
+        (if (buffer-file-name)
+            (pcase arg
+              ("Thunar" (shell-command (concat "thunar " "\"" default-directory "\"")))
+              ("Code" (shell-command (concat "code " "\"" (buffer-file-name) "\"")))
+              ("Zathura" (shell-command (concat "za " "\"" (buffer-file-name) "\""))))
+          (message "The buffer is not a file")))
+    #+END_SRC
+**** Keybinding
+     #+BEGIN_SRC emacs-lisp
+       (eval-after-load 'evil-leader
+         (evil-leader/set-key "x" 'init/open-file-in-external-application))
+     #+END_SRC
 ** Evil system
 *** Basic evil packages
     #+BEGIN_SRC emacs-lisp
@@ -189,7 +229,7 @@
                      ivy-use-selectable-prompt t)
      #+END_SRC
 **** Issues
-     Enable `escape` as quit in ivy
+     Enable ~escape~ as quit in ivy
      #+BEGIN_SRC emacs-lisp
        (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
      #+END_SRC
@@ -281,31 +321,31 @@
    #+END_SRC
 ** Theme
 *** Issues
-   We need to advice the theme changer so that theme can be completely changed in runtime.
-   #+BEGIN_SRC emacs-lisp
-     (defcustom load-theme-before-hook nil
-       "Functions to run before load theme."
-       :type 'hook)
-     (defcustom load-theme-after-hook nil
-       "Functions to run after load theme."
-       :type 'hook)
-     (defun load-theme-hook-wrapper (origin-func theme &rest args)
-       "A wrapper of hooks around `load-theme'."
-       (mapc #'disable-theme custom-enabled-themes)
-       (run-hook-with-args 'load-theme-before-hook theme)
-       (apply origin-func theme args)
-       (run-hook-with-args 'load-theme-after-hook theme))
-     (advice-add 'load-theme :around #'load-theme-hook-wrapper)
-   #+END_SRC
+    We need to advice the theme changer so that theme can be completely changed in runtime.
+    #+BEGIN_SRC emacs-lisp
+      (defcustom load-theme-before-hook nil
+        "Functions to run before load theme."
+        :type 'hook)
+      (defcustom load-theme-after-hook nil
+        "Functions to run after load theme."
+        :type 'hook)
+      (defun load-theme-hook-wrapper (origin-func theme &rest args)
+        "A wrapper of hooks around `load-theme'."
+        (mapc #'disable-theme custom-enabled-themes)
+        (run-hook-with-args 'load-theme-before-hook theme)
+        (apply origin-func theme args)
+        (run-hook-with-args 'load-theme-after-hook theme))
+      (advice-add 'load-theme :around #'load-theme-hook-wrapper)
+    #+END_SRC
 *** Setup theme
-   Install [[https://github.com/kuanyui/moe-theme.el][moe-theme]].
-   #+BEGIN_SRC emacs-lisp
-     (init/ensure-package 'moe-theme)
-   #+END_SRC
-   Setup theme.
-   #+BEGIN_SRC emacs-lisp
-     (load-theme 'moe-dark 1)
-   #+END_SRC
+    Install [[https://github.com/kuanyui/moe-theme.el][moe-theme]].
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'moe-theme)
+    #+END_SRC
+    Setup theme.
+    #+BEGIN_SRC emacs-lisp
+      (load-theme 'moe-dark 1)
+    #+END_SRC
 *** Small modification to fringe color
     #+BEGIN_SRC emacs-lisp
       (defun init/tone-down-fringes ()
@@ -316,10 +356,10 @@
     #+END_SRC
 ** Icon
    Set up all-the-icons
-    #+BEGIN_SRC emacs-lisp
-      (init/ensure-package 'all-the-icons)
-    #+END_SRC
-    I do not manually install the fonts of ~all-the-icons~. System package manager (~pacman~) maintains the font.
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'all-the-icons)
+   #+END_SRC
+   I do not manually install the fonts of ~all-the-icons~. System package manager (~pacman~) maintains the font.
 ** Modeline
 *** Install package
     #+BEGIN_SRC emacs-lisp
@@ -348,14 +388,14 @@
 *** Set variables
     #+BEGIN_SRC emacs-lisp
       (setq centaur-tabs-set-modified-marker t
-              centaur-tabs-modified-marker "*"
-              centaur-tabs-gray-out-icons 'buffer
-              centaur-tabs-set-icons t
-              ;; centaur-tabs-plain-icons t
-              x-underline-at-descent-line t
-              ;; centaur-tabs-set-bar
-              centaur-tabs-style "bar"
-              centaur-tabs-show-navigation-buttons nil)
+            centaur-tabs-modified-marker "*"
+            centaur-tabs-gray-out-icons 'buffer
+            centaur-tabs-set-icons t
+            ;; centaur-tabs-plain-icons t
+            x-underline-at-descent-line t
+            ;; centaur-tabs-set-bar
+            centaur-tabs-style "bar"
+            centaur-tabs-show-navigation-buttons nil)
     #+END_SRC
 *** Set color for tabs
     #+BEGIN_SRC emacs-lisp
@@ -521,9 +561,9 @@
     #+END_SRC
 ** Line number
 *** Install package
-   #+BEGIN_SRC emacs-lisp
-     (init/ensure-package 'linum-relative)
-     #+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'linum-relative)
+    #+END_SRC
 *** Set appearance
     #+BEGIN_SRC emacs-lisp
       (setq linum-relative-current-symbol "")
@@ -556,19 +596,19 @@
 *** Keybindings
     #+BEGIN_SRC emacs-lisp :tangle no
       (evil-leader/set-key
-          "t" 'treemacs
-          "0" 'treemacs-select-window
-          "-" 'speedbar-get-focus)
+        "t" 'treemacs
+        "0" 'treemacs-select-window
+        "-" 'speedbar-get-focus)
       (define-key treemacs-mode-map
-          [?\t] #'treemacs-TAB-action)
+        [?\t] #'treemacs-TAB-action)
       (evil-define-key '(normal) treemacs-mode-map
-          [?\t] #'treemacs-TAB-action
-          (kbd "RET") #'treemacs-RET-action
-          )
+        [?\t] #'treemacs-TAB-action
+        (kbd "RET") #'treemacs-RET-action
+        )
       (define-key speedbar-mode-map
-          (kbd "<tab>") #'speedbar-toggle-line-expansion)
+        (kbd "<tab>") #'speedbar-toggle-line-expansion)
       (define-key speedbar-mode-map
-          [?\t] #'speedbar-toggle-line-expansion)
+        [?\t] #'speedbar-toggle-line-expansion)
     #+END_SRC
 *** Appearance
     #+BEGIN_SRC emacs-lisp :tangle no
@@ -598,10 +638,10 @@
     #+END_SRC
 *** Brackets
 **** Look
-    #+BEGIN_SRC emacs-lisp
-      (init/ensure-package 'rainbow-delimiters)
-      (init/ensure-package 'highlight-parentheses)
-    #+END_SRC
+     #+BEGIN_SRC emacs-lisp
+       (init/ensure-package 'rainbow-delimiters)
+       (init/ensure-package 'highlight-parentheses)
+     #+END_SRC
 **** Smart parens
      #+BEGIN_SRC emacs-lisp
        (init/ensure-package 'smartparens)
@@ -618,6 +658,66 @@
       (init/ensure-package 'rainbow-mode)
     #+END_SRC
 * Languages
+** Complete system
+   First of all, install ~company~.
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'company)
+   #+END_SRC
+   Then setup hooks, we donnot need company in eshell.
+   #+BEGIN_SRC emacs-lisp
+     (add-hook 'after-init-hook 'global-company-mode)
+     (add-hook 'eshell-mode-hook (lambda () (company-mode -1)))
+   #+END_SRC
+*** Keybindings
+    Use ~M-n,p~ instead of ~C-n,p~.
+    #+BEGIN_SRC emacs-lisp
+      (define-key company-active-map (kbd "M-n") nil)
+      (define-key company-active-map (kbd "M-p") nil)
+      (define-key company-active-map (kbd "C-n") #'company-select-next)
+      (define-key company-active-map (kbd "C-p") #'company-select-previous)
+    #+END_SRC
+*** Default behaviors
+    #+BEGIN_SRC emacs-lisp
+      (setq company-idle-delay 0
+            company-minimum-prefix-length 1
+            company-show-numbers t)
+      (push 'company-files company-backends)
+    #+END_SRC
+*** Frontend
+*** Snippet
+    Install ~yasnippet~.
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'yasnippet)
+    #+END_SRC
+    Then add hook, we only need snippet in ~lsp-mode~.
+    #+BEGIN_SRC emacs-lisp
+      (add-hook 'lsp-mode-hook 'yas-minor-mode)
+    #+END_SRC
+*** LSP
+    Install ~lsp-mode~.
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'lsp-mode)
+    #+END_SRC
+    Enable ~which-key~ help in ~lsp mode~.
+    #+BEGIN_SRC emacs-lisp
+      (add-hook 'lsp-mode-hook 'lsp-enable-which-key-integration)
+    #+END_SRC
+    We need to set ~idle-delay~ to tell LSP when it can update.
+    #+BEGIN_SRC emacs-lisp
+      (setq lsp-idle-delay 1)
+    #+END_SRC
+    Make the headline look uniform.
+    #+BEGIN_SRC emacs-lisp
+      (set-face-attribute 'header-line nil
+                            :background (face-background 'default))
+    #+END_SRC
+** Emacs-Lisp
+   Use ~paredit~ in ~elisp-mode~
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'paredit)
+     (add-hook 'scheme-mode-hook 'paredit-mode)
+     (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
+   #+END_SRC
 * Documentation
 * Extra features
 ** Set up clipboard in terminal
@@ -625,4 +725,9 @@
      (init/ensure-package 'xclip)
      (xclip-mode 1)
    #+END_SRC
-
+** Set up magit
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'magit)
+     (evil-leader/set-key
+       "m" 'magit-status)
+   #+END_SRC

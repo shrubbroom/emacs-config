@@ -32,7 +32,7 @@
       (setq frame-title-format '(:eval
                                  (buffer-name)))
     #+END_SRC
-*** Disable visuble warning
+*** Disable visible warning
     #+BEGIN_SRC emacs-lisp
       (setq inhibit-splash-screen t)
       (setq visible-bell nil
@@ -267,6 +267,16 @@
     #+BEGIN_SRC emacs-lisp
       (smex-initialize)
     #+END_SRC
+** Project manager
+   Install ~projectile~
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'projectile)
+   #+END_SRC
+   Enable ~projectile-mode~ by default
+   #+BEGIN_SRC emacs-lisp
+     (projectile-mode +1)
+     (setq projectile-enable-caching t)
+   #+END_SRC
 ** Helping System
 *** Basic packages
     #+BEGIN_SRC emacs-lisp
@@ -373,19 +383,20 @@
       (init/ensure-package 'doom-modeline)
     #+END_SRC
 *** Set variables
+    #+TODO: unicode fallback is broken.
     #+BEGIN_SRC emacs-lisp
       (setq doom-modeline-buffer-file-name-style 'buffer-name
             doom-modeline-project-detection 'projectile
             doom-modeline-icon nil
-            doom-modeline-unicode-fallback t
+            doom-modeline-unicode-fallback nil
             doom-modeline-height 1
-            doom-modeline-mu4e t)
+            doom-modeline-mu4e nil)
       (display-time-mode)
       (column-number-mode)
     #+END_SRC
-*** Fireup modeline
+*** Fire up modeline
     #+BEGIN_SRC emacs-lisp
-      (doom-modeline-mode 1)
+      (add-hook 'after-init-hook 'doom-modeline-mode)
     #+END_SRC
 ** Tabs
 *** Install package
@@ -691,8 +702,8 @@
       (push 'company-files company-backends)
     #+END_SRC
 *** Frontend
-    ~company-posframe~ performs poorly in ~pgtk~ branch, I block it here.
-    #+BEGIN_SRC emacs-lisp :tangle no
+    I use ~company-posframe~ as company frontend.
+    #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'company-posframe)
       (company-posframe-mode 1)
       (setq posframe-mouse-banish nil)

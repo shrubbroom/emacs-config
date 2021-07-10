@@ -2,7 +2,8 @@
 (setq-default
  default-frame-alist
  '((horizontal-scroll-bars . nil)       ;; No horizontal scroll-bars
-   ;; (left-fringe . 8)                    ;; Thin left fringe
+   (left-fringe . 8)                    ;; Thin left fringe
+   (right-fringe . 8)                   ;; Thin right fringe
    (menu-bar-lines . 0)                 ;; No menu bar
    (tool-bar-lines . 0)                 ;; No tool bar
    (vertical-scroll-bars . nil)))       ;; No vertical scroll-bars

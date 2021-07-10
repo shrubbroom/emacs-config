@@ -1,3 +1,4 @@
+;;; early-init.el --- Emacs early init -*- lexical-binding: t; -*-
 (setq gc-cons-threshold 100000000)
 (setq-default
  default-frame-alist

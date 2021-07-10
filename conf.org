@@ -826,6 +826,13 @@
      (setq sis-inline-tighten-head-rule 0
            sis-inline-tighten-tail-rule 1)
    #+END_SRC
+** Display
+   Enable ~visual-line-mode~ in ~text-mode~ and Latex buffer.
+    #+BEGIN_SRC emacs-lisp
+      (add-hook 'text-mode-hook 'visual-line-mode)
+      (dolist (hook '(TeX-mode-hook LaTeX-mode-hook bibtex-mode-hook))
+        (add-hook hook visual-line-mode))
+    #+END_SRC
 ** Org mode
 *** Quick jump to specific headline via ivy and fuzzy search
     It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://github.com/abo-abo/swiper/issues/986][discussion]].

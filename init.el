@@ -27,4 +27,3 @@
 
   ;; Collect garbage when all else is done
   (garbage-collect))
-

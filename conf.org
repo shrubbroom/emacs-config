@@ -303,6 +303,7 @@
                   '(font . "Sarasa Mono SC-14"))
    #+END_SRC
 *** Complex EN-ZH font configuration :blocked:
+    This configuration is obsolete.
     #+BEGIN_SRC emacs-lisp :tangle no
       (defun init/set-fonts ()
         (interactive)
@@ -736,7 +737,7 @@
                           :background (face-background 'default))
     #+END_SRC
 ** Verilog
-   Require built in ~verilog-mode~.
+   Require built-in ~verilog-mode~.
    #+BEGIN_SRC emacs-lisp
      (require 'verilog-mode)
    #+END_SRC
@@ -801,6 +802,14 @@
      (add-hook 'scheme-mode-hook 'paredit-mode)
      (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
    #+END_SRC
+** Shell
+   Install ~fish-mode~ and config keybindings
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'fish-mode)
+     (define-key fish-mode-map (kbd "=") nil)
+     (evil-define-key '(normal motion visual) fish-mode-map
+       (kbd "=") 'fish_indent)
+   #+END_SRC
 * Documentation
 ** IM module
    Use ~smart-input-method~ as auto IM switcher.
@@ -817,6 +826,20 @@
      (setq sis-inline-tighten-head-rule 0
            sis-inline-tighten-tail-rule 1)
    #+END_SRC
+** Org mode
+*** Quick jump to specific headline via ivy and fuzzy search
+    It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://github.com/abo-abo/swiper/issues/986][discussion]].
+    #+BEGIN_SRC emacs-lisp
+      (setq org-goto-interface 'outline-path-completion)
+      (setq org-outline-path-complete-in-steps nil)
+    #+END_SRC
+    I use ~"J"~ to invoke jump.
+    #+BEGIN_SRC emacs-lisp
+      (define-key org-mode-map (kbd "J") nil)
+      (evil-define-key '(normal motion visual) org-mode-map 
+        (kbd "J") 'org-goto)
+    #+END_SRC
+** Latex
 * Extra features
 ** Set up clipboard in terminal
    #+BEGIN_SRC emacs-lisp

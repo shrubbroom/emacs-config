@@ -112,6 +112,22 @@
        (eval-after-load 'evil-leader
          (evil-leader/set-key "x" 'init/open-file-in-external-application))
      #+END_SRC
+*** Toggle proxy
+    #+BEGIN_SRC emacs-lisp
+      (defun init/toggle-url-proxy ()
+        "Toggle proxy for the url.el library."
+        (interactive)
+        (cond
+         (url-proxy-services
+          (message "Turn off URL proxy")
+          (setq url-proxy-services nil))
+         (t
+          (message "Turn on URL proxy")
+          (setq url-proxy-services
+                '(("http" . "localhost:8889")
+                  ("https" . "localhost:8889")
+                  ("no_proxy" . "0.0.0.0"))))))
+    #+END_SRC
 ** Evil system
    First install packages. ~evil-surround~ is used for extra surrounding actions. and ~evil-collection~ is installed for ~evil~ in ~magit~, etc. Also see [[https://github.com/emacs-evil/evil-collection/issues/60][issue of evil-collection]].
     #+BEGIN_SRC emacs-lisp
@@ -297,10 +313,10 @@
     #+END_SRC
 * Look and feel
 ** Fonts
-   Use Sarasa Mono SC as default font
+   Use Sarasa Term Slab SC as default font
    #+BEGIN_SRC emacs-lisp
      (add-to-list 'default-frame-alist
-                  '(font . "Sarasa Mono SC-14"))
+                  '(font . "Sarasa Term Slab SC-14"))
    #+END_SRC
 *** Complex EN-ZH font configuration :blocked:
     This configuration is obsolete.
@@ -880,7 +896,7 @@
    #+END_SRC
 *** Prompt
     #+BEGIN_SRC emacs-lisp
-      (setq eshell-prompt-regexp "^[#>] ";;"[^#$\n]* at [^#$\n]* in [^#$\n]*\n[#>] "
+      (setq eshell-prompt-regexp "^[#>] "
             eshell-prompt-function #'(lambda nil
                                        (concat
                                         (propertize (user-login-name) 'face `(:foreground "yellow"))
@@ -888,14 +904,13 @@
                                         (propertize (system-name) 'face `(:foreground "magenta"))
                                         (propertize " in " 'face `(:background (face-background 'default)))
                                         (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground "green"))
+                                        (if (and (boundp 'url-proxy-services)
+                                                 (assoc "http" url-proxy-services))
+                                            (concat
+                                             (propertize " via " 'face `(:background (face-background 'default)))
+                                             (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground "cyan"))))
                                         (propertize "\n" 'face `(:background (face-background 'default)))
                                         (propertize (if (= (user-uid) 0) "# " "> ") 'face `(:background (face-background 'default))))))
-
-      ;; (setq eshell-prompt-regexp   "^[^#$\n]* [#>]+ "
-      ;;       eshell-prompt-function #'(lambda nil
-      ;;                                  (concat
-      ;;                                   (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:background (face-background 'default)))
-      ;;                                   (propertize (if (= (user-uid) 0) " # " " >>> ") 'face `(:background (face-background 'default))))))
     #+END_SRC
 *** FZF fuzzy search
     #+BEGIN_SRC emacs-lisp

@@ -60,7 +60,8 @@
         (unless (package-installed-p pkg)
           (package-refresh-contents)
           (package-install pkg))
-        (require pkg))
+        (unless (ignore-errors (require pkg))
+          (warn (format "(init/ensure-package) feature %s doesn't exist" pkg))))
     #+END_SRC
 *** Toggle sudo in a buffer
     #+BEGIN_SRC emacs-lisp
@@ -316,7 +317,8 @@
    Use Sarasa Term Slab SC as default font
    #+BEGIN_SRC emacs-lisp
      (add-to-list 'default-frame-alist
-                  '(font . "Sarasa Term Slab SC-14"))
+                  '(font . "Sarasa Term Slab SC-14")
+                  )
    #+END_SRC
 *** Complex EN-ZH font configuration :blocked:
     This configuration is obsolete.
@@ -840,6 +842,11 @@
      (evil-define-key '(normal motion visual) fish-mode-map
        (kbd "=") 'fish_indent)
    #+END_SRC
+** Matlab
+   Install ~matlab-mode~
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'matlab-mode)
+   #+END_SRC
 * Documentation
 ** IM module
    Use ~smart-input-method~ as auto IM switcher.
@@ -854,7 +861,8 @@
      (sis-global-context-mode t)
      (sis-global-inline-mode t)
      (setq sis-inline-tighten-head-rule 0
-           sis-inline-tighten-tail-rule 1)
+           sis-inline-tighten-tail-rule 1
+           sis-english-pattern "[a-zA-Zλ]")
    #+END_SRC
 ** Display
    Enable ~visual-line-mode~ in ~text-mode~ and Latex buffer.
@@ -896,24 +904,25 @@
    #+END_SRC
 *** Prompt
     #+BEGIN_SRC emacs-lisp
-      (setq eshell-prompt-regexp "^[#>] "
+      (setq eshell-prompt-regexp "^[#λ] "
             eshell-prompt-function #'(lambda nil
                                        (concat
-                                        (propertize (user-login-name) 'face `(:foreground "yellow"))
+                                        (propertize (user-login-name) 'face `(:foreground "yellow" :weight bold))
                                         (propertize " at " 'face `(:background (face-background 'default)))
-                                        (propertize (system-name) 'face `(:foreground "magenta"))
+                                        (propertize (system-name) 'face `(:foreground "magenta" :weight bold))
                                         (propertize " in " 'face `(:background (face-background 'default)))
-                                        (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground "green"))
+                                        (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground "green" :weight bold :slant italic))
                                         (if (and (boundp 'url-proxy-services)
                                                  (assoc "http" url-proxy-services))
                                             (concat
                                              (propertize " via " 'face `(:background (face-background 'default)))
-                                             (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground "cyan"))))
+                                             (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground "cyan" :weight bold))))
                                         (propertize "\n" 'face `(:background (face-background 'default)))
-                                        (propertize (if (= (user-uid) 0) "# " "> ") 'face `(:background (face-background 'default))))))
+                                        (propertize (if (= (user-uid) 0) "# " "λ ") 'face `(:slant italic :weight bold)))))
     #+END_SRC
 *** FZF fuzzy search
     #+BEGIN_SRC emacs-lisp
+      (setq eshell-history-size 1024)
       (defun init/ivy-eshell-history ()
         (interactive)
         (require 'em-hist)
@@ -934,6 +943,35 @@
       (add-hook 'eshell-mode-hook
                 #'(lambda ()
                     (require 'eshell-z)))
+    #+END_SRC
+*** Colorful ~cat~
+    #+BEGIN_SRC emacs-lisp
+      (with-eval-after-load 'em-unix
+        (defun eshell/cat (&rest args)
+          "Like cat(1) but with syntax highlighting."
+          (unless args (error "Usage: cat FILE ..."))
+          (dolist (filename (eshell-flatten-list args))
+           (let ((existing-buffer (get-file-buffer filename))
+                 (buffer (find-file-noselect filename)))
+             (eshell-print
+              (with-current-buffer buffer
+                (if (fboundp 'font-lock-ensure)
+                    (font-lock-ensure)
+                  (with-no-warnings
+                    (font-lock-fontify-buffer)))
+                (buffer-string)))
+             (unless existing-buffer
+               (kill-buffer buffer))
+             nil))))
+    #+END_SRC
+*** image cat
+    #+BEGIN_SRC emacs-lisp
+      (defun eshell/imgcat (&rest args)
+        "Display image files."
+        (unless args (error "Usage: imgcat FILE ..."))
+        (dolist (img (eshell-flatten-list args))
+          (eshell/printnl
+           (propertize " " 'display (create-image img)))))
     #+END_SRC
 *** Fish-like auto-suggestion :blocked:
     #+BEGIN_SRC emacs-lisp :tangle no
@@ -956,3 +994,14 @@
         (push "ghci" eshell-visual-commands)
         (push "ssh" eshell-visual-commands))
     #+END_SRC
+
+** Symbol overlay
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'symbol-overlay)
+     (global-set-key (kbd "M-i") 'symbol-overlay-put)
+     (global-set-key (kbd "M-n") 'symbol-overlay-switch-forward)
+     (global-set-key (kbd "M-p") 'symbol-overlay-switch-backward)
+     (global-set-key (kbd "M-k") 'symbol-overlay-remove-all)
+     (define-key symbol-overlay-map (kbd "h") 'evil-backward-char)
+     (add-hook 'prog-mode-hook 'symbol-overlay-mode)
+   #+END_SRC

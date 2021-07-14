@@ -11,6 +11,11 @@
        (lambda (value) (equal value '(org-babel-tangle t))))
   (put 'display-line-numbers-width 'safe-local-variable 'integerp)
 
+  ;; Load local variables
+  (let ((local-variables (expand-file-name "local-variables.el" user-emacs-directory)))
+    (if (file-exists-p local-variables)
+        (load-file local-variables)))
+
   ;; Tangle and compile if necessary only, then load the configuration
   (let* ((.org "conf.org")
          (.el (concat (file-name-sans-extension .org) ".el"))

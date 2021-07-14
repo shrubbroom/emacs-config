@@ -1005,3 +1005,38 @@
      (define-key symbol-overlay-map (kbd "h") 'evil-backward-char)
      (add-hook 'prog-mode-hook 'symbol-overlay-mode)
    #+END_SRC
+
+** mu4e
+   #+BEGIN_SRC emacs-lisp
+     (add-to-list 'load-path
+                  (concat user-emacs-directory "site-packages/mu/mu4e"))
+     (if (ignore-errors (require 'mu4e))
+         (progn
+           (init/ensure-package 'mu4e-alert)
+           (mu4e-alert-set-default-style 'libnotify)
+           (setq epa-pinentry-mode 'loopback
+                 mail-user-agent 'mu4e-user-agent
+                 mu4e-maildir "~/.mail"
+                 mu4e-view-show-images t
+                 mu4e-get-mail-command "offlineimap -u quiet"
+                 mu4e-index-update-error-warning nil
+                 mu4e-update-interval 300
+                 mu4e-index-update-error-warning t
+                 send-mail-function 'smtpmail-send-it
+                 message-send-mail-function 'smtpmail-send-it
+                 send-mail-function 'smtpmail-send-it
+                 message-send-mail-function 'smtpmail-send-it
+                 smtpmail-smtp-server "smtp.sjtu.edu.cn"
+                 smtpmail-smtp-service 465
+                 smtpmail-auth-credentials "~/.authinfo.gpg"
+                 smtpmail-stream-type 'ssl
+                 mu4e-context-policy 'pick-first)
+           (add-to-list 'mu4e-view-actions
+                        '("View in browser" . mu4e-action-view-in-browser) t)
+           (defun offlineimap-get-password (host port)
+             (require 'netrc)
+             (let* ((netrc (netrc-parse (expand-file-name "~/.authinfo.gpg")))
+                    (hostentry (netrc-machine netrc host port port)))
+               (when hostentry (netrc-get hostentry "password")))))
+       (warn (format "(init/ensure-package) feature %s doesn't exist" 'mu4e)))
+   #+END_SRC

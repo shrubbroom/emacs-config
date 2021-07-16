@@ -1039,8 +1039,6 @@
                  message-send-mail-function 'smtpmail-send-it
                  send-mail-function 'smtpmail-send-it
                  message-send-mail-function 'smtpmail-send-it
-                 smtpmail-smtp-server "smtp.sjtu.edu.cn"
-                 smtpmail-smtp-service 465
                  smtpmail-auth-credentials "~/.authinfo.gpg"
                  smtpmail-stream-type 'ssl
                  mu4e-context-policy 'pick-first)

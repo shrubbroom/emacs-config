@@ -313,6 +313,7 @@
       (global-set-key (kbd "C-h d") #'helpful-at-point)
     #+END_SRC
 * Look and feel
+  *This part should not be changed frequently. Spend time on important things*
 ** Fonts
    Use Sarasa Term Slab SC as default font
    #+BEGIN_SRC emacs-lisp
@@ -374,13 +375,14 @@
       (advice-add 'load-theme :around #'load-theme-hook-wrapper)
     #+END_SRC
 *** Setup theme
-    Install [[https://github.com/kuanyui/moe-theme.el][moe-theme]].
+    Install [[https://github.com/kuanyui/moe-theme.el][moe-theme]] and [[https://github.com/11111000000/tao-theme-emacs][tao-theme]]. 
     #+BEGIN_SRC emacs-lisp
-      (init/ensure-package 'moe-theme)
+      ;; (init/ensure-package 'moe-theme)
+      (init/ensure-package 'tao-theme)
     #+END_SRC
     Setup theme.
     #+BEGIN_SRC emacs-lisp
-      (load-theme 'moe-dark 1)
+      (load-theme 'tao-yang 1)
     #+END_SRC
 *** Small modification to fringe color
     #+BEGIN_SRC emacs-lisp
@@ -440,7 +442,8 @@
         (set-face-attribute 'tab-bar-tab nil
                             :background (face-background 'mode-line))
         (set-face-attribute 'tab-bar-tab-inactive nil
-                            :background "#3D3C3D"
+                            :background "#ECE9E0"
+                            ;;"#3D3C3D"
                             )
         (set-face-attribute 'tab-bar nil
                             :background (face-background 'default))
@@ -827,6 +830,14 @@
        (when (executable-find "python3")
          (setq lsp-pyright-python-executable-cmd "python3"))
    #+END_SRC
+** C/C++
+   Installing ~ccls~.
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'ccls)
+     (dolist (hook '(c-mode-hook c++-mode-hook))
+       (add-hook hook #'lsp))
+     (setq ccls-sem-highlight-method nil)
+   #+END_SRC
 ** Emacs-Lisp
    Use ~paredit~ in ~elisp-mode~
    #+BEGIN_SRC emacs-lisp
@@ -862,7 +873,9 @@
      (sis-global-inline-mode t)
      (setq sis-inline-tighten-head-rule 0
            sis-inline-tighten-tail-rule 1
-           sis-english-pattern "[a-zA-Zλ]")
+           sis-english-pattern "[a-zA-Zλ]"
+           sis-default-cursor-color "black"
+           sis-other-cursor-color "#0E4B8C")
    #+END_SRC
 ** Display
    Enable ~visual-line-mode~ in ~text-mode~ and Latex buffer.
@@ -907,16 +920,16 @@
       (setq eshell-prompt-regexp "^[#λ] "
             eshell-prompt-function #'(lambda nil
                                        (concat
-                                        (propertize (user-login-name) 'face `(:foreground "yellow" :weight bold))
+                                        (propertize (user-login-name) 'face `(:foreground "black" :weight bold))
                                         (propertize " at " 'face `(:background (face-background 'default)))
-                                        (propertize (system-name) 'face `(:foreground "magenta" :weight bold))
+                                        (propertize (system-name) 'face `(:foreground "black" :weight bold))
                                         (propertize " in " 'face `(:background (face-background 'default)))
-                                        (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground "green" :weight bold :slant italic))
+                                        (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground "black" :weight bold :slant italic))
                                         (if (and (boundp 'url-proxy-services)
                                                  (assoc "http" url-proxy-services))
                                             (concat
                                              (propertize " via " 'face `(:background (face-background 'default)))
-                                             (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground "cyan" :weight bold))))
+                                             (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground "black" :weight bold))))
                                         (propertize "\n" 'face `(:background (face-background 'default)))
                                         (propertize (if (= (user-uid) 0) "# " "λ ") 'face `(:slant italic :weight bold)))))
     #+END_SRC

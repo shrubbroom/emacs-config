@@ -63,12 +63,21 @@
 *** Auto install packages
     #+BEGIN_SRC emacs-lisp
       (defun init/ensure-package (pkg)
-        "ensure that package is installed"
+        "ensure that package is installed, require it"
+        (if (ignore-errors (require pkg))
+            t
+          (progn
+            (unless (package-installed-p pkg)
+              (package-refresh-contents)
+              (package-install pkg))
+            (unless (ignore-errors (require pkg))
+              (warn (format "(init/ensure-package) feature %s doesn't exist" pkg)))
+            nil)))
+      (defun init/ensure-package- (pkg)
+        "ensure package is installed, donot require"
         (unless (package-installed-p pkg)
           (package-refresh-contents)
-          (package-install pkg))
-        (unless (ignore-errors (require pkg))
-          (warn (format "(init/ensure-package) feature %s doesn't exist" pkg))))
+          (package-install pkg)))
     #+END_SRC
 *** Toggle sudo in a buffer
     #+BEGIN_SRC emacs-lisp
@@ -87,7 +96,7 @@
         (interactive) (find-file "~/.config/emacs/init.el"))
     #+END_SRC
     Keybinding
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (with-eval-after-load 'evil-leader
         (evil-leader/set-key "ee" 'init/find-init))
     #+END_SRC
@@ -97,7 +106,7 @@
         (interactive) (find-file "~/.config/emacs/conf.org"))
     #+END_SRC
     Keybinding
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (with-eval-after-load 'evil-leader
         (evil-leader/set-key "ef" 'init/find-conf))
     #+END_SRC
@@ -117,7 +126,7 @@
           (message "The buffer is not a file")))
     #+END_SRC
     Keybinding
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (with-eval-after-load 'evil-leader
         (evil-leader/set-key "x" 'init/open-file-in-external-application))
     #+END_SRC
@@ -139,7 +148,7 @@
     #+END_SRC
 ** Evil system
    First install packages. ~evil-surround~ is used for extra surrounding actions. and ~evil-collection~ is installed for ~evil~ in ~magit~, etc. Also see [[https://github.com/emacs-evil/evil-collection/issues/60][issue of evil-collection]].
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (setq evil-want-keybinding nil)
      (init/ensure-package 'evil)
      (init/ensure-package 'evil-leader)
@@ -148,35 +157,35 @@
    #+END_SRC
 *** Basic configurations
     First setup hooks, I enable ~evil-mode~ globally.
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (add-hook 'after-init-hook 'evil-mode)
       (global-evil-leader-mode)
       (evil-leader/set-leader "<SPC>")
       (global-evil-surround-mode 1)
     #+END_SRC
     Set appearance for cursor.
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (setq-default evil-visual-state-cursor '(hbar . 5))
       (setq-default evil-insert-state-cursor '(bar "#98BC37"))
       (setq-default evil-normal-state-cursor '(box "orange"))
     #+END_SRC
     Select searching module in evil.
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (evil-select-search-module 'evil-search-module 'evil-search)
     #+END_SRC
     Set up ~evil-collection~
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (setq evil-collection-company-use-tng nil)
       (evil-collection-init)
     #+END_SRC
     Set up ~evil-pinyin~
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (init/ensure-package 'evil-pinyin)
       (global-evil-pinyin-mode)
     #+END_SRC
 *** Key bindings
 **** Buffer and windows
-     #+BEGIN_SRC emacs-lisp
+     #+BEGIN_SRC emacs-lisp :tangle no
        (evil-leader/set-key
          "f" 'find-file
          "b" 'switch-to-buffer
@@ -194,7 +203,7 @@
          )
      #+END_SRC
 **** Basic motions
-     #+BEGIN_SRC emacs-lisp
+     #+BEGIN_SRC emacs-lisp :tangle no
        (define-key evil-motion-state-map
          [remap evil-next-line]
          'evil-next-visual-line)
@@ -203,22 +212,22 @@
          'evil-previous-visual-line)
      #+END_SRC
 **** Basic edits
-     #+BEGIN_SRC emacs-lisp
+     #+BEGIN_SRC emacs-lisp :tangle no
        (evil-define-key '(visual) evil-surround-mode-map
          "s" 'evil-surround-region)
      #+END_SRC
 *** Terminal
     Execute this function in terminal Emacs
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (defun init/enable-terminal-cursor-changer ()
         (interactive)
         (init/ensure-package 'evil-terminal-cursor-changer)
         (evil-terminal-cursor-changer-activate)
-        (setq doom-modeline-unicode-fallback t))
+        )
     #+END_SRC
 *** Issues
     This issue is related to [[https://github.com/hlissner/doom-emacs/issues/2493][local variables in folder]].
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (advice-add #'turn-on-evil-mode :before
                   (lambda (&optional args)
                     (when (eq major-mode 'fundamental-mode)
@@ -231,11 +240,11 @@
       (global-undo-tree-mode)
     #+END_SRC
 *** Set evil undo system
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (evil-set-undo-system 'undo-tree)
     #+END_SRC
 *** Key bindings
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (evil-leader/set-key
         "/" 'undo-tree-visualize)
       (evil-define-key '(normal visual) 'global
@@ -337,7 +346,7 @@
 * Look and feel
   *This part should not be changed frequently. Spend time on important things*
 ** Fonts
-   Use Sarasa Term Slab SC as default font
+   Use Sarasa Term SC as default font
    #+BEGIN_SRC emacs-lisp
      (add-to-list 'default-frame-alist
                   '(font . "Sarasa Term Slab SC-16"))
@@ -363,7 +372,7 @@
         (add-hook 'after-make-frame-functions #'init/init-fonts))
     #+END_SRC
 ** Ligature
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (add-to-list 'load-path
                        (concat user-emacs-directory "site-packages/ligature"))
      (require 'ligature)
@@ -383,8 +392,8 @@
                                           "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
                                           ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
                                           "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
-                                          "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
-                                          "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+                                          "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++"
+                                          ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
                                           "\\\\" "://"))
      (global-ligature-mode t)
    #+END_SRC
@@ -404,7 +413,7 @@
      (setq hscroll-margin 0)
    #+END_SRC
 *** Images
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (init/ensure-package 'iscroll)
       (evil-define-key '(normal) org-mode-map
         "j" 'iscroll-next-line
@@ -429,10 +438,11 @@
       (advice-add 'load-theme :around #'load-theme-hook-wrapper)
     #+END_SRC
 *** Setup theme
-    Install [[https://github.com/kuanyui/moe-theme.el][moe-theme]] and [[https://github.com/11111000000/tao-theme-emacs][tao-theme]]. 
+    Install themes
     #+BEGIN_SRC emacs-lisp
-      (init/ensure-package 'moe-theme)
-      (init/ensure-package 'tao-theme)
+      ;; (init/ensure-package 'moe-theme)
+      ;; (init/ensure-package 'tao-theme)
+      (init/ensure-package 'doom-themes)
     #+END_SRC
     Setup theme.
     #+BEGIN_SRC emacs-lisp
@@ -455,6 +465,8 @@
 ** Modeline
 *** Install package
     #+BEGIN_SRC emacs-lisp
+      (add-to-list 'load-path
+                   (concat user-emacs-directory "site-packages/doom-modeline"))
       (init/ensure-package 'doom-modeline)
     #+END_SRC
 *** Set variables
@@ -462,10 +474,15 @@
     #+BEGIN_SRC emacs-lisp
       (setq doom-modeline-buffer-file-name-style 'buffer-name
             doom-modeline-project-detection 'projectile
+            doom-modeline-modal-icon nil
             doom-modeline-icon nil
             doom-modeline-unicode-fallback nil
-            doom-modeline-height 1
             doom-modeline-mu4e nil)
+      ;; (setq evil-normal-state-tag " NORMAL "
+      ;;       evil-insert-state-tag " INSERT "
+      ;;       evil-motion-state-tag " MOTION "
+      ;;       evil-visual-state-tag " VISUAL "
+      ;;       evil-operator-state-tag " OPERAT ")
       (display-time-mode)
       (column-number-mode)
     #+END_SRC
@@ -495,8 +512,8 @@
       (defun init/centaur-tabs-set-color ()
         ;; (set-face-attribute 'tab-bar-tab nil
         ;;                     :background (face-background 'mode-line))
-        ;; ;; (set-face-attribute 'tab-bar-tab-inactive nil
-        ;; ;;                     :background "#afd7ff")
+        ;; (set-face-attribute 'tab-bar-tab-inactive nil
+        ;;                     :background "#222d32")
         ;; (set-face-attribute 'tab-bar nil
         ;;                     :background (face-background 'default))
         ;; (set-face-attribute 'tab-line nil
@@ -570,6 +587,14 @@
                 Other buffer group by `centaur-tabs-get-group-name' with project name."
         (list
          (cond
+          ((and (projectile-project-p)
+                (string-equal "*" (substring (buffer-name) 0 1))
+                (not (or (derived-mode-p 'term-mode)
+                         (derived-mode-p 'eshell-mode))))
+           (concat (centaur-tabs-get-group-name (current-buffer)) "-backends")
+           )
+          ((projectile-project-p)
+           (centaur-tabs-get-group-name (current-buffer)))
           ((and (buffer-file-name)
                 (string-match (rx (= 3 (seq (one-or-more num) "."))
                                   (one-or-more num))
@@ -631,13 +656,13 @@
        ^^^^Fast Move             ^^^^Tab                    ^^Search            ^^Misc
       -^^^^--------------------+-^^^^---------------------+-^^----------------+-^^---------------------------
          ^_h_^   prev group    | _0_^^       select first | _g_ search group  | _C-S-k_ kill others in group
-       _k_   _j_  switch tab   | _$_^^       select last  | ^^                | ^^
+       _j_   _k_  switch tab   | _$_^^       select last  | ^^                | ^^
          ^_l_^   next group    | _C-k_/_C-j_ move current | ^^                | ^^
       -^^^^--------------------+-^^^^---------------------+-^^----------------+-^^---------------------------
       "
         ("k" centaur-tabs-backward-tab)
-        ("h" centaur-tabs-forward-group)
-        ("l" centaur-tabs-backward-group)
+        ("l" centaur-tabs-forward-group)
+        ("h" centaur-tabs-backward-group)
         ("j" centaur-tabs-forward-tab)
         ("0" centaur-tabs-select-beg-tab)
         ("$" centaur-tabs-select-end-tab)
@@ -650,15 +675,20 @@
     #+END_SRC
     Then set keybindings.
     #+BEGIN_SRC emacs-lisp
-      (define-key evil-normal-state-map "t" 'centaur-fast-switch/body)
+      ;; (define-key evil-normal-state-map "t" 'centaur-fast-switch/body)
+      (global-set-key (kbd "C-t") 'centaur-fast-switch/body)
     #+END_SRC
 ** Line number
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+#+END_SRC
+   This package is very laggy
 *** Install package
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (init/ensure-package 'linum-relative)
     #+END_SRC
 *** Set appearance
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (setq linum-relative-current-symbol "")
       (defun match-number-line-backgroud-color ()
         (interactive)
@@ -677,45 +707,28 @@
                                        :height (face-attribute 'default :height))))
     #+END_SRC
 *** Add hooks
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (add-hook 'prog-mode-hook 'linum-relative-mode)
     #+END_SRC
-** Side bar :blocked:
+** Side bar
 *** Install treemacs
     #+BEGIN_SRC emacs-lisp :tangle no
       (init/ensure-package 'treemacs)
-      (require 'speedbar)
     #+END_SRC
 *** Keybindings
     #+BEGIN_SRC emacs-lisp :tangle no
       (evil-leader/set-key
         "t" 'treemacs
-        "0" 'treemacs-select-window
-        "-" 'speedbar-get-focus)
+        "0" 'treemacs-select-window)
       (define-key treemacs-mode-map
         [?\t] #'treemacs-TAB-action)
       (evil-define-key '(normal) treemacs-mode-map
         [?\t] #'treemacs-TAB-action
         (kbd "RET") #'treemacs-RET-action
         )
-      (define-key speedbar-mode-map
-        (kbd "<tab>") #'speedbar-toggle-line-expansion)
-      (define-key speedbar-mode-map
-        [?\t] #'speedbar-toggle-line-expansion)
     #+END_SRC
 *** Appearance
     #+BEGIN_SRC emacs-lisp :tangle no
-      (set-face-attribute 'treemacs-file-face nil :family "Sarasa Mono SC" :height 130)
-      (set-face-attribute 'treemacs-directory-face nil :family "Sarasa Mono SC" :height 130)
-      (set-face-attribute 'treemacs-root-face nil :family "Sarasa Mono SC" :height 130)
-      (set-face-attribute 'treemacs-git-added-face nil :family "Sarasa Mono SC" :height 130)
-      (set-face-attribute 'treemacs-git-modified-face nil :family "Sarasa Mono SC" :height 130)
-      (set-face-attribute 'treemacs-git-renamed-face nil :family "Sarasa Mono SC" :height 130)
-      (set-face-attribute 'treemacs-git-conflict-face nil :family "Sarasa Mono SC" :height 130)
-      (set-face-attribute 'treemacs-git-ignored-face nil :family "Sarasa Mono SC" :height 130)
-      (set-face-attribute 'treemacs-git-unmodified-face nil :family "Sarasa Mono SC" :height 130)
-      (set-face-attribute 'treemacs-git-untracked-face nil :family "Sarasa Mono SC" :height 130)
-      (set-face-attribute 'treemacs-tags-face nil :family "Sarasa Mono SC" :height 130)
       (treemacs-toggle-fixed-width)
       (setq-default treemacs--width-is-locked nil
                     treemacs-width 20)
@@ -795,7 +808,7 @@
 *** LSP
     Install ~lsp-mode~.
     #+BEGIN_SRC emacs-lisp
-      (init/ensure-package 'lsp-mode)
+      (init/ensure-package- 'lsp-mode)
     #+END_SRC
     Enable ~which-key~ help in ~lsp mode~.
     #+BEGIN_SRC emacs-lisp
@@ -810,6 +823,10 @@
       (set-face-attribute 'header-line nil
                           :background (face-background 'default))
     #+END_SRC
+    Disable annoying diagnostic
+    #+BEGIN_SRC emacs-lisp
+      (setq lsp-diagnostic-package :none)
+    #+END_SRC
 *** Issues
 **** Ignore cases of ~company-dabbrev~
      #+BEGIN_SRC emacs-lisp
@@ -819,11 +836,11 @@
      #+END_SRC
 ** Verilog
    Require built-in ~verilog-mode~.
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (require 'verilog-mode)
    #+END_SRC
    Build completion system with ~ctags~ and ~company-keywords~.
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (init/ensure-package 'citre)
      (setq verilog-imenu-generic-expression
            '(("*Outputs*" "^\\s-*\\(output\\)\\s-+\\(reg\\|wire\\|logic\\|\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 4)
@@ -890,7 +907,7 @@
                              (pyvenv-activate arg))))
    #+END_SRC
    ~yapf~ and ~pyright~ are used to format and complete.
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (init/ensure-package 'lsp-pyright)
      (defun lsp-pyright-format-buffer ()
        (interactive)
@@ -907,7 +924,7 @@
 ** C/C++
    Installing ~ccls~.
    #+BEGIN_SRC emacs-lisp
-     (init/ensure-package 'ccls)
+     (init/ensure-package- 'ccls)
      (dolist (hook '(c-mode-hook c++-mode-hook))
        (add-hook hook #'lsp))
      (setq ccls-sem-highlight-method nil)
@@ -923,9 +940,9 @@
    Install ~fish-mode~ and config keybindings
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'fish-mode)
-     (define-key fish-mode-map (kbd "=") nil)
-     (evil-define-key '(normal motion visual) fish-mode-map
-       (kbd "=") 'fish_indent)
+     ;; (define-key fish-mode-map (kbd "=") nil)
+     ;; (evil-define-key '(normal motion visual) fish-mode-map
+     ;;   (kbd "=") 'fish_indent)
    #+END_SRC
 ** Matlab
    Install ~matlab-mode~
@@ -940,7 +957,7 @@
 * Documentation
 ** IM module
    Use ~smart-input-method~ as auto IM switcher.
-   #+BEGIN_SRC emacs-lisp :tangle no
+   #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'sis)
      (sis-ism-lazyman-config
       "1"
@@ -953,35 +970,42 @@
      (setq sis-inline-tighten-head-rule 0
            sis-inline-tighten-tail-rule 1
            sis-english-pattern "[a-zA-Zλ]"
-           sis-default-cursor-color "black"
-           sis-other-cursor-color "#0E4B8C"
+           sis-default-cursor-color "dark orange"
+           sis-other-cursor-color "medium blue"
            )
    #+END_SRC
 *** Emacs Rime
-    #+BEGIN_SRC emacs-lisp
-      (init/ensure-package 'rime)
-      (setq default-input-method "rime")
-      (define-key evil-insert-state-map (kbd "M-a") 'toggle-input-method)
-      (define-key evil-emacs-state-map (kbd "M-a") 'toggle-input-method)
-      (define-key rime-mode-map (kbd "M-z") 'rime-force-enable)
-      (setq rime-show-candidate 'posframe)
-      (setq rime-user-data-dir "~/.config/emacs/rime/")
-      (setq rime-translate-keybindings
-            '("C-f" "C-b" "C-n" "C-p" "C-g" "C-`"))
-      (setq rime-show-preedit 'inline)
-      ;; (setq rime-posframe-properties
-      ;;       (list :font "-LXGW-霞鹜文楷-normal-normal-normal-*-32-*-*-*-*-0-iso10646-1"
-      ;;             :internal-border-width 4))
-      (setq rime-disable-predicates
-            '(
-              rime-predicate-prog-in-code-p
-              rime-predicate-current-uppercase-letter-p
-              rime-predicate-after-alphabet-char-p
-              rime-predicate-after-ascii-char-p
-              rime-predicate-evil-mode-p
-              rime-predicate-hydra-p rime-predicate-punctuation-line-begin-p
-              rime-predicate-space-after-cc-p
-              rime-predicate-tex-math-or-command-p))
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (defun init/toggle-rime (&optional args)
+        (interactive)
+        (init/ensure-package 'rime)
+        (setq default-input-method "rime")
+        (define-key evil-insert-state-map (kbd "C-SPC") nil)
+        (define-key evil-emacs-state-map (kbd "C-SPC") nil)
+        (evil-define-key '(insert emacs) 'global
+          (kbd "C-SPC") 'init/toggle-rime)
+        (define-key rime-mode-map (kbd "C-z") 'rime-force-enable)
+        (setq rime-show-candidate 'posframe)
+        (setq rime-user-data-dir "~/.config/emacs/rime/")
+        (setq rime-translate-keybindings
+              '("C-f" "C-b" "C-n" "C-p" "C-g" "C-`"))
+        (setq rime-show-preedit 'inline)
+        (setq rime-disable-predicates
+              '(
+                rime-predicate-prog-in-code-p
+                rime-predicate-current-uppercase-letter-p
+                rime-predicate-after-alphabet-char-p
+                rime-predicate-after-ascii-char-p
+                rime-predicate-evil-mode-p
+                rime-predicate-hydra-p rime-predicate-punctuation-line-begin-p
+                rime-predicate-space-after-cc-p
+                rime-predicate-tex-math-or-command-p))
+        (setq init/toggle-rime 'toggle-input-method)
+        )
+      (define-key evil-insert-state-map (kbd "C-SPC") nil)
+      (define-key evil-emacs-state-map (kbd "C-SPC") nil)
+      (evil-define-key '(insert emacs) 'global
+        (kbd "C-SPC") 'init/toggle-rime)
     #+END_SRC
 ** Display
    Enable ~visual-line-mode~ in ~text-mode~ and Latex buffer.
@@ -991,8 +1015,21 @@
        (add-hook hook visual-line-mode))
    #+END_SRC
 ** Org mode
+*** Set seperate font for org mode
+#+BEGIN_SRC emacs-lisp
+  (defface org-font
+    '((t :family "Times New Roman"))
+    "Times New Roman"
+    :group 'basic-faces)
+  (add-hook 'org-mode-hook
+            #'(lambda ()
+                (if (display-graphic-p)
+                    (progn
+                      (set (make-local-variable 'buffer-face-mode-face) 'org-font)
+                      (buffer-face-mode t)))))
+#+END_SRC
 *** Quick jump to specific headline via ivy and fuzzy search
-    It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://github.com/abo-abo/swiper/issues/986][discussion]].
+It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://github.com/abo-abo/swiper/issues/986][discussion]].
     #+BEGIN_SRC emacs-lisp
       (setq org-goto-interface 'outline-path-completion)
       (setq org-outline-path-complete-in-steps nil)
@@ -1000,25 +1037,27 @@
     I use ~"J"~ to invoke jump.
     #+BEGIN_SRC emacs-lisp
       (with-eval-after-load 'org
-        (define-key org-mode-map (kbd "J") nil)
-        (evil-define-key '(normal motion visual) org-mode-map 
-          (kbd "J") 'org-goto))
+        (define-key org-mode-map (kbd "C-j") 'org-goto)
+        ;; (define-key org-mode-map (kbd "J") nil)
+        ;; (evil-define-key '(normal motion visual) org-mode-map 
+        ;;   (kbd "J") 'org-goto)
+        )
     #+END_SRC
 *** Preview
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (with-eval-after-load 'org
         (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.4)
               org-preview-latex-default-process 'dvisvgm))
     #+END_SRC
 *** Highlight Latex fragment
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (setq org-highlight-latex-and-related '(latex script entities))
       (with-eval-after-load 'org
         (require 'latex)
         (add-hook 'org-mode-hook 'latex-math-mode))
     #+END_SRC
 *** Integrate zotxt
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (init/ensure-package 'zotxt)
       (add-hook 'org-mode-hook 'org-zotxt-mode)
     #+END_SRC
@@ -1033,9 +1072,9 @@
            '("xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"
              "xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"
              "xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"))
-     (evil-define-key '(normal) LaTeX-mode-map
-       "cc" 'TeX-command-master
-       "cv" 'TeX-view)
+     ;; (evil-define-key '(normal) LaTeX-mode-map
+     ;;   "cc" 'TeX-command-master
+     ;;   "cv" 'TeX-view)
      (org-babel-do-load-languages
       'org-babel-load-languages
       '((dot . t)))
@@ -1072,33 +1111,52 @@
    #+END_SRC
 ** Set up magit
    #+BEGIN_SRC emacs-lisp
-     (init/ensure-package 'magit)
-     (evil-leader/set-key
-       "m" 'magit-status)
+     (init/ensure-package- 'magit)
+     ;; (evil-leader/set-key
+     ;;   "m" 'magit-status)
    #+END_SRC
 ** Eshell
-   #+BEGIN_SRC emacs-lisp
-     (require 'eshell)
-   #+END_SRC
 *** Prompt
     #+BEGIN_SRC emacs-lisp
-      (setq eshell-prompt-regexp "^[#λ] "
-            eshell-prompt-function #'(lambda nil
-                                       (concat
-                                        (propertize (user-login-name) 'face `(:foreground (face-foreground 'default) :weight bold))
-                                        (propertize " at " 'face `(:background (face-background 'default)))
-                                        (propertize (system-name) 'face `(:foreground (face-foreground 'default) :weight bold))
-                                        (propertize " in " 'face `(:background (face-background 'default)))
-                                        (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground (face-foreground 'default)
-                                                                                                            :weight bold :slant italic))
-                                        (if (and (boundp 'url-proxy-services)
-                                                 (assoc "http" url-proxy-services))
+      (setq eshell-prompt-function-light #'(lambda nil
                                             (concat
-                                             (propertize " via " 'face `(:background (face-background 'default)))
-                                             (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground (face-foreground 'default)
-                                                                                                                     :weight bold))))
-                                        (propertize "\n" 'face `(:background (face-background 'default)))
-                                        (propertize (if (= (user-uid) 0) "# " "λ ") 'face `(:slant italic :weight bold)))))
+                                             (propertize (user-login-name) 'face `(:foreground (face-foreground 'default) :weight bold))
+                                             (propertize " at " 'face `(:background (face-background 'default)))
+                                             (propertize (system-name) 'face `(:foreground (face-foreground 'default) :weight bold))
+                                             (propertize " in " 'face `(:background (face-background 'default)))
+                                             (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground (face-foreground 'default)
+                                                                                                                 :weight bold :slant italic))
+                                             (if (and (boundp 'url-proxy-services)
+                                                      (assoc "http" url-proxy-services))
+                                                 (concat
+                                                  (propertize " via " 'face `(:background (face-background 'default)))
+                                                  (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground (face-foreground 'default)
+                                                                                                                          :weight bold))))
+                                             (propertize "\n" 'face `(:background (face-background 'default)))
+                                             (propertize (if (= (user-uid) 0) "# " "λ") 'face `(:slant italic :weight bold))
+                                             (propertize " " 'face `(:background (face-background 'default))))))
+
+      (setq eshell-prompt-function-dark #'(lambda nil
+                                             (concat
+                                              (propertize (user-login-name) 'face `(:foreground "yellow" :weight bold))
+                                              (propertize " at " 'face `(:background (face-background 'default)))
+                                              (propertize (system-name) 'face `(:foreground  "magenta" :weight bold))
+                                              (propertize " in " 'face `(:background (face-background 'default)))
+                                              (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground "green"
+                                                                                                                  :weight bold :slant italic))
+                                              (if (and (boundp 'url-proxy-services)
+                                                       (assoc "http" url-proxy-services))
+                                                  (concat
+                                                   (propertize " via " 'face `(:background (face-background 'default)))
+                                                   (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground "cyan"
+                                                                                                                           :weight bold))))
+                                              (propertize "\n" 'face `(:background (face-background 'default)))
+                                              (propertize (if (= (user-uid) 0) "# " "λ") 'face `(:slant italic :weight bold))
+                                              (propertize " " 'face `(:background (face-background 'default))))))
+
+
+      (setq eshell-prompt-regexp "^[#λ] "
+            eshell-prompt-function eshell-prompt-function-light)
     #+END_SRC
 *** FZF fuzzy search
     #+BEGIN_SRC emacs-lisp
@@ -1119,7 +1177,7 @@
     #+END_SRC
 *** z-jump
     #+BEGIN_SRC emacs-lisp
-      (init/ensure-package 'eshell-z)
+      (init/ensure-package- 'eshell-z)
       (add-hook 'eshell-mode-hook
                 #'(lambda ()
                     (require 'eshell-z)))
@@ -1145,7 +1203,7 @@
               nil))))
     #+END_SRC
 *** image cat
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (defun eshell/imgcat (&rest args)
         "Display image files."
         (unless args (error "Usage: imgcat FILE ..."))
@@ -1160,13 +1218,9 @@
     #+END_SRC
 *** Keybindings
     #+BEGIN_SRC emacs-lisp
-      ;; (add-hook 'eshell-mode-hook
-      ;;           #'(lambda () (define-key eshell-mode-map (kbd "C-r") nil)))
-      (evil-define-key '(normal motion insert visual) eshell-mode-map
-        (kbd "C-r") #'init/ivy-eshell-history)
-      ;; (define-key eshell-mode-map (kbd "C-c") nil)
-      ;; (evil-define-key '(normal motion insert visual) eshell-mode-map
-      ;;  (kbd "C-c") #'eshell-interrupt-process)
+      (add-hook 'eshell-mode-hook
+                #'(lambda ()
+                    (local-set-key (kbd "C-r") #'init/ivy-eshell-history)))
     #+END_SRC
 *** Issues
     #+BEGIN_SRC emacs-lisp
@@ -1185,45 +1239,60 @@
      (global-set-key (kbd "M-n") 'symbol-overlay-switch-forward)
      (global-set-key (kbd "M-p") 'symbol-overlay-switch-backward)
      (global-set-key (kbd "M-k") 'symbol-overlay-remove-all)
-     (define-key symbol-overlay-map (kbd "h") 'evil-backward-char)
+     ;;(define-key symbol-overlay-map (kbd "h") 'evil-backward-char)
      (add-hook 'prog-mode-hook 'symbol-overlay-mode)
    #+END_SRC
 
 ** mu4e
+Set font
+#+BEGIN_SRC emacs-lisp
+  (defface mu4e-font
+    '((t :family "Times New Roman"))
+    "Times New Roman"
+    :group 'basic-faces)
+  (dolist (hook '(mu4e-view-mode-hook mu4e-compose-mode-hook mu4e-headers-mode-hook mu4e-main-mode-hook))
+    (add-hook hook
+              #'(lambda ()
+                  (if (display-graphic-p)
+                      (progn
+                        (set (make-local-variable 'buffer-face-mode-face) 'mu4e-font)
+                        (buffer-face-mode t))))))
+#+END_SRC
+
    #+BEGIN_SRC emacs-lisp
-     (add-to-list 'load-path
-                  (concat user-emacs-directory "site-packages/mu/mu4e"))
-     (if (ignore-errors (require 'mu4e))
-         (progn
-           (init/ensure-package 'mu4e-alert)
-           (mu4e-alert-set-default-style 'libnotify)
-           (setq epa-pinentry-mode 'loopback
-                 mail-user-agent 'mu4e-user-agent
-                 mu4e-maildir "~/.mail"
-                 mu4e-view-show-images t
-                 mu4e-get-mail-command "offlineimap -u quiet"
-                 mu4e-index-update-error-warning nil
-                 mu4e-update-interval 300
-                 mu4e-index-update-error-warning t
-                 send-mail-function 'smtpmail-send-it
-                 message-send-mail-function 'smtpmail-send-it
-                 send-mail-function 'smtpmail-send-it
-                 message-send-mail-function 'smtpmail-send-it
-                 smtpmail-auth-credentials "~/.authinfo.gpg"
-                 smtpmail-stream-type 'ssl
-                 mu4e-context-policy 'pick-first)
-           (add-to-list 'mu4e-view-actions
-                        '("View in browser" . mu4e-action-view-in-browser) t)
-           (defun offlineimap-get-password (host port)
-             (require 'netrc)
-             (let* ((netrc (netrc-parse (expand-file-name "~/.authinfo.gpg")))
-                    (hostentry (netrc-machine netrc host port port)))
-               (when hostentry (netrc-get hostentry "password")))))
-       (warn (format "(init/ensure-package) feature %s doesn't exist" 'mu4e)))
+     (defun mu4e (&optional args)
+       (interactive)
+       (add-to-list 'load-path
+                    (concat user-emacs-directory "site-packages/mu/mu4e"))
+       (init/ensure-package 'mu4e)
+       (setq epa-pinentry-mode 'loopback
+             mail-user-agent 'mu4e-user-agent
+             mu4e-maildir "~/.mail"
+             mu4e-view-show-images t
+             mu4e-get-mail-command "offlineimap -u quiet"
+             mu4e-index-update-error-warning nil
+             mu4e-update-interval 300
+             mu4e-index-update-error-warning t
+             send-mail-function 'smtpmail-send-it
+             message-send-mail-function 'smtpmail-send-it
+             send-mail-function 'smtpmail-send-it
+             message-send-mail-function 'smtpmail-send-it
+             smtpmail-auth-credentials "~/.authinfo.gpg"
+             smtpmail-stream-type 'ssl
+             mu4e-context-policy 'pick-first)
+       (add-to-list 'mu4e-view-actions
+                    '("View in browser" . mu4e-action-view-in-browser) t)
+       (defun offlineimap-get-password (host port)
+         (require 'netrc)
+         (let* ((netrc (netrc-parse (expand-file-name "~/.authinfo.gpg")))
+                (hostentry (netrc-machine netrc host port port)))
+           (when hostentry (netrc-get hostentry "password"))))
+       (mu4e)
+       )
    #+END_SRC
 
 ** ssh-deploy
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (init/ensure-package 'ssh-deploy)
      (ssh-deploy-line-mode)
      (ssh-deploy-add-after-save-hook) ;; If you want automatic upload support
@@ -1231,7 +1300,7 @@
      (global-set-key (kbd "C-c C-z") 'ssh-deploy-prefix-map)
    #+END_SRC
 ** pdf-tools
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (init/ensure-package 'pdf-tools)
      (with-eval-after-load 'doc-view
        (pdf-tools-install t))
@@ -1242,3 +1311,20 @@
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'lua-mode)
    #+END_SRC
+** scala-mode
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'scala-mode)
+   #+END_SRC
+** ivy-posframe
+#+BEGIN_SRC emacs-lisp :tangle no
+  (init/ensure-package 'ivy-posframe)
+  (ivy-posframe-mode)
+  (defun my-ivy-posframe-get-size ()
+    "Set the ivy-posframe size according to the current frame."
+    (let ((height (or ivy-posframe-height (or ivy-height 10)))
+          (width (min (or ivy-posframe-width 200) (round (* .85 (frame-width))))))
+      (list :height height :width width :min-height height :min-width width)))
+
+  (setq ivy-posframe-size-function 'my-ivy-posframe-get-size)
+
+#+END_SRC

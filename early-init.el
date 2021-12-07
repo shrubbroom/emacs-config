@@ -15,7 +15,6 @@
 (setq package-enable-at-startup nil)
 (setq package-archives '(("gnu" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/gnu/")
                          ("melpa" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/melpa/")
-                         ("melpa-stable" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/melpa-stable/")
                          ("org" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/org/")))
 (let ((custom (expand-file-name "custom.el" user-emacs-directory)))
  (unless (file-exists-p custom)

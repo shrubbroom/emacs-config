@@ -1,6 +1,6 @@
 [submodule "site-packages/mu"]
 	path = site-packages/mu
 	url = git@github.com:djcb/mu.git
-[submodule "site-packages/awesome-tray"]
-	path = site-packages/awesome-tray
-	url = git@github.com:shrubbroom/awesome-tray.git
+[submodule "site-packages/nox"]
+	path = site-packages/nox
+	url = git@github.com:manateelazycat/nox.git

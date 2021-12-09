@@ -39,6 +39,10 @@
             visible-cursor nil
             ring-bell-function 'ignore)
     #+END_SRC
+*** Disable cursor blink
+#+BEGIN_SRC  emacs-lisp
+  (blink-cursor-mode 0)
+#+END_SRC
 *** Highlight current line :blocked:
     #+BEGIN_SRC emacs-lisp :tangle no
       (global-hl-line-mode)
@@ -96,20 +100,12 @@
         (interactive) (find-file "~/.config/emacs/init.el"))
     #+END_SRC
     Keybinding
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (with-eval-after-load 'evil-leader
-        (evil-leader/set-key "ee" 'init/find-init))
-    #+END_SRC
 *** Find ~conf.org~
     #+BEGIN_SRC emacs-lisp
       (defun init/find-conf ()
         (interactive) (find-file "~/.config/emacs/conf.org"))
     #+END_SRC
     Keybinding
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (with-eval-after-load 'evil-leader
-        (evil-leader/set-key "ef" 'init/find-conf))
-    #+END_SRC
 *** Open file in external applications
     #+BEGIN_SRC emacs-lisp
       (defun init/open-file-in-external-application (&optional args)
@@ -126,10 +122,6 @@
           (message "The buffer is not a file")))
     #+END_SRC
     Keybinding
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (with-eval-after-load 'evil-leader
-        (evil-leader/set-key "x" 'init/open-file-in-external-application))
-    #+END_SRC
 *** Toggle proxy
     #+BEGIN_SRC emacs-lisp
       (defun init/toggle-url-proxy ()
@@ -146,125 +138,22 @@
                   ("https" . "localhost:8889")
                   ("no_proxy" . "0.0.0.0"))))))
     #+END_SRC
-** Evil system
-   First install packages. ~evil-surround~ is used for extra surrounding actions. and ~evil-collection~ is installed for ~evil~ in ~magit~, etc. Also see [[https://github.com/emacs-evil/evil-collection/issues/60][issue of evil-collection]].
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (setq evil-want-keybinding nil)
-     (init/ensure-package 'evil)
-     (init/ensure-package 'evil-leader)
-     (init/ensure-package 'evil-surround)
-     (init/ensure-package 'evil-collection)
-   #+END_SRC
-*** Basic configurations
-    First setup hooks, I enable ~evil-mode~ globally.
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (add-hook 'after-init-hook 'evil-mode)
-      (global-evil-leader-mode)
-      (evil-leader/set-leader "<SPC>")
-      (global-evil-surround-mode 1)
-    #+END_SRC
-    Set appearance for cursor.
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (setq-default evil-visual-state-cursor '(hbar . 5))
-      (setq-default evil-insert-state-cursor '(bar "#98BC37"))
-      (setq-default evil-normal-state-cursor '(box "orange"))
-    #+END_SRC
-    Select searching module in evil.
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (evil-select-search-module 'evil-search-module 'evil-search)
-    #+END_SRC
-    Set up ~evil-collection~
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (setq evil-collection-company-use-tng nil)
-      (evil-collection-init)
-    #+END_SRC
-    Set up ~evil-pinyin~
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (init/ensure-package 'evil-pinyin)
-      (global-evil-pinyin-mode)
-    #+END_SRC
-*** Key bindings
-**** Buffer and windows
-     #+BEGIN_SRC emacs-lisp :tangle no
-       (evil-leader/set-key
-         "f" 'find-file
-         "b" 'switch-to-buffer
-         "k" 'kill-current-buffer
-         "s" 'save-buffer
-         "0" 'winum-select-window-0
-         "1" 'winum-select-window-1
-         "2" 'winum-select-window-2
-         "3" 'winum-select-window-3
-         "4" 'winum-select-window-4
-         "5" 'winum-select-window-5
-         "w1" 'delete-other-windows
-         "w-" 'split-window-below
-         "w/" 'split-window-right
-         )
-     #+END_SRC
-**** Basic motions
-     #+BEGIN_SRC emacs-lisp :tangle no
-       (define-key evil-motion-state-map
-         [remap evil-next-line]
-         'evil-next-visual-line)
-       (define-key evil-motion-state-map
-         [remap evil-previous-line]
-         'evil-previous-visual-line)
-     #+END_SRC
-**** Basic edits
-     #+BEGIN_SRC emacs-lisp :tangle no
-       (evil-define-key '(visual) evil-surround-mode-map
-         "s" 'evil-surround-region)
-     #+END_SRC
-*** Terminal
-    Execute this function in terminal Emacs
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (defun init/enable-terminal-cursor-changer ()
-        (interactive)
-        (init/ensure-package 'evil-terminal-cursor-changer)
-        (evil-terminal-cursor-changer-activate)
-        )
-    #+END_SRC
-*** Issues
-    This issue is related to [[https://github.com/hlissner/doom-emacs/issues/2493][local variables in folder]].
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (advice-add #'turn-on-evil-mode :before
-                  (lambda (&optional args)
-                    (when (eq major-mode 'fundamental-mode)
-                      (hack-local-variables))))
-    #+END_SRC
+
+
 ** Undo system
+No extra undo system is required.
 *** Set up package
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (init/ensure-package 'undo-tree)
       (global-undo-tree-mode)
-    #+END_SRC
-*** Set evil undo system
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (evil-set-undo-system 'undo-tree)
-    #+END_SRC
-*** Key bindings
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (evil-leader/set-key
-        "/" 'undo-tree-visualize)
-      (evil-define-key '(normal visual) 'global
-        "u" 'evil-undo
-        (kbd "C-r") nil
-        "U" 'evil-redo)
-      (define-key undo-tree-visualizer-mode-map (kbd "j") nil)
-      (define-key undo-tree-visualizer-mode-map (kbd "k") nil)
-      (evil-define-key '(normal motion) undo-tree-visualizer-mode-map
-        (kbd "j") 'undo-tree-visualize-redo
-        (kbd "k") 'undo-tree-visualize-undo
-        (kbd "h") 'undo-tree-visualize-switch-branch-left
-        (kbd "l") 'undo-tree-visualize-switch-branch-right)
     #+END_SRC
 
 ** Navigation & Searching system
 *** Basic packages
     #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'ivy)
-      (init/ensure-package 'swiper)
+      ;; (init/ensure-package 'swiper)
+      (init/ensure-package- 'ctrlf)
       (init/ensure-package 'counsel)
       (init/ensure-package 'smex)
     #+END_SRC
@@ -290,9 +179,13 @@
      #+END_SRC
 *** Configure swiper
     Only keybinding is required
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (global-set-key "\C-s" 'swiper)
     #+END_SRC
+*** Config ctrlf
+#+BEGIN_SRC emacs-lisp
+  (ctrlf-mode +1)
+#+END_SRC
 *** Configure counsel
 **** Hook at startup
      #+BEGIN_SRC emacs-lisp
@@ -350,6 +243,17 @@
    #+BEGIN_SRC emacs-lisp
      (add-to-list 'default-frame-alist
                   '(font . "Sarasa Term Slab SC-16"))
+   #+END_SRC
+   Also fix modeline font
+   #+BEGIN_SRC emacs-lisp
+     (set-face-attribute 'mode-line nil :font "Sarasa Term Slab SC-16")
+     (set-face-attribute 'mode-line-active nil :font "Sarasa Term Slab SC-16")
+     (set-face-attribute 'mode-line-inactive nil :font "Sarasa Term Slab SC-16")
+
+     (add-hook 'after-make-frame-functions #'(lambda (f)
+                                               (set-face-attribute 'mode-line nil :font "Sarasa Term Slab SC-16")
+                                               (set-face-attribute 'mode-line-active nil :font "Sarasa Term Slab SC-16")
+                                               (set-face-attribute 'mode-line-inactive nil :font "Sarasa Term Slab SC-16")))
    #+END_SRC
 *** Complex EN-ZH font configuration :blocked:
     This configuration is obsolete.
@@ -415,9 +319,10 @@
 *** Images
     #+BEGIN_SRC emacs-lisp :tangle no
       (init/ensure-package 'iscroll)
-      (evil-define-key '(normal) org-mode-map
-        "j" 'iscroll-next-line
-        "k" 'iscroll-previous-line)
+      (add-hook 'org-mode-hook
+                #'(lambda ()
+                    (local-set-key (kbd "C-n") 'iscroll-next-line)
+                    (local-set-key (kbd "C-p") 'iscroll-previous-line)))
     #+END_SRC
 ** Theme
 *** Issues
@@ -446,7 +351,7 @@
     #+END_SRC
     Setup theme.
     #+BEGIN_SRC emacs-lisp
-      (load-theme 'doom-solarized-light 1)
+      (load-theme 'doom-one-light 1)
     #+END_SRC
 *** Small modification to fringe color
     #+BEGIN_SRC emacs-lisp
@@ -478,11 +383,6 @@
             doom-modeline-icon nil
             doom-modeline-unicode-fallback nil
             doom-modeline-mu4e nil)
-      ;; (setq evil-normal-state-tag " NORMAL "
-      ;;       evil-insert-state-tag " INSERT "
-      ;;       evil-motion-state-tag " MOTION "
-      ;;       evil-visual-state-tag " VISUAL "
-      ;;       evil-operator-state-tag " OPERAT ")
       (display-time-mode)
       (column-number-mode)
     #+END_SRC
@@ -607,14 +507,6 @@
           ((or (derived-mode-p 'term-mode)
                (derived-mode-p 'eshell-mode))
            "Shell")
-          ((or (string-match "mu4e" (buffer-name))
-               (memq major-mode '(
-                                  'mu4e-main-mode
-                                  'mu4e-headers-mode
-                                  'mu4e-view-mode
-                                  'mu4e-compose-mode
-                                  )))
-           "Mu4e")
           ((memq major-mode '(
                               telega-root-mode
                               telega-chat-mode
@@ -630,15 +522,7 @@
                               (substring (buffer-file-name) 0 31))
                 (derived-mode-p 'emacs-lisp-mode))
            "Config")
-          ((or (string-equal "*" (substring (buffer-name) 0 1))
-               (memq major-mode '(magit-process-mode
-                                  magit-status-mode
-                                  magit-diff-mode
-                                  magit-log-mode
-                                  magit-file-mode
-                                  magit-blob-mode
-                                  magit-blame-mode
-                                  )))
+          ((string-equal "*" (substring (buffer-name) 0 1))
            "Emacs")
           ((derived-mode-p 'emacs-lisp-mode)
            "Elisp")
@@ -1028,23 +912,34 @@
                       (set (make-local-variable 'buffer-face-mode-face) 'org-font)
                       (buffer-face-mode t)))))
 #+END_SRC
+*** Table Align
+#+BEGIN_SRC emacs-lisp
+  (init/ensure-package- 'valign)
+  (add-hook 'org-mode-hook #'valign-mode)
+#+END_SRC
+*** Org Download
+#+BEGIN_SRC emacs-lisp
+  (init/ensure-package- 'org-download)
+  (add-hook 'org-mode-hook 'org-download-enable)
+#+END_SRC
+*** Org Superstar
+#+BEGIN_SRC emacs-lisp
+  (init/ensure-package- 'org-superstar)
+  (add-hook 'org-mode-hook 'org-superstar-mode)
+#+END_SRC
 *** Quick jump to specific headline via ivy and fuzzy search
 It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://github.com/abo-abo/swiper/issues/986][discussion]].
     #+BEGIN_SRC emacs-lisp
       (setq org-goto-interface 'outline-path-completion)
       (setq org-outline-path-complete-in-steps nil)
     #+END_SRC
-    I use ~"J"~ to invoke jump.
+    I use ~"C-j"~ to invoke jump.
     #+BEGIN_SRC emacs-lisp
       (with-eval-after-load 'org
-        (define-key org-mode-map (kbd "C-j") 'org-goto)
-        ;; (define-key org-mode-map (kbd "J") nil)
-        ;; (evil-define-key '(normal motion visual) org-mode-map 
-        ;;   (kbd "J") 'org-goto)
-        )
+        (define-key org-mode-map (kbd "C-j") 'org-goto))
     #+END_SRC
 *** Preview
-    #+BEGIN_SRC emacs-lisp :tangle no
+    #+BEGIN_SRC emacs-lisp
       (with-eval-after-load 'org
         (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.4)
               org-preview-latex-default-process 'dvisvgm))
@@ -1072,9 +967,6 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
            '("xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"
              "xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"
              "xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"))
-     ;; (evil-define-key '(normal) LaTeX-mode-map
-     ;;   "cc" 'TeX-command-master
-     ;;   "cv" 'TeX-view)
      (org-babel-do-load-languages
       'org-babel-load-languages
       '((dot . t)))
@@ -1112,8 +1004,6 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
 ** Set up magit
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package- 'magit)
-     ;; (evil-leader/set-key
-     ;;   "m" 'magit-status)
    #+END_SRC
 ** Eshell
 *** Prompt
@@ -1211,11 +1101,6 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
           (eshell/printnl
            (propertize " " 'display (create-image img)))))
     #+END_SRC
-*** Fish-like auto-suggestion :blocked:
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (init/ensure-package 'esh-autosuggest)
-      (add-hook 'eshell-mode-hook #'esh-autosuggest-mode)
-    #+END_SRC
 *** Keybindings
     #+BEGIN_SRC emacs-lisp
       (add-hook 'eshell-mode-hook
@@ -1239,7 +1124,6 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
      (global-set-key (kbd "M-n") 'symbol-overlay-switch-forward)
      (global-set-key (kbd "M-p") 'symbol-overlay-switch-backward)
      (global-set-key (kbd "M-k") 'symbol-overlay-remove-all)
-     ;;(define-key symbol-overlay-map (kbd "h") 'evil-backward-char)
      (add-hook 'prog-mode-hook 'symbol-overlay-mode)
    #+END_SRC
 

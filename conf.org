@@ -346,13 +346,11 @@ No extra undo system is required.
 *** Setup theme
     Install themes
     #+BEGIN_SRC emacs-lisp
-      ;; (init/ensure-package 'moe-theme)
-      ;; (init/ensure-package 'tao-theme)
       (init/ensure-package 'doom-themes)
     #+END_SRC
     Setup theme.
     #+BEGIN_SRC emacs-lisp
-      (load-theme 'doom-one-light 1)
+      (load-theme init/theme 1)
     #+END_SRC
 *** Small modification to fringe color
     #+BEGIN_SRC emacs-lisp

@@ -126,18 +126,17 @@
     #+END_SRC
     Keybinding
 *** Toggle proxy
-    #+BEGIN_SRC emacs-lisp
-      (if (boundp 'init/local-proxies)
-          (defun init/toggle-url-proxy ()
-            "Toggle proxy for the url.el library."
-            (interactive)
-            (cond
-             (url-proxy-services
-              (message "Turn off URL proxy")
-              (setq url-proxy-services nil))
-             (t
-              (message "Turn on URL proxy")
-              (setq url-proxy-services init/local-proxies)))))
+    #+BEGIN_SRC emacs-lisp :tangle (when (boundp 'init/local-proxies) "yes")
+      (defun init/toggle-url-proxy ()
+        "Toggle proxy for the url.el library."
+        (interactive)
+        (cond
+         (url-proxy-services
+          (message "Turn off URL proxy")
+          (setq url-proxy-services nil))
+         (t
+          (message "Turn on URL proxy")
+          (setq url-proxy-services init/local-proxies))))
     #+END_SRC
 
 
@@ -273,7 +272,7 @@ No extra undo system is required.
     #+END_SRC
 ** Ligature
 *** MasOS
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle (when (eq system-type 'darwin) "yes")
       (mac-auto-operator-composition-mode +1)
     #+END_SRC
 *** Other Platform
@@ -349,8 +348,8 @@ No extra undo system is required.
       (init/ensure-package 'doom-themes)
     #+END_SRC
     Setup theme.
-    #+BEGIN_SRC emacs-lisp
-      (if (boundp 'init/theme) (load-theme init/theme 1))
+    #+BEGIN_SRC emacs-lisp :tangle (when (boundp 'init/theme) "yes")
+      (load-theme init/theme 1)
     #+END_SRC
 *** Small modification to fringe color
     #+BEGIN_SRC emacs-lisp
@@ -940,8 +939,8 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
                     (local-set-key (kbd "C-r") #'init/ivy-eshell-history)))
     #+END_SRC
 *** Define path
-#+BEGIN_SRC emacs-lisp
-  (if (fboundp 'init/define-path) (init/define-path))
+#+BEGIN_SRC emacs-lisp :tangle (when (fboundp 'init/define-path) "yes")
+  (init/define-path)
 #+END_SRC
 *** Issues
     #+BEGIN_SRC emacs-lisp

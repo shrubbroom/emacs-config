@@ -126,7 +126,7 @@
     #+END_SRC
     Keybinding
 *** Toggle proxy
-    #+BEGIN_SRC emacs-lisp :tangle (when (boundp 'init/local-proxies) "yes")
+    #+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/local-proxies) "yes" "no")
       (defun init/toggle-url-proxy ()
         "Toggle proxy for the url.el library."
         (interactive)
@@ -272,7 +272,7 @@ No extra undo system is required.
     #+END_SRC
 ** Ligature
 *** MasOS
-    #+BEGIN_SRC emacs-lisp :tangle (when (eq system-type 'darwin) "yes")
+    #+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
       (mac-auto-operator-composition-mode +1)
     #+END_SRC
 *** Other Platform
@@ -348,7 +348,7 @@ No extra undo system is required.
       (init/ensure-package 'doom-themes)
     #+END_SRC
     Setup theme.
-    #+BEGIN_SRC emacs-lisp :tangle (when (boundp 'init/theme) "yes")
+    #+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/theme) "yes" "no")
       (load-theme init/theme 1)
     #+END_SRC
 *** Small modification to fringe color
@@ -939,7 +939,7 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
                     (local-set-key (kbd "C-r") #'init/ivy-eshell-history)))
     #+END_SRC
 *** Define path
-#+BEGIN_SRC emacs-lisp :tangle (when (fboundp 'init/define-path) "yes")
+#+BEGIN_SRC emacs-lisp :tangle (if (fboundp 'init/define-path) "yes" "no")
   (init/define-path)
 #+END_SRC
 *** Issues

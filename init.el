@@ -16,6 +16,8 @@
     (if (file-exists-p local-variables)
         (load-file local-variables)))
 
+  ;; Set proxies
+  (setq url-proxy-services init/local-proxies)
   ;; Tangle and compile if necessary only, then load the configuration
   (let* ((.org "conf.org")
          (.el (concat (file-name-sans-extension .org) ".el"))

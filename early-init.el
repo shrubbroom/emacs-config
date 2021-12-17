@@ -13,15 +13,8 @@
                        t
                        'garbage-collect))
 (setq package-enable-at-startup nil)
-(setq url-proxy-services
-      '(("http" . "localhost:7890")
-        ("https" . "localhost:7890")
-        ("no_proxy" . "0.0.0.0")))
 (setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
                          ("melpa" . "https://melpa.org/packages/")))
-;; (setq package-archives '(("gnu" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/gnu/")
-;;                          ("melpa" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/melpa/")
-;;                          ("org" . "https://mirrors.sjtug.sjtu.edu.cn/emacs-elpa/org/")))
 (let ((custom (expand-file-name "custom.el" user-emacs-directory)))
  (unless (file-exists-p custom)
    (warn "creating custom.el since it doesn't exist")

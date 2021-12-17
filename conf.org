@@ -75,7 +75,10 @@
               (package-refresh-contents)
               (package-install pkg))
             (unless (ignore-errors (require pkg))
-              (warn (format "(init/ensure-package) feature %s doesn't exist" pkg)))
+              nil
+              ;; (warn (format "(init/ensure-package) feature %s doesn't exist" pkg)
+              ;;       )
+              )
             nil)))
       (defun init/ensure-package- (pkg)
         "ensure package is installed, donot require"
@@ -124,19 +127,17 @@
     Keybinding
 *** Toggle proxy
     #+BEGIN_SRC emacs-lisp
-      (defun init/toggle-url-proxy ()
-        "Toggle proxy for the url.el library."
-        (interactive)
-        (cond
-         (url-proxy-services
-          (message "Turn off URL proxy")
-          (setq url-proxy-services nil))
-         (t
-          (message "Turn on URL proxy")
-          (setq url-proxy-services
-                '(("http" . "localhost:8889")
-                  ("https" . "localhost:8889")
-                  ("no_proxy" . "0.0.0.0"))))))
+      (if (boundp 'init/local-proxies)
+          (defun init/toggle-url-proxy ()
+            "Toggle proxy for the url.el library."
+            (interactive)
+            (cond
+             (url-proxy-services
+              (message "Turn off URL proxy")
+              (setq url-proxy-services nil))
+             (t
+              (message "Turn on URL proxy")
+              (setq url-proxy-services init/local-proxies)))))
     #+END_SRC
 
 
@@ -218,6 +219,13 @@ No extra undo system is required.
      (projectile-mode +1)
      (setq projectile-enable-caching t)
    #+END_SRC
+   Keybindings
+   #+BEGIN_SRC emacs-lisp
+     (global-set-key (kbd "C-c p f") #'projectile-find-file)
+     (global-set-key (kbd "C-c p b") #'projectile-switch-to-buffer)
+     (global-set-key (kbd "C-c p C-b") #'projectile-ibuffer)
+     (global-set-key (kbd "C-c p g") #'projectile-switch-project)
+   #+END_SRC
 ** Helping System
 *** Basic packages
     #+BEGIN_SRC emacs-lisp
@@ -241,19 +249,7 @@ No extra undo system is required.
 ** Fonts
    Use Sarasa Term SC as default font
    #+BEGIN_SRC emacs-lisp
-     (add-to-list 'default-frame-alist
-                  '(font . "Sarasa Term Slab SC-16"))
-   #+END_SRC
-   Also fix modeline font
-   #+BEGIN_SRC emacs-lisp
-     (set-face-attribute 'mode-line nil :font "Sarasa Term Slab SC-16")
-     (set-face-attribute 'mode-line-active nil :font "Sarasa Term Slab SC-16")
-     (set-face-attribute 'mode-line-inactive nil :font "Sarasa Term Slab SC-16")
-
-     (add-hook 'after-make-frame-functions #'(lambda (f)
-                                               (set-face-attribute 'mode-line nil :font "Sarasa Term Slab SC-16")
-                                               (set-face-attribute 'mode-line-active nil :font "Sarasa Term Slab SC-16")
-                                               (set-face-attribute 'mode-line-inactive nil :font "Sarasa Term Slab SC-16")))
+     (set-frame-font "Sarasa Term Slab SC-18" nil t)
    #+END_SRC
 *** Complex EN-ZH font configuration :blocked:
     This configuration is obsolete.
@@ -276,30 +272,35 @@ No extra undo system is required.
         (add-hook 'after-make-frame-functions #'init/init-fonts))
     #+END_SRC
 ** Ligature
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (add-to-list 'load-path
-                       (concat user-emacs-directory "site-packages/ligature"))
-     (require 'ligature)
-     ;; Enable the "www" ligature in every possible major mode
-     (ligature-set-ligatures 't '("www"))
-     ;; Enable traditional ligature support in eww-mode, if the
-     ;; `variable-pitch' face supports it
-     (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
-     ;; Enable all Cascadia Code ligatures in programming modes
-     (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
-                                          ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
-                                          "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
-                                          "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
-                                          "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
-                                          "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
-                                          "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
-                                          "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
-                                          ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
-                                          "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
-                                          "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++"
-                                          ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
-                                          "\\\\" "://"))
-     (global-ligature-mode t)
+*** MasOS
+    #+BEGIN_SRC emacs-lisp
+      (mac-auto-operator-composition-mode +1)
+    #+END_SRC
+*** Other Platform
+    #+BEGIN_SRC emacs-lisp :tangle no
+      (add-to-list 'load-path
+                   (concat user-emacs-directory "site-packages/ligature"))
+      (require 'ligature)
+      ;; Enable the "www" ligature in every possible major mode
+      (ligature-set-ligatures 't '("www"))
+      ;; Enable traditional ligature support in eww-mode, if the
+      ;; `variable-pitch' face supports it
+      (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
+      ;; Enable all Cascadia Code ligatures in programming modes
+      (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
+                                           ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
+                                           "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
+                                           "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
+                                           "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
+                                           "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
+                                           "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
+                                           "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
+                                           ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
+                                           "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
+                                           "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++"
+                                           ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+                                           "\\\\" "://"))
+      (global-ligature-mode t)
    #+END_SRC
 ** Smooth scrolling
    #+BEGIN_SRC emacs-lisp
@@ -382,7 +383,8 @@ No extra undo system is required.
             doom-modeline-modal-icon nil
             doom-modeline-icon nil
             doom-modeline-unicode-fallback nil
-            doom-modeline-mu4e nil)
+            doom-modeline-mu4e nil
+            doom-modeline-hud t)
       (display-time-mode)
       (column-number-mode)
     #+END_SRC
@@ -391,176 +393,19 @@ No extra undo system is required.
       (add-hook 'after-init-hook 'doom-modeline-mode)
     #+END_SRC
 ** Tabs
-*** Install package
+*** Sort-tab
     #+BEGIN_SRC emacs-lisp
-      (init/ensure-package 'centaur-tabs)
-    #+END_SRC
-*** Set variables
-    #+BEGIN_SRC emacs-lisp
-      (setq centaur-tabs-set-modified-marker t
-            centaur-tabs-modified-marker "*"
-            centaur-tabs-gray-out-icons 'buffer
-            centaur-tabs-set-icons t
-            ;; centaur-tabs-plain-icons t
-            x-underline-at-descent-line t
-            ;; centaur-tabs-set-bar 'under
-            centaur-tabs-style "bar"
-            centaur-tabs-show-navigation-buttons nil)
-    #+END_SRC
-*** Set color for tabs
-    #+BEGIN_SRC emacs-lisp
-      (defun init/centaur-tabs-set-color ()
-        ;; (set-face-attribute 'tab-bar-tab nil
-        ;;                     :background (face-background 'mode-line))
-        ;; (set-face-attribute 'tab-bar-tab-inactive nil
-        ;;                     :background "#222d32")
-        ;; (set-face-attribute 'tab-bar nil
-        ;;                     :background (face-background 'default))
-        ;; (set-face-attribute 'tab-line nil
-        ;;                     :background (face-background 'tab-bar-tab-inactive))
-        ;; (set-face-attribute 'centaur-tabs-unselected nil
-        ;;                     :background (face-background 'tab-bar-tab-inactive))
-        ;; (set-face-attribute 'centaur-tabs-selected nil
-        ;;                     :background (face-background 'default)
-        ;;                     :foreground (face-foreground 'default)
-        ;;                     )
-        ;; (set-face-attribute 'centaur-tabs-selected-modified nil
-        ;;                     :background (face-background 'centaur-tabs-selected)
-        ;;                     :foreground (face-foreground 'centaur-tabs-selected)
-        ;;                     )
-        ;; (set-face-attribute 'centaur-tabs-unselected-modified nil
-        ;;                     :background (face-background 'tab-bar-tab-inactive)
-        ;;                     :foreground (face-foreground 'centaur-tabs-unselected)
-        ;;                     )
-        ;; ;; (set-face-attribute 'centaur-tabs-active-bar-face nil
-        ;; ;;                     :background "#D08770"
-        ;; ;;                     :foreground "#D08770"
-        ;; ;;                     :overline "#D08770")
-        ;; (set-face-attribute 'centaur-tabs-default nil
-        ;;                     :background (face-background 'centaur-tabs-unselected))
-        (centaur-tabs-headline-match))
-    #+END_SRC
-*** Display tabs in daemon mode
-    #+BEGIN_SRC emacs-lisp
-      (if (not (daemonp))
-          (progn
-            (centaur-tabs-mode)
-            (init/centaur-tabs-set-color))
-        (defun centaur-tabs-daemon-mode (frame)
-          (unless (and (featurep 'centaur-tabs) (centaur-tabs-mode-on-p))
-            (run-at-time nil nil (lambda ()
-                                   (centaur-tabs-mode)
-                                   (init/centaur-tabs-set-color)
-                                   ))))
-        (add-hook 'after-make-frame-functions #'centaur-tabs-daemon-mode))
-    #+END_SRC
-*** Hide tabs in specific buffer
-    Hide tabs in ~ediff, flycheck, ...~
-    #+BEGIN_SRC emacs-lisp
-      (defun init/show-tabbar-p(&optional buf redisplay)
-        (let ((show t))
-          (with-current-buffer (or buf (current-buffer))
-            (cond
-             ((char-equal ?\  (aref (buffer-name) 0))
-              (setq show nil))
-             ((member (buffer-name) '("*Ediff Control Panel*"
-                                      "\*Flycheck error messages\*"
-                                      "\*org-latex-impatient\*"
-                                      "\*Gofmt Errors\*"))
-              (setq show nil))
-             (t t))
-            (unless show
-              ;; (kill-local-variable 'header-line-format)
-              (setq header-line-format nil)
-              (when redisplay (redisplay t)))
-            show)))
-      (defun init/hide-tab-p(buf)
-        (not (init/show-tabbar-p buf t)))
-      (setq centaur-tabs-hide-tab-function #'init/hide-tab-p)
-    #+END_SRC
-*** Group tabs
-    #+BEGIN_SRC emacs-lisp
-      (defun centaur-tabs-buffer-groups ()
-        "`centaur-tabs-buffer-groups' control buffers' group rules.
-                Group centaur-tabs with mode if buffer is derived from `eshell-mode' `emacs-lisp-mode' `dired-mode' `org-mode' `magit-mode'.
-                All buffer name start with * will group to \"Emacs\".
-                Other buffer group by `centaur-tabs-get-group-name' with project name."
-        (list
-         (cond
-          ((and (projectile-project-p)
-                (string-equal "*" (substring (buffer-name) 0 1))
-                (not (or (derived-mode-p 'term-mode)
-                         (derived-mode-p 'eshell-mode))))
-           (concat (centaur-tabs-get-group-name (current-buffer)) "-backends")
-           )
-          ((projectile-project-p)
-           (centaur-tabs-get-group-name (current-buffer)))
-          ((and (buffer-file-name)
-                (string-match (rx (= 3 (seq (one-or-more num) "."))
-                                  (one-or-more num))
-                              (buffer-file-name)))
-           (match-string 0 (buffer-file-name)))
-          ((string-match (rx (= 3 (seq (one-or-more num) "."))
-                             (one-or-more num))
-                         (buffer-name))
-           (match-string 0 (buffer-name)))
-          ((or (derived-mode-p 'term-mode)
-               (derived-mode-p 'eshell-mode))
-           "Shell")
-          ((memq major-mode '(
-                              telega-root-mode
-                              telega-chat-mode
-                              ))
-           "Telega")
-          ((string-match "vterm" (buffer-name))
-           "Vterm")
-          ((string-match "TAGS" (buffer-name))
-           "Tags")
-          ((and (buffer-file-name)
-                (> (length (buffer-file-name)) 32)
-                (string-equal "~/home/shrubbroom/.config/emacs/"
-                              (substring (buffer-file-name) 0 31))
-                (derived-mode-p 'emacs-lisp-mode))
-           "Config")
-          ((string-equal "*" (substring (buffer-name) 0 1))
-           "Emacs")
-          ((derived-mode-p 'emacs-lisp-mode)
-           "Elisp")
-          ((derived-mode-p 'dired-mode)
-           "Dired")
-          ((memq major-mode '(org-mode org-agenda-mode diary-mode))
-           "OrgMode")
-          (t
-           (centaur-tabs-get-group-name (current-buffer))))))
-    #+END_SRC
-*** Hydra for tabs
-    #+BEGIN_SRC emacs-lisp
-      (defhydra centaur-fast-switch (:hint nil)
-        "
-       ^^^^Fast Move             ^^^^Tab                    ^^Search            ^^Misc
-      -^^^^--------------------+-^^^^---------------------+-^^----------------+-^^---------------------------
-         ^_h_^   prev group    | _0_^^       select first | _g_ search group  | _C-S-k_ kill others in group
-       _j_   _k_  switch tab   | _$_^^       select last  | ^^                | ^^
-         ^_l_^   next group    | _C-k_/_C-j_ move current | ^^                | ^^
-      -^^^^--------------------+-^^^^---------------------+-^^----------------+-^^---------------------------
-      "
-        ("k" centaur-tabs-backward-tab)
-        ("l" centaur-tabs-forward-group)
-        ("h" centaur-tabs-backward-group)
-        ("j" centaur-tabs-forward-tab)
-        ("0" centaur-tabs-select-beg-tab)
-        ("$" centaur-tabs-select-end-tab)
-        ;; ("f" centaur-tabs-ace-jump)
-        ("C-k" centaur-tabs-move-current-tab-to-left)
-        ("C-j" centaur-tabs-move-current-tab-to-right)
-        ("g" centaur-tabs-counsel-switch-group)
-        ("C-S-k" centaur-tabs-kill-other-buffers-in-current-group)
-        ("q" nil "quit"))
-    #+END_SRC
-    Then set keybindings.
-    #+BEGIN_SRC emacs-lisp
-      ;; (define-key evil-normal-state-map "t" 'centaur-fast-switch/body)
-      (global-set-key (kbd "C-t") 'centaur-fast-switch/body)
+      (add-to-list 'load-path
+                   (concat user-emacs-directory "site-packages/sort-tab"))
+      (require 'sort-tab)
+      (sort-tab-mode +1)
+      (global-set-key (kbd "<S-left>") 'sort-tab-select-prev-tab)
+      (global-set-key (kbd "<S-right>") 'sort-tab-select-next-tab)
+      (with-eval-after-load 'org
+       (define-key org-mode-map (kbd "<S-left>") 'sort-tab-select-prev-tab)
+       (define-key org-mode-map (kbd "<S-right>") 'sort-tab-select-next-tab))
+      (add-to-list 'winum-ignored-buffers
+                   "*sort-tab*")
     #+END_SRC
 ** Line number
 #+BEGIN_SRC emacs-lisp
@@ -601,15 +446,7 @@ No extra undo system is required.
     #+END_SRC
 *** Keybindings
     #+BEGIN_SRC emacs-lisp :tangle no
-      (evil-leader/set-key
-        "t" 'treemacs
-        "0" 'treemacs-select-window)
-      (define-key treemacs-mode-map
-        [?\t] #'treemacs-TAB-action)
-      (evil-define-key '(normal) treemacs-mode-map
-        [?\t] #'treemacs-TAB-action
-        (kbd "RET") #'treemacs-RET-action
-        )
+      (global-set-key (kbd "C-t") #'treemacs)
     #+END_SRC
 *** Appearance
     #+BEGIN_SRC emacs-lisp :tangle no
@@ -755,7 +592,7 @@ No extra undo system is required.
 
      (defun init/regenerate-tags ()
        (interactive)
-       (if (and (boundp projectile-project-root)
+       (if (and (boundp 'projectile-project-root)
                 (projectile-project-root))
            (citre-update-this-tags-file t)
          ))
@@ -772,23 +609,19 @@ No extra undo system is required.
      (add-to-list 'company-transformers #'delete-dups)
    #+END_SRC
 ** Python
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (init/ensure-package 'pyvenv)
    #+END_SRC
    This function is defined to manually select virtual environment.
-   #+BEGIN_SRC emacs-lisp
-     (setq init/python-env-list
-           (append 
-                   (directory-files "~/.local/anaconda3/envs"
-                                    t
-                                    "^\\([^.]\\|\\.[^.]\\|\\.\\..\\)")))
-     (defun init/python-switch-env (&optional args)
-       (interactive)
-       (ivy-read "Env: "
-                 init/python-env-list
-                 :action #'(lambda (arg)
-                             (pyvenv-deactivate)
-                             (pyvenv-activate arg))))
+   #+BEGIN_SRC emacs-lisp :tangle no
+     (if (boundp 'init/python-env-list)
+         (defun init/python-switch-env (&optional args)
+           (interactive)
+           (ivy-read "Env: "
+                     init/python-env-list
+                     :action #'(lambda (arg)
+                                 (pyvenv-deactivate)
+                                 (pyvenv-activate arg)))))
    #+END_SRC
    ~yapf~ and ~pyright~ are used to format and complete.
    #+BEGIN_SRC emacs-lisp :tangle no
@@ -824,9 +657,6 @@ No extra undo system is required.
    Install ~fish-mode~ and config keybindings
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'fish-mode)
-     ;; (define-key fish-mode-map (kbd "=") nil)
-     ;; (evil-define-key '(normal motion visual) fish-mode-map
-     ;;   (kbd "=") 'fish_indent)
    #+END_SRC
 ** Matlab
    Install ~matlab-mode~
@@ -841,7 +671,7 @@ No extra undo system is required.
 * Documentation
 ** IM module
    Use ~smart-input-method~ as auto IM switcher.
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (init/ensure-package 'sis)
      (sis-ism-lazyman-config
       "1"
@@ -902,7 +732,7 @@ No extra undo system is required.
 *** Set seperate font for org mode
 #+BEGIN_SRC emacs-lisp
   (defface org-font
-    '((t :family "Times New Roman"))
+    '((t :family "STSong"))
     "Times New Roman"
     :group 'basic-faces)
   (add-hook 'org-mode-hook
@@ -952,8 +782,8 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
         (add-hook 'org-mode-hook 'latex-math-mode))
     #+END_SRC
 *** Integrate zotxt
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (init/ensure-package 'zotxt)
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package- 'zotxt)
       (add-hook 'org-mode-hook 'org-zotxt-mode)
     #+END_SRC
 *** Disable company
@@ -961,6 +791,10 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
       (add-hook 'org-mode-hook (lambda ()
                                  (setq-local company-backends '((company-capf)))))
     #+END_SRC
+*** Word Wrap
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'org-mode-hook #'(lambda () (setq-local word-wrap-by-category t)))
+#+END_SRC
 ** Latex
    #+BEGIN_SRC emacs-lisp
      (setq org-latex-pdf-process
@@ -997,7 +831,7 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
                     #+END_SRC
 * Extra features
 ** Set up clipboard in terminal
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (init/ensure-package 'xclip)
      (xclip-mode 1)
    #+END_SRC
@@ -1093,7 +927,7 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
               nil))))
     #+END_SRC
 *** image cat
-    #+BEGIN_SRC emacs-lisp :tangle no
+    #+BEGIN_SRC emacs-lisp
       (defun eshell/imgcat (&rest args)
         "Display image files."
         (unless args (error "Usage: imgcat FILE ..."))
@@ -1107,6 +941,10 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
                 #'(lambda ()
                     (local-set-key (kbd "C-r") #'init/ivy-eshell-history)))
     #+END_SRC
+*** Define path
+#+BEGIN_SRC emacs-lisp
+  (if (fboundp 'init/define-path) (init/define-path))
+#+END_SRC
 *** Issues
     #+BEGIN_SRC emacs-lisp
       (with-eval-after-load 'em-term
@@ -1129,7 +967,7 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
 
 ** mu4e
 Set font
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (defface mu4e-font
     '((t :family "Times New Roman"))
     "Times New Roman"
@@ -1143,7 +981,7 @@ Set font
                         (buffer-face-mode t))))))
 #+END_SRC
 
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (defun mu4e (&optional args)
        (interactive)
        (add-to-list 'load-path

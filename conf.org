@@ -777,7 +777,7 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
         (add-hook 'org-mode-hook 'latex-math-mode))
     #+END_SRC
 *** Integrate zotxt
-    #+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp :tangle no
       (init/ensure-package- 'zotxt)
       (add-hook 'org-mode-hook 'org-zotxt-mode)
     #+END_SRC
@@ -789,6 +789,21 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
 *** Word Wrap
 #+BEGIN_SRC emacs-lisp
   (add-hook 'org-mode-hook #'(lambda () (setq-local word-wrap-by-category t)))
+#+END_SRC
+*** Beautify
+#+BEGIN_SRC emacs-lisp
+  ;; Make verbatim with highlight text background.
+  (add-to-list 'org-emphasis-alist
+             '("=" (:background "#fef7ca")))
+  ;; Make deletion(obsolote) text foreground with dark gray.
+  (add-to-list 'org-emphasis-alist
+             '("+" (:foreground "dark gray"
+                    :strike-through t)))
+  ;; Make code style around with box.
+  (add-to-list 'org-emphasis-alist
+             '("~" (:box (:line-width 1
+                          :color "grey75"
+                          :style released-button))))
 #+END_SRC
 ** Latex
    #+BEGIN_SRC emacs-lisp
@@ -806,10 +821,11 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
            TeX-source-correlate-start-server t
            TeX-source-correlate-method '((dvi . source-specials)
                                          (pdf . synctex))
-           TeX-view-program-selection (quote
-                                       ((output-pdf "Zathura")
-                                        (output-dvi "Zathura")
-                                        (output-html "xdg-open"))))
+           ;; TeX-view-program-selection (quote
+           ;;                             ((output-pdf "Zathura")
+           ;;                              (output-dvi "Zathura")
+           ;;                              (output-html "xdg-open")))
+           )
      (setq-default TeX-master nil)
      (init/ensure-package 'lsp-latex)
      (dolist
@@ -1017,7 +1033,7 @@ Set font
      (global-set-key (kbd "C-c C-z") 'ssh-deploy-prefix-map)
    #+END_SRC
 ** pdf-tools
-   #+BEGIN_SRC emacs-lisp :tangle no
+   #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'pdf-tools)
      (with-eval-after-load 'doc-view
        (pdf-tools-install t))
@@ -1049,6 +1065,7 @@ Set font
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package- 'ebib)
   (with-eval-after-load 'ebib
+    (setq ebib-file-associations nil)
     (add-to-list 'ebib-file-associations '("pdf" . "open"))
     (defcustom ebib-zotero-translation-server "https://translate.manubot.org"
       "The address of Zotero translation server."

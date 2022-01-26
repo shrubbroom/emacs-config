@@ -1,6 +1,3 @@
-[submodule "site-packages/mu"]
-	path = site-packages/mu
-	url = git@github.com:djcb/mu.git
 [submodule "site-packages/sort-tab"]
 	path = site-packages/sort-tab
-	url = git@github.com:shrubbroom/sort-tab.git
+	url = https://github.com/manateelazycat/sort-tab.git

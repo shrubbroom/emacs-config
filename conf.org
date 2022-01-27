@@ -645,6 +645,7 @@ No extra undo system is required.
    Use ~paredit~ in ~elisp-mode~
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'paredit)
+     (setq backward-delete-char-untabify-method 'all)
      (add-hook 'scheme-mode-hook 'paredit-mode)
      (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
    #+END_SRC
@@ -792,18 +793,21 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
 #+END_SRC
 *** Beautify
 #+BEGIN_SRC emacs-lisp
-  ;; Make verbatim with highlight text background.
-  (add-to-list 'org-emphasis-alist
-             '("=" (:background "#fef7ca")))
-  ;; Make deletion(obsolote) text foreground with dark gray.
-  (add-to-list 'org-emphasis-alist
-             '("+" (:foreground "dark gray"
-                    :strike-through t)))
-  ;; Make code style around with box.
-  (add-to-list 'org-emphasis-alist
-             '("~" (:box (:line-width 1
-                          :color "grey75"
-                          :style released-button))))
+  (with-eval-after-load 'org
+    ;; Make verbatim with highlight text background.
+    (add-to-list 'org-emphasis-alist
+                 '("=" (:background "#fef7ca")))
+    ;; Make deletion(obsolote) text foreground with dark gray.
+    (add-to-list 'org-emphasis-alist
+                 '("+" (:foreground "dark gray"
+                                    :strike-through t)))
+    ;; Make code style around with box.
+    (add-to-list 'org-emphasis-alist
+                 '("~" (:box (:line-width 1
+                                          :color "grey75"
+                                          :style released-button))))
+    (setq org-hide-emphasis-markers t)
+    )
 #+END_SRC
 ** Latex
    #+BEGIN_SRC emacs-lisp
@@ -1100,4 +1104,23 @@ Set font
         (insert (ebib-zotero-translate identifier "search"))
         (ebib-import-entries ebib--cur-db)))
     )
+#+END_SRC
+** English Helper
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path
+               (concat user-emacs-directory "site-packages/company-english-helper"))
+  (defun toggle-company-english-helper (&optional args)
+    "Lazy load wrapper for english helper"
+    (interactive)
+    (require 'company-english-helper)
+    (toggle-company-english-helper))
+#+END_SRC
+** Ripgrep
+#+BEGIN_SRC emacs-lisp
+  (init/ensure-package- 'rg)
+  (defun rg (&optional args)
+    "Lazy load wrapper for rg"
+    (interactive)
+    (require 'rg)
+    (rg))
 #+END_SRC

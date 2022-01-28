@@ -40,9 +40,9 @@
             ring-bell-function 'ignore)
     #+END_SRC
 *** Disable cursor blink
-#+BEGIN_SRC  emacs-lisp
-  (blink-cursor-mode 0)
-#+END_SRC
+    #+BEGIN_SRC  emacs-lisp
+      (blink-cursor-mode 0)
+    #+END_SRC
 *** Highlight current line :blocked:
     #+BEGIN_SRC emacs-lisp :tangle no
       (global-hl-line-mode)
@@ -80,7 +80,7 @@
               ;;       )
               )
             nil)))
-      (defun init/ensure-package- (pkg)
+      (defun init/ensure-package-lazy (pkg)
         "ensure package is installed, donot require"
         (unless (package-installed-p pkg)
           (package-refresh-contents)
@@ -141,7 +141,7 @@
 
 
 ** Undo system
-No extra undo system is required.
+   No extra undo system is required.
 *** Set up package
     #+BEGIN_SRC emacs-lisp :tangle no
       (init/ensure-package 'undo-tree)
@@ -153,7 +153,7 @@ No extra undo system is required.
     #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'ivy)
       ;; (init/ensure-package 'swiper)
-      (init/ensure-package- 'ctrlf)
+      (init/ensure-package-lazy 'ctrlf)
       (init/ensure-package 'counsel)
       (init/ensure-package 'smex)
     #+END_SRC
@@ -183,9 +183,9 @@ No extra undo system is required.
       (global-set-key "\C-s" 'swiper)
     #+END_SRC
 *** Config ctrlf
-#+BEGIN_SRC emacs-lisp
-  (ctrlf-mode +1)
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (ctrlf-mode +1)
+    #+END_SRC
 *** Configure counsel
 **** Hook at startup
      #+BEGIN_SRC emacs-lisp
@@ -300,7 +300,7 @@ No extra undo system is required.
                                            ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
                                            "\\\\" "://"))
       (global-ligature-mode t)
-   #+END_SRC
+    #+END_SRC
 ** Smooth scrolling
    #+BEGIN_SRC emacs-lisp
      (setq scroll-margin 0)
@@ -397,15 +397,15 @@ No extra undo system is required.
       (global-set-key (kbd "<S-left>") 'sort-tab-select-prev-tab)
       (global-set-key (kbd "<S-right>") 'sort-tab-select-next-tab)
       (with-eval-after-load 'org
-       (define-key org-mode-map (kbd "<S-left>") 'sort-tab-select-prev-tab)
-       (define-key org-mode-map (kbd "<S-right>") 'sort-tab-select-next-tab))
+        (define-key org-mode-map (kbd "<S-left>") 'sort-tab-select-prev-tab)
+        (define-key org-mode-map (kbd "<S-right>") 'sort-tab-select-next-tab))
       (add-to-list 'winum-ignored-buffers
                    "*sort-tab*")
     #+END_SRC
 ** Line number
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-#+END_SRC
+   #+BEGIN_SRC emacs-lisp
+     (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+   #+END_SRC
    This package is very laggy
 *** Install package
     #+BEGIN_SRC emacs-lisp :tangle no
@@ -419,16 +419,16 @@ No extra undo system is required.
         (set-face-background 'linum (face-attribute 'default :background) nil))
       (add-hook 'linum-before-numbering-hook
                 #'(lambda ()
-                   (interactive)
-                   (set-face-background 'linum (face-attribute 'default :background) nil)
-                   (set-face-attribute 'linum
-                                       nil
-                                       :weight 'light
-                                       :height (face-attribute 'default :height))
-                   (set-face-attribute 'linum-relative-current-face
-                                       nil
-                                       :weight 'bold
-                                       :height (face-attribute 'default :height))))
+                    (interactive)
+                    (set-face-background 'linum (face-attribute 'default :background) nil)
+                    (set-face-attribute 'linum
+                                        nil
+                                        :weight 'light
+                                        :height (face-attribute 'default :height))
+                    (set-face-attribute 'linum-relative-current-face
+                                        nil
+                                        :weight 'bold
+                                        :height (face-attribute 'default :height))))
     #+END_SRC
 *** Add hooks
     #+BEGIN_SRC emacs-lisp :tangle no
@@ -524,7 +524,7 @@ No extra undo system is required.
 *** LSP
     Install ~lsp-mode~.
     #+BEGIN_SRC emacs-lisp
-      (init/ensure-package- 'lsp-mode)
+      (init/ensure-package-lazy 'lsp-mode)
     #+END_SRC
     Enable ~which-key~ help in ~lsp mode~.
     #+BEGIN_SRC emacs-lisp
@@ -628,15 +628,15 @@ No extra undo system is required.
          (revert-buffer t t)))
      (add-hook 'python-mode-hook
                #'(lambda ()
-                  (lsp)
-                  (add-hook 'after-save-hook #'lsp-pyright-format-buffer t t)))
+                   (lsp)
+                   (add-hook 'after-save-hook #'lsp-pyright-format-buffer t t)))
      (when (executable-find "python3")
        (setq lsp-pyright-python-executable-cmd "python3"))
    #+END_SRC
 ** C/C++
    Installing ~ccls~.
    #+BEGIN_SRC emacs-lisp
-     (init/ensure-package- 'ccls)
+     (init/ensure-package-lazy 'ccls)
      (dolist (hook '(c-mode-hook c++-mode-hook))
        (add-hook hook #'lsp))
      (setq ccls-sem-highlight-method nil)
@@ -693,7 +693,7 @@ No extra undo system is required.
         (define-key evil-insert-state-map (kbd "C-SPC") nil)
         (define-key evil-emacs-state-map (kbd "C-SPC") nil)
         (evil-define-key '(insert emacs) 'global
-          (kbd "C-SPC") 'init/toggle-rime)
+                         (kbd "C-SPC") 'init/toggle-rime)
         (define-key rime-mode-map (kbd "C-z") 'rime-force-enable)
         (setq rime-show-candidate 'posframe)
         (setq rime-user-data-dir "~/.config/emacs/rime/")
@@ -715,7 +715,7 @@ No extra undo system is required.
       (define-key evil-insert-state-map (kbd "C-SPC") nil)
       (define-key evil-emacs-state-map (kbd "C-SPC") nil)
       (evil-define-key '(insert emacs) 'global
-        (kbd "C-SPC") 'init/toggle-rime)
+                       (kbd "C-SPC") 'init/toggle-rime)
     #+END_SRC
 ** Display
    Enable ~visual-line-mode~ in ~text-mode~ and Latex buffer.
@@ -726,35 +726,35 @@ No extra undo system is required.
    #+END_SRC
 ** Org mode
 *** Set seperate font for org mode
-#+BEGIN_SRC emacs-lisp
-  (defface org-font
-    '((t :family "STSong"))
-    "Times New Roman"
-    :group 'basic-faces)
-  (add-hook 'org-mode-hook
-            #'(lambda ()
-                (if (display-graphic-p)
-                    (progn
-                      (set (make-local-variable 'buffer-face-mode-face) 'org-font)
-                      (buffer-face-mode t)))))
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (defface org-font
+        '((t :family "STSong"))
+        "Times New Roman"
+        :group 'basic-faces)
+      (add-hook 'org-mode-hook
+                #'(lambda ()
+                    (if (display-graphic-p)
+                        (progn
+                          (set (make-local-variable 'buffer-face-mode-face) 'org-font)
+                          (buffer-face-mode t)))))
+    #+END_SRC
 *** Table Align
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package- 'valign)
-  (add-hook 'org-mode-hook #'valign-mode)
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package-lazy 'valign)
+      (add-hook 'org-mode-hook #'valign-mode)
+    #+END_SRC
 *** Org Download
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package- 'org-download)
-  (add-hook 'org-mode-hook 'org-download-enable)
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package-lazy 'org-download)
+      (add-hook 'org-mode-hook 'org-download-enable)
+    #+END_SRC
 *** Org Superstar
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package- 'org-superstar)
-  (add-hook 'org-mode-hook 'org-superstar-mode)
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package-lazy 'org-superstar)
+      (add-hook 'org-mode-hook 'org-superstar-mode)
+    #+END_SRC
 *** Quick jump to specific headline via ivy and fuzzy search
-It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://github.com/abo-abo/swiper/issues/986][discussion]].
+    It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://github.com/abo-abo/swiper/issues/986][discussion]].
     #+BEGIN_SRC emacs-lisp
       (setq org-goto-interface 'outline-path-completion)
       (setq org-outline-path-complete-in-steps nil)
@@ -779,7 +779,7 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
     #+END_SRC
 *** Integrate zotxt
     #+BEGIN_SRC emacs-lisp :tangle no
-      (init/ensure-package- 'zotxt)
+      (init/ensure-package-lazy 'zotxt)
       (add-hook 'org-mode-hook 'org-zotxt-mode)
     #+END_SRC
 *** Disable company
@@ -788,27 +788,27 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
                                  (setq-local company-backends '((company-capf)))))
     #+END_SRC
 *** Word Wrap
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'org-mode-hook #'(lambda () (setq-local word-wrap-by-category t)))
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (add-hook 'org-mode-hook #'(lambda () (setq-local word-wrap-by-category t)))
+    #+END_SRC
 *** Beautify
-#+BEGIN_SRC emacs-lisp
-  (with-eval-after-load 'org
-    ;; Make verbatim with highlight text background.
-    (add-to-list 'org-emphasis-alist
-                 '("=" (:background "#fef7ca")))
-    ;; Make deletion(obsolote) text foreground with dark gray.
-    (add-to-list 'org-emphasis-alist
-                 '("+" (:foreground "dark gray"
-                                    :strike-through t)))
-    ;; Make code style around with box.
-    (add-to-list 'org-emphasis-alist
-                 '("~" (:box (:line-width 1
-                                          :color "grey75"
-                                          :style released-button))))
-    (setq org-hide-emphasis-markers t)
-    )
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (with-eval-after-load 'org
+        ;; Make verbatim with highlight text background.
+        (add-to-list 'org-emphasis-alist
+                     '("=" (:background "#fef7ca")))
+        ;; Make deletion(obsolote) text foreground with dark gray.
+        (add-to-list 'org-emphasis-alist
+                     '("+" (:foreground "dark gray"
+                                        :strike-through t)))
+        ;; Make code style around with box.
+        (add-to-list 'org-emphasis-alist
+                     '("~" (:box (:line-width 1
+                                              :color "grey75"
+                                              :style released-button))))
+        (setq org-hide-emphasis-markers t)
+        )
+    #+END_SRC
 ** Latex
    #+BEGIN_SRC emacs-lisp
      (setq org-latex-pdf-process
@@ -843,7 +843,7 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
                           (setq-local lsp-eldoc-enable-hover nil)
                           (setq-local lsp-modeline-diagnostics-enable nil)
                           (lsp))))
-                    #+END_SRC
+   #+END_SRC
 * Extra features
 ** Set up clipboard in terminal
    #+BEGIN_SRC emacs-lisp :tangle no
@@ -852,46 +852,46 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
    #+END_SRC
 ** Set up magit
    #+BEGIN_SRC emacs-lisp
-     (init/ensure-package- 'magit)
+     (init/ensure-package-lazy 'magit)
    #+END_SRC
 ** Eshell
 *** Prompt
     #+BEGIN_SRC emacs-lisp
       (setq eshell-prompt-function-light #'(lambda nil
-                                            (concat
-                                             (propertize (user-login-name) 'face `(:foreground (face-foreground 'default) :weight bold))
-                                             (propertize " at " 'face `(:background (face-background 'default)))
-                                             (propertize (system-name) 'face `(:foreground (face-foreground 'default) :weight bold))
-                                             (propertize " in " 'face `(:background (face-background 'default)))
-                                             (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground (face-foreground 'default)
-                                                                                                                 :weight bold :slant italic))
-                                             (if (and (boundp 'url-proxy-services)
-                                                      (assoc "http" url-proxy-services))
-                                                 (concat
-                                                  (propertize " via " 'face `(:background (face-background 'default)))
-                                                  (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground (face-foreground 'default)
-                                                                                                                          :weight bold))))
-                                             (propertize "\n" 'face `(:background (face-background 'default)))
-                                             (propertize (if (= (user-uid) 0) "# " "λ") 'face `(:slant italic :weight bold))
-                                             (propertize " " 'face `(:background (face-background 'default))))))
-
-      (setq eshell-prompt-function-dark #'(lambda nil
                                              (concat
-                                              (propertize (user-login-name) 'face `(:foreground "yellow" :weight bold))
+                                              (propertize (user-login-name) 'face `(:foreground (face-foreground 'default) :weight bold))
                                               (propertize " at " 'face `(:background (face-background 'default)))
-                                              (propertize (system-name) 'face `(:foreground  "magenta" :weight bold))
+                                              (propertize (system-name) 'face `(:foreground (face-foreground 'default) :weight bold))
                                               (propertize " in " 'face `(:background (face-background 'default)))
-                                              (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground "green"
+                                              (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground (face-foreground 'default)
                                                                                                                   :weight bold :slant italic))
                                               (if (and (boundp 'url-proxy-services)
                                                        (assoc "http" url-proxy-services))
                                                   (concat
                                                    (propertize " via " 'face `(:background (face-background 'default)))
-                                                   (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground "cyan"
+                                                   (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground (face-foreground 'default)
                                                                                                                            :weight bold))))
                                               (propertize "\n" 'face `(:background (face-background 'default)))
                                               (propertize (if (= (user-uid) 0) "# " "λ") 'face `(:slant italic :weight bold))
                                               (propertize " " 'face `(:background (face-background 'default))))))
+
+      (setq eshell-prompt-function-dark #'(lambda nil
+                                            (concat
+                                             (propertize (user-login-name) 'face `(:foreground "yellow" :weight bold))
+                                             (propertize " at " 'face `(:background (face-background 'default)))
+                                             (propertize (system-name) 'face `(:foreground  "magenta" :weight bold))
+                                             (propertize " in " 'face `(:background (face-background 'default)))
+                                             (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground "green"
+                                                                                                                 :weight bold :slant italic))
+                                             (if (and (boundp 'url-proxy-services)
+                                                      (assoc "http" url-proxy-services))
+                                                 (concat
+                                                  (propertize " via " 'face `(:background (face-background 'default)))
+                                                  (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground "cyan"
+                                                                                                                          :weight bold))))
+                                             (propertize "\n" 'face `(:background (face-background 'default)))
+                                             (propertize (if (= (user-uid) 0) "# " "λ") 'face `(:slant italic :weight bold))
+                                             (propertize " " 'face `(:background (face-background 'default))))))
 
 
       (setq eshell-prompt-regexp "^[#λ] "
@@ -916,7 +916,7 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
     #+END_SRC
 *** z-jump
     #+BEGIN_SRC emacs-lisp
-      (init/ensure-package- 'eshell-z)
+      (init/ensure-package-lazy 'eshell-z)
       (add-hook 'eshell-mode-hook
                 #'(lambda ()
                     (require 'eshell-z)))
@@ -957,9 +957,9 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
                     (local-set-key (kbd "C-r") #'init/ivy-eshell-history)))
     #+END_SRC
 *** Define path
-#+BEGIN_SRC emacs-lisp :tangle (if (fboundp 'init/define-path) "yes" "no")
-  (init/define-path)
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp :tangle (if (fboundp 'init/define-path) "yes" "no")
+      (init/define-path)
+    #+END_SRC
 *** Issues
     #+BEGIN_SRC emacs-lisp
       (with-eval-after-load 'em-term
@@ -981,20 +981,20 @@ It will be helpful to jump quickly when editing ~conf.org~. Also see [[https://g
    #+END_SRC
 
 ** mu4e
-Set font
-#+BEGIN_SRC emacs-lisp :tangle no
-  (defface mu4e-font
-    '((t :family "Times New Roman"))
-    "Times New Roman"
-    :group 'basic-faces)
-  (dolist (hook '(mu4e-view-mode-hook mu4e-compose-mode-hook mu4e-headers-mode-hook mu4e-main-mode-hook))
-    (add-hook hook
-              #'(lambda ()
-                  (if (display-graphic-p)
-                      (progn
-                        (set (make-local-variable 'buffer-face-mode-face) 'mu4e-font)
-                        (buffer-face-mode t))))))
-#+END_SRC
+   Set font
+   #+BEGIN_SRC emacs-lisp :tangle no
+     (defface mu4e-font
+       '((t :family "Times New Roman"))
+       "Times New Roman"
+       :group 'basic-faces)
+     (dolist (hook '(mu4e-view-mode-hook mu4e-compose-mode-hook mu4e-headers-mode-hook mu4e-main-mode-hook))
+       (add-hook hook
+                 #'(lambda ()
+                     (if (display-graphic-p)
+                         (progn
+                           (set (make-local-variable 'buffer-face-mode-face) 'mu4e-font)
+                           (buffer-face-mode t))))))
+   #+END_SRC
 
    #+BEGIN_SRC emacs-lisp :tangle no
      (defun mu4e (&optional args)
@@ -1053,74 +1053,89 @@ Set font
      (init/ensure-package 'scala-mode)
    #+END_SRC
 ** ivy-posframe
-#+BEGIN_SRC emacs-lisp :tangle no
-  (init/ensure-package 'ivy-posframe)
-  (ivy-posframe-mode)
-  (defun my-ivy-posframe-get-size ()
-    "Set the ivy-posframe size according to the current frame."
-    (let ((height (or ivy-posframe-height (or ivy-height 10)))
-          (width (min (or ivy-posframe-width 200) (round (* .85 (frame-width))))))
-      (list :height height :width width :min-height height :min-width width)))
+   #+BEGIN_SRC emacs-lisp :tangle no
+     (init/ensure-package 'ivy-posframe)
+     (ivy-posframe-mode)
+     (defun my-ivy-posframe-get-size ()
+       "Set the ivy-posframe size according to the current frame."
+       (let ((height (or ivy-posframe-height (or ivy-height 10)))
+             (width (min (or ivy-posframe-width 200) (round (* .85 (frame-width))))))
+         (list :height height :width width :min-height height :min-width width)))
 
-  (setq ivy-posframe-size-function 'my-ivy-posframe-get-size)
+     (setq ivy-posframe-size-function 'my-ivy-posframe-get-size)
 
-#+END_SRC
+   #+END_SRC
 ** ebib
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package- 'ebib)
-  (with-eval-after-load 'ebib
-    (setq ebib-file-associations nil)
-    (add-to-list 'ebib-file-associations '("pdf" . "open"))
-    (defcustom ebib-zotero-translation-server "https://translate.manubot.org"
-      "The address of Zotero translation server."
-      :group 'ebib
-      :type 'string)
-    (defun ebib-zotero-translate (item server-path &optional export-format)
-      "Convert item to EXPORT-FORMAT entry through `ebib-zotero-translation-server'."
-      (let ((export-format (or export-format
-                               (downcase (symbol-name (intern-soft bibtex-dialect))))))
-        (shell-command-to-string
-         (format "curl -s -d '%s' -H 'Content-Type: text/plain' '%s/%s' | curl -s -d @- -H 'Content-Type: application/json' '%s/export?format=%s'"
-                 item
-                 ebib-zotero-translation-server
-                 server-path
-                 ebib-zotero-translation-server
-                 export-format))))
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package-lazy 'ebib)
+     (with-eval-after-load 'ebib
+       (setq ebib-file-associations nil)
+       (add-to-list 'ebib-file-associations '("pdf" . "open"))
+       (defcustom ebib-zotero-translation-server "https://translate.manubot.org"
+         "The address of Zotero translation server."
+         :group 'ebib
+         :type 'string)
+       (defun ebib-zotero-translate (item server-path &optional export-format)
+         "Convert item to EXPORT-FORMAT entry through `ebib-zotero-translation-server'."
+         (let ((export-format (or export-format
+                                  (downcase (symbol-name (intern-soft bibtex-dialect))))))
+           (shell-command-to-string
+            (format "curl -s -d '%s' -H 'Content-Type: text/plain' '%s/%s' | curl -s -d @- -H 'Content-Type: application/json' '%s/export?format=%s'"
+                    item
+                    ebib-zotero-translation-server
+                    server-path
+                    ebib-zotero-translation-server
+                    export-format))))
 
-    (defun ebib-zotero-import-url (url)
-      "Fetch a entry from zotero translation server via a URL.
-  The entry is stored in the current database."
-      (interactive "MURL: ")
-      (with-temp-buffer
-        (insert (ebib-zotero-translate url "web"))
-        (ebib-import-entries ebib--cur-db)))
+       (defun ebib-zotero-import-url (url)
+         "Fetch a entry from zotero translation server via a URL.
+     The entry is stored in the current database."
+         (interactive "MURL: ")
+         (with-temp-buffer
+           (insert (ebib-zotero-translate url "web"))
+           (ebib-import-entries ebib--cur-db)))
 
-    (defun ebib-zotero-import-identifier (identifier)
-      "Fetch a entry from zotero translation server via an IDENTIFIER.
-  The entry is stored in the current database,
-  and the identifier can be DOI, ISBN, PMID, or arXiv ID."
-      (interactive "MIDENTIFIER: ")
-      (with-temp-buffer
-        (insert (ebib-zotero-translate identifier "search"))
-        (ebib-import-entries ebib--cur-db)))
-    )
-#+END_SRC
+       (defun ebib-zotero-import-identifier (identifier)
+         "Fetch a entry from zotero translation server via an IDENTIFIER.
+     The entry is stored in the current database,
+     and the identifier can be DOI, ISBN, PMID, or arXiv ID."
+         (interactive "MIDENTIFIER: ")
+         (with-temp-buffer
+           (insert (ebib-zotero-translate identifier "search"))
+           (ebib-import-entries ebib--cur-db)))
+       )
+   #+END_SRC
 ** English Helper
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/company-english-helper"))
-  (defun toggle-company-english-helper (&optional args)
-    "Lazy load wrapper for english helper"
-    (interactive)
-    (require 'company-english-helper)
-    (toggle-company-english-helper))
-#+END_SRC
+   #+BEGIN_SRC emacs-lisp
+     (add-to-list 'load-path
+                  (concat user-emacs-directory "site-packages/company-english-helper"))
+     (defun toggle-company-english-helper (&optional args)
+       "Lazy load wrapper for english helper"
+       (interactive)
+       (require 'company-english-helper)
+       (toggle-company-english-helper))
+   #+END_SRC
 ** Ripgrep
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package- 'rg)
-  (defun rg (&optional args)
-    "Lazy load wrapper for rg"
-    (interactive)
-    (require 'rg)
-    (rg))
-#+END_SRC
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package-lazy 'rg)
+     (defun rg (&optional args)
+       "Lazy load wrapper for rg"
+       (interactive)
+       (require 'rg)
+       (rg))
+   #+END_SRC
+** IBuffer
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package-lazy 'all-the-icons-ibuffer)
+     (init/ensure-package-lazy 'ibuffer-projectile)
+     (global-set-key (kbd "C-x C-b") #'ibuffer)
+     (add-hook 'ibuffer-hook
+               (lambda ()
+                 (all-the-icons-ibuffer-mode)
+                 (ibuffer-projectile-set-filter-groups)
+                 (unless (eq ibuffer-sorting-mode 'alphabetic)
+                   (ibuffer-do-sort-by-alphabetic))))
+     (with-eval-after-load 'ibuffer
+       (require 'all-the-icons-ibuffer)
+       (require 'ibuffer-projectile))
+   #+END_SRC

@@ -13,8 +13,11 @@
                        t
                        'garbage-collect))
 (setq package-enable-at-startup nil)
-(setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
-                         ("melpa" . "https://melpa.org/packages/")))
+(setq package-archives '(("gnu"   . "http://elpa.zilongshanren.com/gnu/")
+                         ("melpa" . "http://elpa.zilongshanren.com/melpa/")))
+
+;; (setq package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
+;;                          ("melpa" . "https://melpa.org/packages/")))
 (let ((custom (expand-file-name "custom.el" user-emacs-directory)))
  (unless (file-exists-p custom)
    (warn "creating custom.el since it doesn't exist")

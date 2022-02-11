@@ -350,6 +350,9 @@
     Install themes
     #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'doom-themes)
+      (add-to-list 'load-path
+                   (concat user-emacs-directory "site-packages/moe-theme"))
+      (require 'moe-theme)
     #+END_SRC
     Setup theme.
     #+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/theme) "yes" "no")
@@ -380,10 +383,16 @@
       (setq doom-modeline-buffer-file-name-style 'buffer-name
             doom-modeline-project-detection 'projectile
             doom-modeline-modal-icon nil
-            doom-modeline-icon nil
+            doom-modeline-icon t
             doom-modeline-unicode-fallback nil
             doom-modeline-mu4e nil
-            doom-modeline-hud t)
+            doom-modeline-hud t
+            all-the-icons-scale-factor 1.0)
+      (set-face-attribute 'mode-line nil
+                          :height 160)
+      (set-face-attribute 'mode-line-inactive nil
+                          :height 160)
+      (set-face-background 'doom-modeline-bar "#859900" nil)
       (display-time-mode)
       (column-number-mode)
     #+END_SRC
@@ -425,33 +434,19 @@
    #+BEGIN_SRC emacs-lisp
      (add-hook 'prog-mode-hook 'display-line-numbers-mode)
    #+END_SRC
-   This package is very laggy
-*** Install package
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (init/ensure-package 'linum-relative)
-    #+END_SRC
-*** Set appearance
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (setq linum-relative-current-symbol "")
-      (defun match-number-line-backgroud-color ()
-        (interactive)
-        (set-face-background 'linum (face-attribute 'default :background) nil))
-      (add-hook 'linum-before-numbering-hook
-                #'(lambda ()
-                    (interactive)
-                    (set-face-background 'linum (face-attribute 'default :background) nil)
-                    (set-face-attribute 'linum
-                                        nil
-                                        :weight 'light
-                                        :height (face-attribute 'default :height))
-                    (set-face-attribute 'linum-relative-current-face
-                                        nil
-                                        :weight 'bold
-                                        :height (face-attribute 'default :height))))
-    #+END_SRC
-*** Add hooks
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (add-hook 'prog-mode-hook 'linum-relative-mode)
+*** Tone down background, modify font
+    #+BEGIN_SRC emacs-lisp
+      (set-face-attribute 'line-number-current-line
+                          nil
+                          :weight 'bold
+                          :height (face-attribute 'default :height)
+                          :background (face-background 'line-number)
+                          :foreground (face-background 'line-number-current-line))
+      (set-face-attribute 'line-number
+                          nil
+                          :weight 'light
+                          :height (face-attribute 'default :height)
+                          :background (face-background 'default))
     #+END_SRC
 ** Side bar
 *** Install treemacs
@@ -785,7 +780,8 @@
                         (progn
                           ;; (text-scale-set 1)
                           (set (make-local-variable 'buffer-face-mode-face) 'org-font)
-                          (buffer-face-mode t)))))
+                          (buffer-face-mode t)
+                          (face-remap-add-relative 'org-block '(:family "Sarasa Term SC"))))))
       (defun buffer-toggle-highlight-foreground (&optional args)
         (interactive)
         (if (and (boundp 'face-remap-add-relative-cookie) face-remap-add-relative-cookie)
@@ -932,44 +928,86 @@
     #+BEGIN_SRC emacs-lisp
       (setq eshell-prompt-function-light #'(lambda nil
                                              (concat
-                                              (propertize (user-login-name) 'face `(:foreground (face-foreground 'default) :weight bold))
-                                              (propertize " at " 'face `(:background (face-background 'default)))
-                                              (propertize (system-name) 'face `(:foreground (face-foreground 'default) :weight bold))
-                                              (propertize " in " 'face `(:background (face-background 'default)))
-                                              (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground (face-foreground 'default)
-                                                                                                                  :weight bold :slant italic))
+                                              (propertize "╭─"
+                                                    
+                                                          'face `(:background (face-background 'default) :weight bold))
+                                              (propertize (user-login-name) 
+                                                          'face `(:foreground (face-foreground 'default) :weight bold))
+                                              (propertize " at " 
+                                                          'face `(:background (face-background 'default)))
+                                              (propertize (system-name) 
+                                                          'face `(:foreground (face-foreground 'default) :weight bold))
+                                              (propertize " in " 
+                                                          'face `(:background (face-background 'default)))
+                                              (propertize (abbreviate-file-name (eshell/pwd)) 
+                                                          'face `(:foreground (face-foreground 'default)
+                                                                              :weight bold :slant italic))
                                               (if (and (boundp 'url-proxy-services)
                                                        (assoc "http" url-proxy-services))
                                                   (concat
-                                                   (propertize " via " 'face `(:background (face-background 'default)))
-                                                   (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground (face-foreground 'default)
-                                                                                                                           :weight bold))))
-                                              (propertize "\n" 'face `(:background (face-background 'default)))
-                                              (propertize (if (= (user-uid) 0) "# " "λ") 'face `(:slant italic :weight bold))
-                                              (propertize " " 'face `(:background (face-background 'default))))))
+                                                   (propertize " via " 
+                                                               'face `(:background (face-background 'default)))
+                                                   (propertize (cdr (assoc "http" url-proxy-services)) 
+                                                               'face `(:foreground (face-foreground 'default)
+                                                                                   :weight bold))))
+                                              (propertize "\n" 
+                                                          'face `(:background (face-background 'default)))
+                                              (propertize "╰─["
+                                                          'face `(:background (face-background 'default) :weight bold))
+                                              (propertize (if (= (user-uid) 0) "# " "λ") 
+                                                          'face `(:slant italic :weight bold))
+                                              (propertize "]"
+                                                    
+                                                          'face `(:background (face-background 'default) :weight bold))
+                                              (propertize " " 
+                                                          'face `(:background (face-background 'default))))))
 
       (setq eshell-prompt-function-dark #'(lambda nil
                                             (concat
-                                             (propertize (user-login-name) 'face `(:foreground "#268bd2" :weight bold))
-                                             (propertize " at " 'face `(:background (face-background 'default)))
-                                             (propertize (system-name) 'face `(:foreground  "#268bd2" :weight bold))
-                                             (propertize " in " 'face `(:background (face-background 'default)))
-                                             (propertize (abbreviate-file-name (eshell/pwd)) 'face `(:foreground "#859900"
-                                                                                                                 :weight bold :slant italic))
+                                             (propertize "╭─"
+                                                         'face `(:background (face-background 'default) :weight bold))
+                                             (propertize (user-login-name)
+                                                         'face `(:foreground "#268bd2" :weight bold))
+                                             (propertize " at "
+                                                         'face `(:background (face-background 'default)))
+                                             (propertize (system-name)
+                                                         'face `(:foreground  "#268bd2" :weight bold))
+                                             (propertize " in "
+                                                         'face `(:background (face-background 'default)))
+                                             (propertize (abbreviate-file-name (eshell/pwd))
+                                                         'face `(:foreground "#859900" :weight bold :slant italic))
                                              (if (and (boundp 'url-proxy-services)
                                                       (assoc "http" url-proxy-services))
                                                  (concat
-                                                  (propertize " via " 'face `(:background (face-background 'default)))
-                                                  (propertize (cdr (assoc "http" url-proxy-services)) 'face `(:foreground "#2aa198"
-                                                                                                                          :weight bold))))
-                                             (propertize "\n" 'face `(:background (face-background 'default)))
-                                             (propertize (if (= (user-uid) 0) "# " "λ") 'face `(:slant default :weight bold))
-                                             (propertize " " 'face `(:background (face-background 'default))))))
+                                                  (propertize " via "
+                                                              'face `(:background (face-background 'default)))
+                                                  (propertize (cdr (assoc "http" url-proxy-services))
+                                                              'face `(:foreground "#2aa198" :weight bold))))
+                                             (propertize "\n"
+                                                         'face `(:background (face-background 'default)))
+                                             (propertize "╰─["
+                                                         'face `(:background (face-background 'default) :weight bold))
+                                             (propertize (if (= (user-uid) 0) "# " "λ")
+                                                         'face `(:slant default :weight bold :foreground "#7959AE"))
+                                             (propertize "]"
+                                                         'face `(:background (face-background 'default) :weight bold))
+                                             (propertize " "
+                                                         'face `(:background (face-background 'default))))))
 
-
-      (setq eshell-prompt-regexp "^[#λ] "
+      (setq eshell-prompt-regexp "^╰─\\\[[#λ]\\\] "
             eshell-prompt-function eshell-prompt-function-dark)
     #+END_SRC
+*** Syntax highlight
+#+BEGIN_SRC emacs-lisp
+  (init/ensure-package-lazy 'eshell-syntax-highlighting)
+  (with-eval-after-load 'eshell
+    (require 'eshell-syntax-highlighting)
+    (set-face-attribute 'eshell-syntax-highlighting-alias-face
+                        nil :foreground "#2E67D3" :weight 'bold)
+    (set-face-attribute 'eshell-syntax-highlighting-shell-command-face
+                        nil :foreground "#2E67D3" :weight 'bold)
+    (add-hook 'eshell-mode-hook 'eshell-syntax-highlighting-mode))
+#+END_SRC
 *** FZF fuzzy search
     #+BEGIN_SRC emacs-lisp
       (setq eshell-history-size 1024)
@@ -990,9 +1028,11 @@
 *** z-jump
     #+BEGIN_SRC emacs-lisp
       (init/ensure-package-lazy 'eshell-z)
-      (add-hook 'eshell-mode-hook
-                #'(lambda ()
-                    (require 'eshell-z)))
+      (with-eval-after-load 'eshell
+        (require 'eshell-z))
+      ;; (add-hook 'eshell-mode-hook
+      ;;           #'(lambda ()
+      ;;               (require 'eshell-z)))
     #+END_SRC
 *** Colorful ~cat~
     #+BEGIN_SRC emacs-lisp

@@ -93,6 +93,20 @@
     #+BEGIN_SRC emacs-lisp
       (save-place-mode)
     #+END_SRC
+*** Go to first char instead of line head
+    #+BEGIN_SRC emacs-lisp
+      (defun smart-beginning-of-line ()
+        "Move point to first non-whitespace character or beginning-of-line.
+      Move point to the first non-whitespace character on this line.
+      If point was already at that position, move point to beginning of line."
+        (interactive)
+        (let ((oldpos (point)))
+          (back-to-indentation)
+          (and (= oldpos (point))
+               (beginning-of-line))))
+      (global-set-key [home] 'smart-beginning-of-line)
+      (global-set-key "\C-a" 'smart-beginning-of-line)
+    #+END_SRC
 *** Revert buffer in daemon-client mode
     #+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'darwin) "no" "yes")
       (advice-add #'save-buffers-kill-terminal :before
@@ -351,14 +365,16 @@
 *** Setup theme
     Install themes
     #+BEGIN_SRC emacs-lisp
-      (init/ensure-package 'doom-themes)
+      (init/ensure-package 'badwolf-theme)
       (add-to-list 'load-path
                    (concat user-emacs-directory "site-packages/moe-theme"))
       (require 'moe-theme)
     #+END_SRC
     Setup theme.
-    #+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/theme) "yes" "no")
-      (load-theme init/theme 1)
+    #+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/theme-light) "yes" "no")
+      (if (bound-and-true-p init/system-dark-modep)
+          (load-theme init/theme-dark 1)
+        (load-theme init/theme-light 1))
     #+END_SRC
 *** Small modification to fringe color
     #+BEGIN_SRC emacs-lisp
@@ -442,8 +458,9 @@
                           nil
                           :weight 'bold
                           :height (face-attribute 'default :height)
-                          :background (face-background 'line-number)
-                          :foreground (face-background 'line-number-current-line))
+                          ;; :background (face-background 'line-number)
+                          ;; :foreground (face-background 'line-number-current-line)
+                          )
       (set-face-attribute 'line-number
                           nil
                           :weight 'light
@@ -465,6 +482,23 @@
       (setq-default treemacs--width-is-locked nil
                     treemacs-width 20)
     #+END_SRC
+** Popup control
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'popper)
+     (init/ensure-package 'popper-echo)
+     (setq popper-reference-buffers
+           '("\\*Messages\\*"
+             "Output\\*$"
+             "\\*Async Shell Command\\*"
+             help-mode
+             helpful-mode
+             compilation-mode
+             Man-mode))
+     (global-set-key (kbd "<C-tab>") 'popper-toggle-latest)
+     (define-key popper-mode-map (kbd "<C-tab>") 'popper-cycle)
+     (popper-mode +1)
+     (popper-echo-mode +1)
+   #+END_SRC
 ** Extra features
 *** Rich ivy
     #+BEGIN_SRC emacs-lisp
@@ -912,75 +946,94 @@
 ** Eshell
 *** Prompt
     #+BEGIN_SRC emacs-lisp
-      (setq eshell-prompt-function-light #'(lambda nil
+      (defun hex-to-hsl (hex)
+        "Convert hex string to hsl digits, the result is returned as list"
+        (eval `(color-rgb-to-hsl ,@(mapcar (lambda (x)
+                                             (/ (float (string-to-number (substring hex (car x) (cadr x)) 16)) 256))
+                                           '((1 3) (3 5) (5 7))))))
+      (defun make-color-lighter (hex factor)
+        "Make hex color lighter, return string"
+        (let ((hsl (hex-to-hsl hex)))
+          (eval `(color-rgb-to-hex
+                  ,@(color-hsl-to-rgb (car hsl) (min (* (cadr hsl) factor) 1) (min (* (caddr hsl) factor) 1))
+                  2))))
+
+      (let* ((eshell-color1 "#268bd2")
+             (eshell-color1-lighter (make-color-lighter eshell-color1 1.5))
+             (eshell-color2 "#859900")
+             (eshell-color2-lighter (make-color-lighter eshell-color2 1.5))
+             (eshell-color3 "#2aa198")
+             (eshell-color3-lighter (make-color-lighter eshell-color3 1.5))
+             (eshell-color4 "#7959AE")
+             (eshell-color4-lighter (make-color-lighter eshell-color4 1.5)))
+
+       (setq eshell-prompt-function-light #'(lambda nil
+                                              (concat
+                                               (propertize "╭─"
+                                                           'face `(:background (face-background 'default) :weight bold))
+                                               (propertize (user-login-name)
+                                                           'face `(:foreground ,eshell-color1 :weight bold))
+                                               (propertize " at "
+                                                           'face `(:background (face-background 'default)))
+                                               (propertize (system-name)
+                                                           'face `(:foreground  ,eshell-color1 :weight bold))
+                                               (propertize " in "
+                                                           'face `(:background (face-background 'default)))
+                                               (propertize (abbreviate-file-name (eshell/pwd))
+                                                           'face `(:foreground ,eshell-color2 :weight bold :slant italic))
+                                               (if (and (boundp 'url-proxy-services)
+                                                        (assoc "http" url-proxy-services))
+                                                   (concat
+                                                    (propertize " via "
+                                                                'face `(:background (face-background 'default)))
+                                                    (propertize (cdr (assoc "http" url-proxy-services))
+                                                                'face `(:foreground ,eshell-color3 :weight bold))))
+                                               (propertize "\n"
+                                                           'face `(:background (face-background 'default)))
+                                               (propertize "╰─["
+                                                           'face `(:background (face-background 'default) :weight bold))
+                                               (propertize (if (= (user-uid) 0) "# " "λ")
+                                                           'face `(:slant default :weight bold :foreground ,eshell-color4))
+                                               (propertize "]"
+                                                           'face `(:background (face-background 'default) :weight bold))
+                                               (propertize " "
+                                                           'face `(:background (face-background 'default))))))
+       (setq eshell-prompt-function-dark #'(lambda nil
                                              (concat
                                               (propertize "╭─"
                                                           'face `(:background (face-background 'default) :weight bold))
                                               (propertize (user-login-name)
-                                                          'face `(:foreground (face-foreground 'default) :weight bold))
+                                                          'face `(:foreground ,eshell-color1-lighter :weight bold))
                                               (propertize " at "
                                                           'face `(:background (face-background 'default)))
                                               (propertize (system-name)
-                                                          'face `(:foreground (face-foreground 'default) :weight bold))
+                                                          'face `(:foreground  ,eshell-color1-lighter :weight bold))
                                               (propertize " in "
                                                           'face `(:background (face-background 'default)))
                                               (propertize (abbreviate-file-name (eshell/pwd))
-                                                          'face `(:foreground (face-foreground 'default)
-                                                                              :weight bold :slant italic))
+                                                          'face `(:foreground ,eshell-color2-lighter :weight bold :slant italic))
                                               (if (and (boundp 'url-proxy-services)
                                                        (assoc "http" url-proxy-services))
                                                   (concat
                                                    (propertize " via "
                                                                'face `(:background (face-background 'default)))
                                                    (propertize (cdr (assoc "http" url-proxy-services))
-                                                               'face `(:foreground (face-foreground 'default)
-                                                                                   :weight bold))))
+                                                               'face `(:foreground ,eshell-color3-lighter :weight bold))))
                                               (propertize "\n"
                                                           'face `(:background (face-background 'default)))
                                               (propertize "╰─["
                                                           'face `(:background (face-background 'default) :weight bold))
                                               (propertize (if (= (user-uid) 0) "# " "λ")
-                                                          'face `(:slant italic :weight bold))
+                                                          'face `(:slant default :weight bold :foreground ,eshell-color4-lighter))
                                               (propertize "]"
-
                                                           'face `(:background (face-background 'default) :weight bold))
                                               (propertize " "
-                                                          'face `(:background (face-background 'default))))))
+                                                          'face `(:background (face-background 'default)))))))
 
-      (setq eshell-prompt-function-dark #'(lambda nil
-                                            (concat
-                                             (propertize "╭─"
-                                                         'face `(:background (face-background 'default) :weight bold))
-                                             (propertize (user-login-name)
-                                                         'face `(:foreground "#268bd2" :weight bold))
-                                             (propertize " at "
-                                                         'face `(:background (face-background 'default)))
-                                             (propertize (system-name)
-                                                         'face `(:foreground  "#268bd2" :weight bold))
-                                             (propertize " in "
-                                                         'face `(:background (face-background 'default)))
-                                             (propertize (abbreviate-file-name (eshell/pwd))
-                                                         'face `(:foreground "#859900" :weight bold :slant italic))
-                                             (if (and (boundp 'url-proxy-services)
-                                                      (assoc "http" url-proxy-services))
-                                                 (concat
-                                                  (propertize " via "
-                                                              'face `(:background (face-background 'default)))
-                                                  (propertize (cdr (assoc "http" url-proxy-services))
-                                                              'face `(:foreground "#2aa198" :weight bold))))
-                                             (propertize "\n"
-                                                         'face `(:background (face-background 'default)))
-                                             (propertize "╰─["
-                                                         'face `(:background (face-background 'default) :weight bold))
-                                             (propertize (if (= (user-uid) 0) "# " "λ")
-                                                         'face `(:slant default :weight bold :foreground "#7959AE"))
-                                             (propertize "]"
-                                                         'face `(:background (face-background 'default) :weight bold))
-                                             (propertize " "
-                                                         'face `(:background (face-background 'default))))))
-
-      (setq eshell-prompt-regexp "^╰─\\\[[#λ]\\\] "
-            eshell-prompt-function eshell-prompt-function-dark)
+      (setq eshell-prompt-regexp "^╰─\\\[[#λ]\\\] ")
+      (if (bound-and-true-p init/system-dark-modep)
+          (setq eshell-prompt-function eshell-prompt-function-dark)
+        (setq eshell-prompt-function eshell-prompt-function-light))
     #+END_SRC
 *** Syntax highlight
 #+BEGIN_SRC emacs-lisp
@@ -988,9 +1041,12 @@
   (with-eval-after-load 'eshell
     (require 'eshell-syntax-highlighting)
     (set-face-attribute 'eshell-syntax-highlighting-alias-face
-                        nil :foreground "#2E67D3" :weight 'bold)
+                        nil :weight 'bold)
     (set-face-attribute 'eshell-syntax-highlighting-shell-command-face
-                        nil :foreground "#2E67D3" :weight 'bold)
+                        nil :weight 'bold)
+    (unless (bound-and-true-p init/system-dark-modep)
+      (progn (set-face-foreground 'eshell-syntax-highlighting-alias-face "#2E67D3")
+             (set-face-foreground 'eshell-syntax-highlighting-shell-command-face "#2E67D3")))
     (add-hook 'eshell-mode-hook 'eshell-syntax-highlighting-mode))
 #+END_SRC
 *** FZF fuzzy search
@@ -1139,6 +1195,7 @@
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'pdf-tools)
      (pdf-loader-install)
+     (setq pdf-view-use-scaling t)
    #+END_SRC
 ** lua-mode
    #+BEGIN_SRC emacs-lisp
@@ -1302,4 +1359,87 @@
   (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
   (add-hook 'dired-mode-hook #'dired-omit-mode)
   (define-key dired-mode-map (kbd "C-c t") #'dired-omit-mode)
+#+END_SRC
+** Word Count
+#+BEGIN_SRC emacs-lisp
+  (defvar words-count-rule-chinese "\\cc"
+    "A regexp string to match Chinese characters.")
+
+  (defvar words-count-rule-nonespace "[^[:space:]]"
+    "A regexp string to match none pace characters.")
+
+  (defvar words-count-rule-ansci "[A-Za-z0-9][A-Za-z0-9[:punct:]]*"
+    "A regexp string to match none pace characters.")
+
+  (defvar words-count-regexp-list
+    (list words-count-rule-chinese
+          words-count-rule-nonespace
+          words-count-rule-ansci)
+    "A list for the regexp used in `advance-words-count'.")
+
+  (defvar words-count-message-func 'message--words-count
+    "The function used to format message in `advance-words-count'.")
+
+  (defun special--words-count (start end regexp)
+    "Count the word from START to END with REGEXP."
+    (let ((count 0))
+      (save-excursion
+        (save-restriction
+          (goto-char start)
+          (while (and (< (point) end) (re-search-forward regexp end t))
+            (setq count (1+ count)))))
+      count))
+  (require 'pos-tip)
+  (defun message--words-count (list start end)
+    "Display the word count message.
+  Using the LIST passed form `advance-words-count'. START & END are
+  required to call extra functions, see `count-lines' &
+  `count-words'. When ARG is specified, display a verbose buffer."
+    (pos-tip-show
+     (format
+      "
+  -----------~*~ Words Count ~*~---------
+   Word Count .................... %d
+   Characters (without Space) .... %d
+   Characters (all) .............. %d
+   Number of Lines ............... %d
+   ANSCII Chars .................. %d
+  %s
+  =======================================
+  "
+      (+ (car list) (car (last list)))
+      (cadr list)
+      (- end start)
+      (count-lines start end)
+      (car (last list))
+      (concat
+       (unless (= 0 (car list))
+         (format " Chinese Chars ................. %d\n"
+                 (car list)))
+       (format " English Words ................. %d\n"
+               (count-words start end))))
+     nil nil nil -1))
+
+  ;;;###autoload
+  (defun advance-words-count (beg end)
+    "Chinese user preferred word count.
+  If BEG = END, count the whole buffer. If called initeractively,
+  use minibuffer to display the messages. The optional ARG will be
+  passed to `message--words-count'.
+
+  See also `special-words-count'."
+    (interactive (if (use-region-p)
+                     (list (region-beginning)
+                           (region-end))
+                   (list nil nil)))
+    (let ((min (or beg (point-min)))
+          (max (or end (point-max)))
+          list)
+      (setq list
+            (mapcar
+             (lambda (r) (special--words-count min max r))
+             words-count-regexp-list))
+      (if (called-interactively-p 'any)
+          (message--words-count list min max)
+        list)))
 #+END_SRC

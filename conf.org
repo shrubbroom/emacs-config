@@ -151,11 +151,11 @@
     #+BEGIN_SRC emacs-lisp
       (setq-default initial-scratch-message "")
       (add-hook 'emacs-startup-hook (lambda ()
-                                       (switch-to-buffer "*scratch*")
-                                       (goto-char (point-min))
-                                       (insert (concat ";; start up cost: "
-                                                       (emacs-init-time)
-                                                       "\n\n"))))
+                                      (switch-to-buffer "*scratch*")
+                                      (goto-char (point-min))
+                                      (insert (concat ";; start up cost: "
+                                                      (emacs-init-time)
+                                                      "\n\n"))))
     #+END_SRC
 *** Define path
     #+BEGIN_SRC emacs-lisp :tangle (if (fboundp 'init/define-path) "yes" "no")
@@ -270,25 +270,21 @@
    #+BEGIN_SRC emacs-lisp
      (set-frame-font "Sarasa Term Slab SC-18" nil t)
    #+END_SRC
-*** Complex EN-ZH font configuration :blocked:
-    This configuration is obsolete.
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (defun init/set-fonts ()
-        (interactive)
-        (if (display-graphic-p)
-            (progn
-              (set-face-attribute 'default nil :font (format "%s:pixelsize=%d" "Lotion" 24))
-              (dolist (charset '(kana han symbol cjk-misc bopomofo))
-                (set-fontset-font (frame-parameter nil 'font)
-                                  charset
-                                  (font-spec :family "LXGW WenKai" :size 24))))))
-      (defun init/init-fonts (frame)
-        (with-selected-frame frame
-          (if (display-graphic-p)
-              (init/set-fonts))))
-      (if (not (daemonp))
-          (init/set-fonts)
-        (add-hook 'after-make-frame-functions #'init/init-fonts))
+*** prog-mode font
+    Use separate font for ~prog-mode~
+    #+BEGIN_SRC emacs-lisp
+      (defface fsm-font
+        '((t :family "Fantasque Sans Mono"))
+        "Fantasque Sans Mono"
+        :group 'basic-faces)
+      (dolist (hook '(eshell-mode-hook prog-mode-hook))
+        (add-hook hook
+                  #'(lambda ()
+                      (if (display-graphic-p)
+                          (progn
+                            (text-scale-set 1)
+                            (set (make-local-variable 'buffer-face-mode-face) 'fsm-font)
+                            (buffer-face-mode t))))))
     #+END_SRC
 ** Ligature
 *** MasOS
@@ -432,6 +428,12 @@
         (define-key org-mode-map (kbd "<S-right>") 'sort-tab-select-next-tab))
       (add-to-list 'winum-ignored-buffers
                    "*sort-tab*")
+      (defun sort-tab-refresh (&optional args)
+        (interactive)
+        (if sort-tab-mode
+            (progn (sort-tab-mode -1)
+                   (sort-tab-mode 1))))
+
     #+END_SRC
     Override hide behavior
     #+BEGIN_SRC emacs-lisp
@@ -458,14 +460,15 @@
                           nil
                           :weight 'bold
                           :height (face-attribute 'default :height)
-                          ;; :background (face-background 'line-number)
-                          ;; :foreground (face-background 'line-number-current-line)
-                          )
+                          :background (face-background 'line-number)
+                          :foreground (face-background 'line-number-current-line)
+                          :family "Fantasque Sans Mono")
       (set-face-attribute 'line-number
                           nil
                           :weight 'light
                           :height (face-attribute 'default :height)
-                          :background (face-background 'default))
+                          :background (face-background 'default)
+                          :family "Fantasque Sans Mono")
     #+END_SRC
 ** Side bar
 *** Install treemacs
@@ -496,6 +499,7 @@
              Man-mode))
      (global-set-key (kbd "<C-tab>") 'popper-toggle-latest)
      (define-key popper-mode-map (kbd "<C-tab>") 'popper-cycle)
+     (global-set-key (kbd "<C-escape>") 'popper-kill-latest-popup)
      (popper-mode +1)
      (popper-echo-mode +1)
    #+END_SRC
@@ -515,10 +519,10 @@
        (init/ensure-package 'highlight-parentheses)
      #+END_SRC
 **** Display
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'prog-mode-hook #'show-paren-mode)
-  (add-hook 'prog-mode-hook #'highlight-parentheses-mode)
-#+END_SRC
+     #+BEGIN_SRC emacs-lisp
+       (add-hook 'prog-mode-hook #'show-paren-mode)
+       (add-hook 'prog-mode-hook #'highlight-parentheses-mode)
+     #+END_SRC
 **** Smart parens
      #+BEGIN_SRC emacs-lisp
        (init/ensure-package 'smartparens)
@@ -541,23 +545,33 @@
     #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'corfu)
       (init/ensure-package 'cape)
+      (init/ensure-package 'yasnippet)
+      (add-hook 'prog-mode-hook 'yas-minor-mode)
       (corfu-global-mode)
     #+END_SRC
     Configurations
-#+BEGIN_SRC emacs-lisp
-  (setq corfu-auto t
-        corfu-auto-prefix 1
-        corfu-auto-delay 0
-        corfu-quit-at-boundary t
-        corfu-quit-no-match nil)
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
-  (setq dabbrev-ignored-buffer-regexps
-        (rx (or (seq bos (any " *"))
-                (seq ".pdf" eos))))
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (setq corfu-auto t
+            corfu-auto-prefix 1
+            corfu-auto-delay 0
+            corfu-quit-at-boundary t
+            corfu-quit-no-match nil)
+      (add-to-list 'completion-at-point-functions #'cape-file)
+      (add-to-list 'completion-at-point-functions #'cape-tex)
+      (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+      (add-to-list 'completion-at-point-functions #'cape-keyword)
+      (setq dabbrev-ignored-buffer-regexps
+            (rx (or (seq bos (any " *"))
+                    (seq ".pdf" eos))))
+    #+END_SRC
+**** Enable Corfu in minibuffer
+     #+BEGIN_SRC emacs-lisp
+       (defun corfu-enable-in-minibuffer ()
+         "Enable Corfu in the minibuffer if `completion-at-point' is bound."
+         (when (where-is-internal #'completion-at-point (list (current-local-map)))
+           (corfu-mode 1)))
+       (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
+     #+END_SRC
 *** LSP
     Install ~lsp-mode~.
     #+BEGIN_SRC emacs-lisp
@@ -586,8 +600,8 @@
     #+BEGIN_SRC emacs-lisp
       (setq lsp-completion-provider :none)
       (defun init/lsp-mode-setup-completion ()
-          (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-                '(flex)))
+        (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+              '(flex)))
       (add-hook 'lsp-mode-hook #'init/lsp-mode-setup-completion)
     #+END_SRC
 ** Verilog
@@ -674,34 +688,37 @@
        (setq lsp-pyright-python-executable-cmd "python3"))
    #+END_SRC
 ** C/C++
-   Installing ~ccls~.
-   #+BEGIN_SRC emacs-lisp
+   Installing ~ccls~ if ccls exists.
+   #+BEGIN_SRC emacs-lisp :tangle (if (executable-find "ccls") "yes" "no")
      (init/ensure-package-lazy 'ccls)
-     (dolist (hook '(c-mode-hook c++-mode-hook))
-       (add-hook hook #'lsp))
      (setq ccls-sem-highlight-method nil)
    #+END_SRC
+   Add lsp to cc-mode hook
+   #+BEGIN_SRC emacs-lisp
+     (dolist (hook '(c-mode-hook c++-mode-hook))
+       (add-hook hook #'lsp))
+   #+END_SRC
 ** Rust
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'rust-mode)
-  (setq lsp-rust-server 'rust-analyzer)
-  (setq lsp-rust-analyzer-cargo-watch-enable nil)
-  (cl-defmethod lsp-clients-extract-signature-on-hover (contents (_server-id (eql rust-analyzer)))
-    (-let* (((&hash "value") contents)
-            (groups (--partition-by (s-blank? it) (s-lines (s-trim value))))
-            (sig_group (if (s-equals? "```rust" (car (-third-item groups)))
-                           (-third-item groups)
-                         (car groups)))
-            (sig (--> sig_group
-                      (--drop-while (s-equals? "```rust" it) it)
-                      (--take-while (not (s-equals? "```" it)) it)
-                      (s-join "" it))))
-      (lsp--render-element (concat "```rust\n" sig "\n```"))))
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'rust-mode)
+     (setq lsp-rust-server 'rust-analyzer)
+     (setq lsp-rust-analyzer-cargo-watch-enable nil)
+     (cl-defmethod lsp-clients-extract-signature-on-hover (contents (_server-id (eql rust-analyzer)))
+       (-let* (((&hash "value") contents)
+               (groups (--partition-by (s-blank? it) (s-lines (s-trim value))))
+               (sig_group (if (s-equals? "```rust" (car (-third-item groups)))
+                              (-third-item groups)
+                            (car groups)))
+               (sig (--> sig_group
+                         (--drop-while (s-equals? "```rust" it) it)
+                         (--take-while (not (s-equals? "```" it)) it)
+                         (s-join "" it))))
+         (lsp--render-element (concat "```rust\n" sig "\n```"))))
 
-  (add-hook 'rust-mode-hook #'(lambda ()
-                                (setq-local compile-command "cargo build")
-                                (lsp)))
-#+END_SRC
+     (add-hook 'rust-mode-hook #'(lambda ()
+                                   (setq-local compile-command "cargo build")
+                                   (lsp)))
+   #+END_SRC
 ** Emacs-Lisp
    Use ~paredit~ in ~elisp-mode~
    #+BEGIN_SRC emacs-lisp
@@ -790,24 +807,25 @@
 ** Org mode
 *** Set seperate font for org mode
     #+BEGIN_SRC emacs-lisp
-      (defface org-font
-        '((t :family "霞鹜文楷"))
+      (defface lxwk-font
+        '((t :family "LXGW Bright"))
         "霞鹜文楷"
         :group 'basic-faces)
       (add-hook 'org-mode-hook
                 #'(lambda ()
                     (if (display-graphic-p)
                         (progn
-                          ;; (text-scale-set 1)
-                          (set (make-local-variable 'buffer-face-mode-face) 'org-font)
+                          ;; (text-scale-set -1)
+                          (set (make-local-variable 'buffer-face-mode-face) 'lxwk-font)
                           (buffer-face-mode t)
-                          (face-remap-add-relative 'org-block '(:family "Sarasa Term SC"))))))
+                          (face-remap-add-relative 'org-block '(:family "Fantasque Sans Mono"))))))
       (defun buffer-toggle-highlight-foreground (&optional args)
         (interactive)
         (if (and (boundp 'face-remap-add-relative-cookie) face-remap-add-relative-cookie)
             (progn (face-remap-remove-relative face-remap-add-relative-cookie)
                    (setq face-remap-add-relative-cookie nil))
           (set (make-local-variable 'face-remap-add-relative-cookie) (face-remap-add-relative 'default '(:foreground "#000000")))))
+      (add-hook 'org-mode-hook #'buffer-toggle-highlight-foreground)
     #+END_SRC
 *** Table Align
     #+BEGIN_SRC emacs-lisp
@@ -863,15 +881,15 @@
       (add-hook 'org-mode-hook #'(lambda () (setq-local word-wrap-by-category t)))
     #+END_SRC
 *** Local Functions
-#+BEGIN_SRC emacs-lisp
-  (defun org-copy-src-block-link()
-    (interactive)
-    (save-excursion
-      (forward-line -1)
-      (org-edit-src-code)
-      (clipboard-kill-ring-save (point-min) (point-max))
-      (org-edit-src-exit)))
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (defun org-copy-src-block-link()
+        (interactive)
+        (save-excursion
+          (forward-line -1)
+          (org-edit-src-code)
+          (clipboard-kill-ring-save (point-min) (point-max))
+          (org-edit-src-exit)))
+    #+END_SRC
 *** Beautify
     #+BEGIN_SRC emacs-lisp
       (with-eval-after-load 'org
@@ -928,6 +946,7 @@
                            'TeX-command-list
                            '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
                           (visual-line-mode)
+                          (yas-minor-mode)
                           (setq-local lsp-diagnostics-provider :none)
                           (setq-local lsp-eldoc-enable-hover nil)
                           (setq-local lsp-modeline-diagnostics-enable nil)
@@ -967,68 +986,68 @@
              (eshell-color4 "#7959AE")
              (eshell-color4-lighter (make-color-lighter eshell-color4 1.5)))
 
-       (setq eshell-prompt-function-light #'(lambda nil
+        (setq eshell-prompt-function-light #'(lambda nil
+                                               (concat
+                                                (propertize "╭─"
+                                                            'face `(:background (face-background 'default) :weight bold))
+                                                (propertize (user-login-name)
+                                                            'face `(:foreground ,eshell-color1 :weight bold))
+                                                (propertize " at "
+                                                            'face `(:background (face-background 'default)))
+                                                (propertize (system-name)
+                                                            'face `(:foreground  ,eshell-color1 :weight bold))
+                                                (propertize " in "
+                                                            'face `(:background (face-background 'default)))
+                                                (propertize (abbreviate-file-name (eshell/pwd))
+                                                            'face `(:foreground ,eshell-color2 :weight bold :slant italic))
+                                                (if (and (boundp 'url-proxy-services)
+                                                         (assoc "http" url-proxy-services))
+                                                    (concat
+                                                     (propertize " via "
+                                                                 'face `(:background (face-background 'default)))
+                                                     (propertize (cdr (assoc "http" url-proxy-services))
+                                                                 'face `(:foreground ,eshell-color3 :weight bold))))
+                                                (propertize "\n"
+                                                            'face `(:background (face-background 'default)))
+                                                (propertize "╰─["
+                                                            'face `(:background (face-background 'default) :weight bold))
+                                                (propertize (if (= (user-uid) 0) "# " "λ")
+                                                            'face `(:slant default :weight bold :foreground ,eshell-color4))
+                                                (propertize "]"
+                                                            'face `(:background (face-background 'default) :weight bold))
+                                                (propertize " "
+                                                            'face `(:background (face-background 'default))))))
+        (setq eshell-prompt-function-dark #'(lambda nil
                                               (concat
                                                (propertize "╭─"
                                                            'face `(:background (face-background 'default) :weight bold))
                                                (propertize (user-login-name)
-                                                           'face `(:foreground ,eshell-color1 :weight bold))
+                                                           'face `(:foreground ,eshell-color1-lighter :weight bold))
                                                (propertize " at "
                                                            'face `(:background (face-background 'default)))
                                                (propertize (system-name)
-                                                           'face `(:foreground  ,eshell-color1 :weight bold))
+                                                           'face `(:foreground  ,eshell-color1-lighter :weight bold))
                                                (propertize " in "
                                                            'face `(:background (face-background 'default)))
                                                (propertize (abbreviate-file-name (eshell/pwd))
-                                                           'face `(:foreground ,eshell-color2 :weight bold :slant italic))
+                                                           'face `(:foreground ,eshell-color2-lighter :weight bold :slant italic))
                                                (if (and (boundp 'url-proxy-services)
                                                         (assoc "http" url-proxy-services))
                                                    (concat
                                                     (propertize " via "
                                                                 'face `(:background (face-background 'default)))
                                                     (propertize (cdr (assoc "http" url-proxy-services))
-                                                                'face `(:foreground ,eshell-color3 :weight bold))))
+                                                                'face `(:foreground ,eshell-color3-lighter :weight bold))))
                                                (propertize "\n"
                                                            'face `(:background (face-background 'default)))
                                                (propertize "╰─["
                                                            'face `(:background (face-background 'default) :weight bold))
                                                (propertize (if (= (user-uid) 0) "# " "λ")
-                                                           'face `(:slant default :weight bold :foreground ,eshell-color4))
+                                                           'face `(:slant default :weight bold :foreground ,eshell-color4-lighter))
                                                (propertize "]"
                                                            'face `(:background (face-background 'default) :weight bold))
                                                (propertize " "
-                                                           'face `(:background (face-background 'default))))))
-       (setq eshell-prompt-function-dark #'(lambda nil
-                                             (concat
-                                              (propertize "╭─"
-                                                          'face `(:background (face-background 'default) :weight bold))
-                                              (propertize (user-login-name)
-                                                          'face `(:foreground ,eshell-color1-lighter :weight bold))
-                                              (propertize " at "
-                                                          'face `(:background (face-background 'default)))
-                                              (propertize (system-name)
-                                                          'face `(:foreground  ,eshell-color1-lighter :weight bold))
-                                              (propertize " in "
-                                                          'face `(:background (face-background 'default)))
-                                              (propertize (abbreviate-file-name (eshell/pwd))
-                                                          'face `(:foreground ,eshell-color2-lighter :weight bold :slant italic))
-                                              (if (and (boundp 'url-proxy-services)
-                                                       (assoc "http" url-proxy-services))
-                                                  (concat
-                                                   (propertize " via "
-                                                               'face `(:background (face-background 'default)))
-                                                   (propertize (cdr (assoc "http" url-proxy-services))
-                                                               'face `(:foreground ,eshell-color3-lighter :weight bold))))
-                                              (propertize "\n"
-                                                          'face `(:background (face-background 'default)))
-                                              (propertize "╰─["
-                                                          'face `(:background (face-background 'default) :weight bold))
-                                              (propertize (if (= (user-uid) 0) "# " "λ")
-                                                          'face `(:slant default :weight bold :foreground ,eshell-color4-lighter))
-                                              (propertize "]"
-                                                          'face `(:background (face-background 'default) :weight bold))
-                                              (propertize " "
-                                                          'face `(:background (face-background 'default)))))))
+                                                           'face `(:background (face-background 'default)))))))
 
       (setq eshell-prompt-regexp "^╰─\\\[[#λ]\\\] ")
       (if (bound-and-true-p init/system-dark-modep)
@@ -1036,19 +1055,19 @@
         (setq eshell-prompt-function eshell-prompt-function-light))
     #+END_SRC
 *** Syntax highlight
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package-lazy 'eshell-syntax-highlighting)
-  (with-eval-after-load 'eshell
-    (require 'eshell-syntax-highlighting)
-    (set-face-attribute 'eshell-syntax-highlighting-alias-face
-                        nil :weight 'bold)
-    (set-face-attribute 'eshell-syntax-highlighting-shell-command-face
-                        nil :weight 'bold)
-    (unless (bound-and-true-p init/system-dark-modep)
-      (progn (set-face-foreground 'eshell-syntax-highlighting-alias-face "#2E67D3")
-             (set-face-foreground 'eshell-syntax-highlighting-shell-command-face "#2E67D3")))
-    (add-hook 'eshell-mode-hook 'eshell-syntax-highlighting-mode))
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package-lazy 'eshell-syntax-highlighting)
+      (with-eval-after-load 'eshell
+        (require 'eshell-syntax-highlighting)
+        (set-face-attribute 'eshell-syntax-highlighting-alias-face
+                            nil :weight 'bold)
+        (set-face-attribute 'eshell-syntax-highlighting-shell-command-face
+                            nil :weight 'bold)
+        (unless (bound-and-true-p init/system-dark-modep)
+          (progn (set-face-foreground 'eshell-syntax-highlighting-alias-face "#2E67D3")
+                 (set-face-foreground 'eshell-syntax-highlighting-shell-command-face "#2E67D3")))
+        (add-hook 'eshell-mode-hook 'eshell-syntax-highlighting-mode))
+    #+END_SRC
 *** FZF fuzzy search
     #+BEGIN_SRC emacs-lisp
       (setq eshell-history-size 1024)
@@ -1111,10 +1130,10 @@
                     (local-set-key (kbd "C-r") #'init/ivy-eshell-history)))
     #+END_SRC
 *** Alias
-#+BEGIN_SRC emacs-lisp
-  (defun eshell/emacs (file)
-    (find-file file))
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (defun eshell/emacs (file)
+        (find-file file))
+    #+END_SRC
 *** Issues
     #+BEGIN_SRC emacs-lisp
       (with-eval-after-load 'em-term
@@ -1234,64 +1253,64 @@
        (global-set-key (kbd "C-c e i") 'ebib-insert-citation))
    #+END_SRC
 ** Org Roam
-#+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/org-roam-directory) "yes" "no")
-  (init/ensure-package-lazy 'org-roam)
-  (setq org-roam-directory init/org-roam-directory)
-  (defun org-roam-node-find (&optional args)
-    "Lazy load wrapper for org-roam"
-    (interactive)
-    (require 'org-roam)
-    (org-roam-setup)
-    (org-roam-node-find))
-  (defun org-roam-node-insert (&optional args)
-    "Lazy load wrapper for org-roam"
-    (interactive)
-    (require 'org-roam)
-    (org-roam-setup)
-    (org-roam-node-insert))
-  (defun org-roam-node-list (&optional args)
-    "Lazy load wrapper for org-roam"
-    (interactive)
-    (require 'org-roam)
-    (org-roam-setup)
-    (org-roam-node-list))
-  (global-set-key (kbd "C-c n f") #'org-roam-node-find)
-  (global-set-key (kbd "C-c n i") #'org-roam-node-insert)
-  (global-set-key (kbd "C-c n l") #'org-roam-buffer-list)
-#+END_SRC
+   #+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/org-roam-directory) "yes" "no")
+     (init/ensure-package-lazy 'org-roam)
+     (setq org-roam-directory init/org-roam-directory)
+     (defun org-roam-node-find (&optional args)
+       "Lazy load wrapper for org-roam"
+       (interactive)
+       (require 'org-roam)
+       (org-roam-setup)
+       (org-roam-node-find))
+     (defun org-roam-node-insert (&optional args)
+       "Lazy load wrapper for org-roam"
+       (interactive)
+       (require 'org-roam)
+       (org-roam-setup)
+       (org-roam-node-insert))
+     (defun org-roam-node-list (&optional args)
+       "Lazy load wrapper for org-roam"
+       (interactive)
+       (require 'org-roam)
+       (org-roam-setup)
+       (org-roam-node-list))
+     (global-set-key (kbd "C-c n f") #'org-roam-node-find)
+     (global-set-key (kbd "C-c n i") #'org-roam-node-insert)
+     (global-set-key (kbd "C-c n l") #'org-roam-buffer-list)
+   #+END_SRC
 *** Advice sort-tab
-#+BEGIN_SRC emacs-lisp
-  (advice-add 'sort-tab-get-tab-name
-              :around #'(lambda (origin buf current-buffer)
-                          (let* ((name (buffer-name buf))
-                                 (short-name (replace-regexp-in-string "20[0-9][0-9][01][0-9][0-3][0-9]+-"
-                                                                       "" name)))
-                            (if (eq (length name) (length short-name))
-                                (apply origin `(,buf ,current-buffer))
-                              (let ((short-name-formatted (concat "roam:"
-                                                                  (string-remove-suffix ".org" short-name))))
-                               (propertize
-                                (format " %s "
-                                        (let ((ellipsis "..."))
-                                          (if (> (length short-name-formatted) sort-tab-name-max-length)
-                                              (format "%s%s"
-                                                      (substring short-name-formatted
-                                                                 0
-                                                                 (- sort-tab-name-max-length (length ellipsis)))
-                                                      ellipsis)
-                                            short-name-formatted)))
-                                'face
-                                (if (eq buf current-buffer)
-                                    'sort-tab-current-tab-face
-                                  'sort-tab-other-tab-face)))))))
-#+END_SRC
+    #+BEGIN_SRC emacs-lisp
+      (advice-add 'sort-tab-get-tab-name
+                  :around #'(lambda (origin buf current-buffer)
+                              (let* ((name (buffer-name buf))
+                                     (short-name (replace-regexp-in-string "20[0-9][0-9][01][0-9][0-3][0-9]+-"
+                                                                           "" name)))
+                                (if (eq (length name) (length short-name))
+                                    (apply origin `(,buf ,current-buffer))
+                                  (let ((short-name-formatted (concat "roam:"
+                                                                      (string-remove-suffix ".org" short-name))))
+                                    (propertize
+                                     (format " %s "
+                                             (let ((ellipsis "..."))
+                                               (if (> (length short-name-formatted) sort-tab-name-max-length)
+                                                   (format "%s%s"
+                                                           (substring short-name-formatted
+                                                                      0
+                                                                      (- sort-tab-name-max-length (length ellipsis)))
+                                                           ellipsis)
+                                                 short-name-formatted)))
+                                     'face
+                                     (if (eq buf current-buffer)
+                                         'sort-tab-current-tab-face
+                                       'sort-tab-other-tab-face)))))))
+    #+END_SRC
 ** Org Drill
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package-lazy 'org-drill)
-  (defun org-find-drill-file ()
-    (interactive)
-    (find-file init/org-drill-file))
-#+END_SRC
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package-lazy 'org-drill)
+     (defun org-find-drill-file ()
+       (interactive)
+       (find-file init/org-drill-file))
+   #+END_SRC
 ** English Helper
    #+BEGIN_SRC emacs-lisp
      (add-to-list 'load-path
@@ -1348,98 +1367,110 @@
        (require 'ibuffer-projectile))
    #+END_SRC
 ** Dired
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package-lazy 'all-the-icons-dired)
-  (with-eval-after-load 'dired
-    (require 'dired-x)
-    (require 'all-the-icons-dired))
-  (when (string= system-type "darwin")
-    (setq dired-use-ls-dired nil))
-  (setq dired-omit-files "^\\\.")
-  (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
-  (add-hook 'dired-mode-hook #'dired-omit-mode)
-  (define-key dired-mode-map (kbd "C-c t") #'dired-omit-mode)
-#+END_SRC
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package-lazy 'all-the-icons-dired)
+     (with-eval-after-load 'dired
+       (require 'dired-x)
+       (require 'all-the-icons-dired))
+     (when (string= system-type "darwin")
+       (setq dired-use-ls-dired nil))
+     (setq dired-omit-files "^\\\.")
+     (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
+     (add-hook 'dired-mode-hook #'dired-omit-mode)
+     (define-key dired-mode-map (kbd "C-c t") #'dired-omit-mode)
+   #+END_SRC
 ** Word Count
-#+BEGIN_SRC emacs-lisp
-  (defvar words-count-rule-chinese "\\cc"
-    "A regexp string to match Chinese characters.")
+   #+BEGIN_SRC emacs-lisp
+     (defvar words-count-rule-chinese "\\cc"
+       "A regexp string to match Chinese characters.")
 
-  (defvar words-count-rule-nonespace "[^[:space:]]"
-    "A regexp string to match none pace characters.")
+     (defvar words-count-rule-nonespace "[^[:space:]]"
+       "A regexp string to match none pace characters.")
 
-  (defvar words-count-rule-ansci "[A-Za-z0-9][A-Za-z0-9[:punct:]]*"
-    "A regexp string to match none pace characters.")
+     (defvar words-count-rule-ansci "[A-Za-z0-9][A-Za-z0-9[:punct:]]*"
+       "A regexp string to match none pace characters.")
 
-  (defvar words-count-regexp-list
-    (list words-count-rule-chinese
-          words-count-rule-nonespace
-          words-count-rule-ansci)
-    "A list for the regexp used in `advance-words-count'.")
+     (defvar words-count-regexp-list
+       (list words-count-rule-chinese
+             words-count-rule-nonespace
+             words-count-rule-ansci)
+       "A list for the regexp used in `advance-words-count'.")
 
-  (defvar words-count-message-func 'message--words-count
-    "The function used to format message in `advance-words-count'.")
+     (defvar words-count-message-func 'message--words-count
+       "The function used to format message in `advance-words-count'.")
 
-  (defun special--words-count (start end regexp)
-    "Count the word from START to END with REGEXP."
-    (let ((count 0))
-      (save-excursion
-        (save-restriction
-          (goto-char start)
-          (while (and (< (point) end) (re-search-forward regexp end t))
-            (setq count (1+ count)))))
-      count))
-  (require 'pos-tip)
-  (defun message--words-count (list start end)
-    "Display the word count message.
-  Using the LIST passed form `advance-words-count'. START & END are
-  required to call extra functions, see `count-lines' &
-  `count-words'. When ARG is specified, display a verbose buffer."
-    (pos-tip-show
-     (format
-      "
-  -----------~*~ Words Count ~*~---------
-   Word Count .................... %d
-   Characters (without Space) .... %d
-   Characters (all) .............. %d
-   Number of Lines ............... %d
-   ANSCII Chars .................. %d
-  %s
-  =======================================
-  "
-      (+ (car list) (car (last list)))
-      (cadr list)
-      (- end start)
-      (count-lines start end)
-      (car (last list))
-      (concat
-       (unless (= 0 (car list))
-         (format " Chinese Chars ................. %d\n"
-                 (car list)))
-       (format " English Words ................. %d\n"
-               (count-words start end))))
-     nil nil nil -1))
+     (defun special--words-count (start end regexp)
+       "Count the word from START to END with REGEXP."
+       (let ((count 0))
+         (save-excursion
+           (save-restriction
+             (goto-char start)
+             (while (and (< (point) end) (re-search-forward regexp end t))
+               (setq count (1+ count)))))
+         count))
+     (require 'pos-tip)
+     (defun message--words-count (list start end)
+       "Display the word count message.
+     Using the LIST passed form `advance-words-count'. START & END are
+     required to call extra functions, see `count-lines' &
+     `count-words'. When ARG is specified, display a verbose buffer."
+       (pos-tip-show
+        (format
+         "
+     -----------~*~ Words Count ~*~---------
+      Word Count .................... %d
+      Characters (without Space) .... %d
+      Characters (all) .............. %d
+      Number of Lines ............... %d
+      ANSCII Chars .................. %d
+     %s
+     =======================================
+     "
+         (+ (car list) (car (last list)))
+         (cadr list)
+         (- end start)
+         (count-lines start end)
+         (car (last list))
+         (concat
+          (unless (= 0 (car list))
+            (format " Chinese Chars ................. %d\n"
+                    (car list)))
+          (format " English Words ................. %d\n"
+                  (count-words start end))))
+        nil nil nil -1))
 
-  ;;;###autoload
-  (defun advance-words-count (beg end)
-    "Chinese user preferred word count.
-  If BEG = END, count the whole buffer. If called initeractively,
-  use minibuffer to display the messages. The optional ARG will be
-  passed to `message--words-count'.
+     ;;;###autoload
+     (defun advance-words-count (beg end)
+       "Chinese user preferred word count.
+     If BEG = END, count the whole buffer. If called initeractively,
+     use minibuffer to display the messages. The optional ARG will be
+     passed to `message--words-count'.
 
-  See also `special-words-count'."
-    (interactive (if (use-region-p)
-                     (list (region-beginning)
-                           (region-end))
-                   (list nil nil)))
-    (let ((min (or beg (point-min)))
-          (max (or end (point-max)))
-          list)
-      (setq list
-            (mapcar
-             (lambda (r) (special--words-count min max r))
-             words-count-regexp-list))
-      (if (called-interactively-p 'any)
-          (message--words-count list min max)
-        list)))
-#+END_SRC
+     See also `special-words-count'."
+       (interactive (if (use-region-p)
+                        (list (region-beginning)
+                              (region-end))
+                      (list nil nil)))
+       (let ((min (or beg (point-min)))
+             (max (or end (point-max)))
+             list)
+         (setq list
+               (mapcar
+                (lambda (r) (special--words-count min max r))
+                words-count-regexp-list))
+         (if (called-interactively-p 'any)
+             (message--words-count list min max)
+           list)))
+   #+END_SRC
+** Writeroom mode
+   This package comes with autoload
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package-lazy 'writeroom-mode)
+     (setq writeroom-width 120)
+     (with-eval-after-load 'writeroom-mode
+       (setq writeroom-global-effects
+             (delq 'writeroom-set-menu-bar-lines
+                   (delq 'writeroom-set-fullscreen writeroom-global-effects))))
+     (advice-add #'writeroom--set-global-effects :after
+                 #'sort-tab-refresh)
+   #+END_SRC

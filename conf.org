@@ -450,6 +450,66 @@
                                  (t (apply origin `(,buf)))))))
 
     #+END_SRC
+*** Save and revert buffer state
+    #+BEGIN_SRC emacs-lisp
+      (defun sort-tab-get-session-and-kill-all-buffers ()
+        (let* ((buffer-list (sort-tab-get-buffer-list))
+               (session-list (mapcar #'(lambda (buf) (with-current-buffer buf
+                                                       (if buffer-file-name
+                                                           `("file" ,buffer-file-name)
+                                                         (cond ((derived-mode-p 'eshell-mode)
+                                                                `("eshell" ,(eshell/pwd) ,(buffer-name)))
+                                                               ((derived-mode-p 'dired-mode)
+                                                                `("dired" ,dired-directory))
+                                                               (t nil)))))
+                                     buffer-list)))
+          (mapcar #'kill-buffer buffer-list)
+          session-list))
+
+      (defun sort-tab-revert-session (session-list)
+        (mapcar #'(lambda (pair)
+                    (let ((mode (car pair))
+                          (file (cadr pair)))
+                      (cond ((equal mode "file") (find-file file))
+                            ((equal mode "eshell") (let ((default-directory file))
+                                                    (with-current-buffer (eshell 17)
+                                                      (rename-buffer (caddr pair)))))
+                            ((equal mode "dired") (dired file)))))
+                session-list)
+        (if sort-tab-mode
+            (progn (sort-tab-mode -1)
+                   (sort-tab-mode 1))))
+
+      (defun act/save-session (session-file)
+        "Save current session into a session file."
+        (interactive
+         (list (read-file-name "Session file to save: " "~/.emacs.d/sessions/")))
+        (with-temp-file session-file
+          (prin1 (sort-tab-get-session-and-kill-all-buffers) (current-buffer)))
+        (switch-to-buffer "*scratch*"))
+      (buffer-list)
+
+      (defun act/load-session (session-file)
+        "Load session from session file."
+        (interactive
+         (list (read-file-name "Session file to load: " "~/.emacs.d/sessions/")))
+        (sort-tab-revert-session
+         (with-temp-buffer
+           (insert-file-contents session-file)
+           (cl-assert (eq (point) (point-min)))
+           (read (current-buffer)))))
+
+      (defun act/exchange-session (session-file)
+        "Exchange session with session from file."
+        (interactive
+         (list (read-file-name "Session file to interchange: " "~/.emacs.d/sessions/")))
+        (let ((session (with-temp-buffer
+                         (insert-file-contents session-file)
+                         (cl-assert (eq (point) (point-min)))
+                         (read (current-buffer)))))
+          (sort-tab-save-session session-file)
+          (sort-tab-revert-session session)))
+    #+END_SRC
 ** Line number
    #+BEGIN_SRC emacs-lisp
      (add-hook 'prog-mode-hook 'display-line-numbers-mode)

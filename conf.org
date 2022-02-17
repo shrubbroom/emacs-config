@@ -107,6 +107,11 @@
       (global-set-key [home] 'smart-beginning-of-line)
       (global-set-key "\C-a" 'smart-beginning-of-line)
     #+END_SRC
+*** Enable CUA mode
+    #+BEGIN_SRC emacs-lisp
+      (setq cua-delete-selection t)
+      (cua-selection-mode t)
+    #+END_SRC
 *** Revert buffer in daemon-client mode
     #+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'darwin) "no" "yes")
       (advice-add #'save-buffers-kill-terminal :before
@@ -282,7 +287,7 @@
                   #'(lambda ()
                       (if (display-graphic-p)
                           (progn
-                            (text-scale-set 1)
+                            ;; (text-scale-set 1)
                             (set (make-local-variable 'buffer-face-mode-face) 'fsm-font)
                             (buffer-face-mode t))))))
     #+END_SRC
@@ -805,58 +810,28 @@
      (init/ensure-package 'yaml-mode)
    #+END_SRC
 * Documentation
-** IM module
-   Use ~smart-input-method~ as auto IM switcher.
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (init/ensure-package 'sis)
-     (sis-ism-lazyman-config
-      "1"
-      "2"
-      'fcitx5)
-     (sis-global-cursor-color-mode t)
-     (sis-global-respect-mode t)
-     (sis-global-context-mode t)
-     (sis-global-inline-mode t)
-     (setq sis-inline-tighten-head-rule 0
-           sis-inline-tighten-tail-rule 1
-           sis-english-pattern "[a-zA-Zλ]"
-           sis-default-cursor-color "dark orange"
-           sis-other-cursor-color "medium blue"
-           )
+** Emacs Rime
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package-lazy 'rime)
+     ;; (define-key rime-mode-map (kbd "C-z") 'rime-force-enable)
+     (setq default-input-method "rime")
+     (setq rime-show-candidate 'posframe
+           rime-librime-root (concat user-emacs-directory "librime/dist/")
+           rime-user-data-dir (concat user-emacs-directory "rime/")
+           rime-translate-keybindings
+           '("C-f" "C-b" "C-n" "C-p" "C-g" "C-`")
+           rime-show-preedit 'inline
+           rime-disable-predicates
+           '(
+             rime-predicate-prog-in-code-p
+             rime-predicate-current-uppercase-letter-p
+             rime-predicate-after-alphabet-char-p
+             rime-predicate-after-ascii-char-p
+             rime-predicate-evil-mode-p
+             rime-predicate-hydra-p rime-predicate-punctuation-line-begin-p
+             rime-predicate-space-after-cc-p
+             rime-predicate-tex-math-or-command-p))
    #+END_SRC
-*** Emacs Rime
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (defun init/toggle-rime (&optional args)
-        (interactive)
-        (init/ensure-package 'rime)
-        (setq default-input-method "rime")
-        (define-key evil-insert-state-map (kbd "C-SPC") nil)
-        (define-key evil-emacs-state-map (kbd "C-SPC") nil)
-        (evil-define-key '(insert emacs) 'global
-                         (kbd "C-SPC") 'init/toggle-rime)
-        (define-key rime-mode-map (kbd "C-z") 'rime-force-enable)
-        (setq rime-show-candidate 'posframe)
-        (setq rime-user-data-dir "~/.config/emacs/rime/")
-        (setq rime-translate-keybindings
-              '("C-f" "C-b" "C-n" "C-p" "C-g" "C-`"))
-        (setq rime-show-preedit 'inline)
-        (setq rime-disable-predicates
-              '(
-                rime-predicate-prog-in-code-p
-                rime-predicate-current-uppercase-letter-p
-                rime-predicate-after-alphabet-char-p
-                rime-predicate-after-ascii-char-p
-                rime-predicate-evil-mode-p
-                rime-predicate-hydra-p rime-predicate-punctuation-line-begin-p
-                rime-predicate-space-after-cc-p
-                rime-predicate-tex-math-or-command-p))
-        (setq init/toggle-rime 'toggle-input-method)
-        )
-      (define-key evil-insert-state-map (kbd "C-SPC") nil)
-      (define-key evil-emacs-state-map (kbd "C-SPC") nil)
-      (evil-define-key '(insert emacs) 'global
-                       (kbd "C-SPC") 'init/toggle-rime)
-    #+END_SRC
 ** Display
    Enable ~visual-line-mode~ in ~text-mode~ and Latex buffer.
    #+BEGIN_SRC emacs-lisp
@@ -890,7 +865,8 @@
 *** Table Align
     #+BEGIN_SRC emacs-lisp
       (init/ensure-package-lazy 'valign)
-      (add-hook 'org-mode-hook #'valign-mode)
+      (if (display-graphic-p)
+       (add-hook 'org-mode-hook #'valign-mode))
     #+END_SRC
 *** Org Download
     #+BEGIN_SRC emacs-lisp
@@ -1200,6 +1176,7 @@
         (push "python" eshell-visual-commands)
         (push "ghci" eshell-visual-commands)
         (push "ssh" eshell-visual-commands)
+        (push "htop" eshell-visual-commands)
         (add-hook 'eshell-mode-hook (lambda ()
                                       (setq-local corfu-auto nil))))
     #+END_SRC
@@ -1358,7 +1335,7 @@
                                                                       0
                                                                       (- sort-tab-name-max-length (length ellipsis)))
                                                            ellipsis)
-                                                 short-name-formatted)))
+                            nnn                     short-name-formatted)))
                                      'face
                                      (if (eq buf current-buffer)
                                          'sort-tab-current-tab-face

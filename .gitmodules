@@ -4,3 +4,6 @@
 [submodule "site-packages/company-english-helper"]
 	path = site-packages/company-english-helper
 	url = https://github.com/manateelazycat/company-english-helper.git
+[submodule "rime"]
+	path = rime
+	url = https://github.com/shrubbroom/rime-config.git

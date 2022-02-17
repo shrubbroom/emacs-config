@@ -48,13 +48,11 @@
       (defun init/find-init ()
         (interactive) (find-file "~/.config/emacs/init.el"))
     #+END_SRC
-    Keybinding
 *** Find ~conf.org~
     #+BEGIN_SRC emacs-lisp
       (defun init/find-conf ()
         (interactive) (find-file "~/.config/emacs/conf.org"))
     #+END_SRC
-    Keybinding
 *** Open file in external applications
     #+BEGIN_SRC emacs-lisp
       (defun init/open-file-in-external-application (&optional args)
@@ -70,7 +68,6 @@
               ("Zathura" (async-shell-command (concat "za " "\"" (buffer-file-name) "\""))))
           (message "The buffer is not a file")))
     #+END_SRC
-    Keybinding
 *** Toggle proxy
     #+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/local-proxies) "yes" "no")
       (defun init/toggle-url-proxy ()
@@ -140,10 +137,6 @@
     #+BEGIN_SRC  emacs-lisp
       (blink-cursor-mode 0)
     #+END_SRC
-*** Highlight current line :blocked:
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (global-hl-line-mode)
-    #+END_SRC
 *** Use y/n instead of yes/no
     #+BEGIN_SRC emacs-lisp
       (fset 'yes-or-no-p 'y-or-n-p)
@@ -165,13 +158,6 @@
 *** Define path
     #+BEGIN_SRC emacs-lisp :tangle (if (fboundp 'init/define-path) "yes" "no")
       (init/define-path)
-    #+END_SRC
-** Undo system
-   No extra undo system is required.
-*** Set up package
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (init/ensure-package 'undo-tree)
-      (global-undo-tree-mode)
     #+END_SRC
 ** Navigation & Searching system
 *** Basic packages
@@ -202,11 +188,6 @@
      #+BEGIN_SRC emacs-lisp
        (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
      #+END_SRC
-*** Configure swiper
-    Only keybinding is required
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (global-set-key "\C-s" 'swiper)
-    #+END_SRC
 *** Config ctrlf
     #+BEGIN_SRC emacs-lisp
       (ctrlf-mode +1)
@@ -255,19 +236,24 @@
 *** Basic packages
     #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'which-key)
-      (init/ensure-package 'winum)
       (init/ensure-package 'helpful)
     #+END_SRC
 *** Configurations
     #+BEGIN_SRC emacs-lisp
       (which-key-mode 1)
-      (setq winum-auto-setup-mode-line nil)
-      (add-hook 'after-init-hook 'winum-mode)
       (setq counsel-describe-function-function #'helpful-callable
             counsel-describe-variable-function #'helpful-variable)
       (global-set-key (kbd "C-h k") #'helpful-key)
       (global-set-key (kbd "C-h d") #'helpful-at-point)
+      (define-key helpful-mode-map (kbd "n") #'next-line)
+      (define-key helpful-mode-map (kbd "p") #'previous-line)
     #+END_SRC
+** Window management
+   #+BEGIN_SRC emacs-lisp
+     (init/ensure-package 'winum)
+     (setq winum-auto-setup-mode-line nil)
+     (add-hook 'after-init-hook 'winum-mode)
+   #+END_SRC
 * Look and feel
   *This part should not be changed frequently. Spend time on important things*
 ** Fonts
@@ -296,32 +282,6 @@
     #+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
       (mac-auto-operator-composition-mode +1)
     #+END_SRC
-*** Other Platform
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (add-to-list 'load-path
-                   (concat user-emacs-directory "site-packages/ligature"))
-      (require 'ligature)
-      ;; Enable the "www" ligature in every possible major mode
-      (ligature-set-ligatures 't '("www"))
-      ;; Enable traditional ligature support in eww-mode, if the
-      ;; `variable-pitch' face supports it
-      (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
-      ;; Enable all Cascadia Code ligatures in programming modes
-      (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
-                                           ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
-                                           "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
-                                           "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
-                                           "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
-                                           "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
-                                           "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
-                                           "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
-                                           ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
-                                           "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
-                                           "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++"
-                                           ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
-                                           "\\\\" "://"))
-      (global-ligature-mode t)
-    #+END_SRC
 ** Smooth scrolling
    #+BEGIN_SRC emacs-lisp
      (setq scroll-margin 0)
@@ -337,14 +297,6 @@
      (setq hscroll-step 1)
      (setq hscroll-margin 0)
    #+END_SRC
-*** Images
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (init/ensure-package 'iscroll)
-      (add-hook 'org-mode-hook
-                #'(lambda ()
-                    (local-set-key (kbd "C-n") 'iscroll-next-line)
-                    (local-set-key (kbd "C-p") 'iscroll-previous-line)))
-    #+END_SRC
 ** Theme
 *** Issues
     We need to advice the theme changer so that theme can be completely changed in runtime.
@@ -408,9 +360,9 @@
             doom-modeline-hud t
             all-the-icons-scale-factor 1.0)
       (set-face-attribute 'mode-line nil
-                          :height 160)
+                          :height 140)
       (set-face-attribute 'mode-line-inactive nil
-                          :height 160)
+                          :height 140)
       (set-face-background 'doom-modeline-bar "#859900" nil)
       (display-time-mode)
       (column-number-mode)
@@ -461,11 +413,11 @@
         (let* ((buffer-list (sort-tab-get-buffer-list))
                (session-list (mapcar #'(lambda (buf) (with-current-buffer buf
                                                        (if buffer-file-name
-                                                           `("file" ,buffer-file-name)
+                                                           `("file" ,buffer-file-name ,sort-tab-buffer-freq)
                                                          (cond ((derived-mode-p 'eshell-mode)
-                                                                `("eshell" ,(eshell/pwd) ,(buffer-name)))
+                                                                `("eshell" ,(eshell/pwd) ,sort-tab-buffer-freq ,(buffer-name)))
                                                                ((derived-mode-p 'dired-mode)
-                                                                `("dired" ,dired-directory))
+                                                                `("dired" ,dired-directory ,sort-tab-buffer-freq))
                                                                (t nil)))))
                                      buffer-list)))
           (mapcar #'kill-buffer buffer-list)
@@ -474,12 +426,16 @@
       (defun sort-tab-revert-session (session-list)
         (mapcar #'(lambda (pair)
                     (let ((mode (car pair))
-                          (file (cadr pair)))
-                      (cond ((equal mode "file") (find-file file))
+                          (file (cadr pair))
+                          (freq (caddr pair)))
+                      (cond ((equal mode "file") (with-current-buffer (find-file file)
+                                                   (setq-local sort-tab-buffer-freq freq)))
                             ((equal mode "eshell") (let ((default-directory file))
                                                     (with-current-buffer (eshell 17)
-                                                      (rename-buffer (caddr pair)))))
-                            ((equal mode "dired") (dired file)))))
+                                                      (rename-buffer (cadddr pair))
+                                                      (setq-local sort-tab-buffer-freq freq))))
+                            ((equal mode "dired") (with-current-buffer (dired file)
+                                                    (setq-local sort-tab-buffer-freq freq))))))
                 session-list)
         (if sort-tab-mode
             (progn (sort-tab-mode -1)
@@ -492,12 +448,12 @@
         (with-temp-file session-file
           (prin1 (sort-tab-get-session-and-kill-all-buffers) (current-buffer)))
         (switch-to-buffer "*scratch*"))
-      (buffer-list)
 
       (defun act/load-session (session-file)
-        "Load session from session file."
+        "Load session from session file, clear current session."
         (interactive
          (list (read-file-name "Session file to load: " "~/.emacs.d/sessions/")))
+        (act/save-session "/dev/null")
         (sort-tab-revert-session
          (with-temp-buffer
            (insert-file-contents session-file)
@@ -514,6 +470,11 @@
                          (read (current-buffer)))))
           (sort-tab-save-session session-file)
           (sort-tab-revert-session session)))
+
+      (defun act/kill-session ()
+        "Clear current session"
+        (interactive)
+        (act/save-session "/dev/null"))
     #+END_SRC
 ** Line number
    #+BEGIN_SRC emacs-lisp
@@ -534,21 +495,6 @@
                           :height (face-attribute 'default :height)
                           :background (face-background 'default)
                           :family "Fantasque Sans Mono")
-    #+END_SRC
-** Side bar
-*** Install treemacs
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (init/ensure-package 'treemacs)
-    #+END_SRC
-*** Keybindings
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (global-set-key (kbd "C-t") #'treemacs)
-    #+END_SRC
-*** Appearance
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (treemacs-toggle-fixed-width)
-      (setq-default treemacs--width-is-locked nil
-                    treemacs-width 20)
     #+END_SRC
 ** Popup control
    #+BEGIN_SRC emacs-lisp
@@ -649,11 +595,6 @@
     We need to set ~idle-delay~ to tell LSP when it can update.
     #+BEGIN_SRC emacs-lisp
       (setq lsp-idle-delay 1)
-    #+END_SRC
-    Make the headline look uniform.
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (set-face-attribute 'header-line nil
-                          :background (face-background 'default))
     #+END_SRC
     Disable some annoying feature
     #+BEGIN_SRC emacs-lisp
@@ -895,23 +836,6 @@
         (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.4)
               org-preview-latex-default-process 'dvisvgm))
     #+END_SRC
-*** Highlight Latex fragment
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (setq org-highlight-latex-and-related '(latex script entities))
-      (with-eval-after-load 'org
-        (require 'latex)
-        (add-hook 'org-mode-hook 'latex-math-mode))
-    #+END_SRC
-*** Integrate zotxt
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (init/ensure-package-lazy 'zotxt)
-      (add-hook 'org-mode-hook 'org-zotxt-mode)
-    #+END_SRC
-*** Disable company
-    #+BEGIN_SRC emacs-lisp :tangle no
-      (add-hook 'org-mode-hook (lambda ()
-                                 (setq-local company-backends '((company-capf)))))
-    #+END_SRC
 *** Word Wrap
     #+BEGIN_SRC emacs-lisp
       (add-hook 'org-mode-hook #'(lambda () (setq-local word-wrap-by-category t)))
@@ -989,11 +913,6 @@
                           (lsp))))
    #+END_SRC
 * Extra features
-** Set up clipboard in terminal
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (init/ensure-package 'xclip)
-     (xclip-mode 1)
-   #+END_SRC
 ** Set up magit
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package-lazy 'magit)
@@ -1180,7 +1099,6 @@
         (add-hook 'eshell-mode-hook (lambda ()
                                       (setq-local corfu-auto nil))))
     #+END_SRC
-
 ** Symbol overlay
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'symbol-overlay)
@@ -1189,63 +1107,6 @@
      (global-set-key (kbd "M-p") 'symbol-overlay-switch-backward)
      (global-set-key (kbd "M-k") 'symbol-overlay-remove-all)
      (add-hook 'prog-mode-hook 'symbol-overlay-mode)
-   #+END_SRC
-
-** mu4e
-   Set font
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (defface mu4e-font
-       '((t :family "Times New Roman"))
-       "Times New Roman"
-       :group 'basic-faces)
-     (dolist (hook '(mu4e-view-mode-hook mu4e-compose-mode-hook mu4e-headers-mode-hook mu4e-main-mode-hook))
-       (add-hook hook
-                 #'(lambda ()
-                     (if (display-graphic-p)
-                         (progn
-                           (set (make-local-variable 'buffer-face-mode-face) 'mu4e-font)
-                           (buffer-face-mode t))))))
-   #+END_SRC
-
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (defun mu4e (&optional args)
-       (interactive)
-       (add-to-list 'load-path
-                    (concat user-emacs-directory "site-packages/mu/mu4e"))
-       (init/ensure-package 'mu4e)
-       (setq epa-pinentry-mode 'loopback
-             mail-user-agent 'mu4e-user-agent
-             mu4e-maildir "~/.mail"
-             mu4e-view-show-images t
-             mu4e-get-mail-command "offlineimap -u quiet"
-             mu4e-index-update-error-warning nil
-             mu4e-update-interval 300
-             mu4e-index-update-error-warning t
-             send-mail-function 'smtpmail-send-it
-             message-send-mail-function 'smtpmail-send-it
-             send-mail-function 'smtpmail-send-it
-             message-send-mail-function 'smtpmail-send-it
-             smtpmail-auth-credentials "~/.authinfo.gpg"
-             smtpmail-stream-type 'ssl
-             mu4e-context-policy 'pick-first)
-       (add-to-list 'mu4e-view-actions
-                    '("View in browser" . mu4e-action-view-in-browser) t)
-       (defun offlineimap-get-password (host port)
-         (require 'netrc)
-         (let* ((netrc (netrc-parse (expand-file-name "~/.authinfo.gpg")))
-                (hostentry (netrc-machine netrc host port port)))
-           (when hostentry (netrc-get hostentry "password"))))
-       (mu4e)
-       )
-   #+END_SRC
-
-** ssh-deploy
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (init/ensure-package 'ssh-deploy)
-     (ssh-deploy-line-mode)
-     (ssh-deploy-add-after-save-hook) ;; If you want automatic upload support
-     (ssh-deploy-add-find-file-hook) ;; If you want detecting remote changes support
-     (global-set-key (kbd "C-c C-z") 'ssh-deploy-prefix-map)
    #+END_SRC
 ** pdf-tools
    #+BEGIN_SRC emacs-lisp
@@ -1260,19 +1121,6 @@
 ** scala-mode
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'scala-mode)
-   #+END_SRC
-** ivy-posframe
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (init/ensure-package 'ivy-posframe)
-     (ivy-posframe-mode)
-     (defun my-ivy-posframe-get-size ()
-       "Set the ivy-posframe size according to the current frame."
-       (let ((height (or ivy-posframe-height (or ivy-height 10)))
-             (width (min (or ivy-posframe-width 200) (round (* .85 (frame-width))))))
-         (list :height height :width width :min-height height :min-width width)))
-
-     (setq ivy-posframe-size-function 'my-ivy-posframe-get-size)
-
    #+END_SRC
 ** ebib
    #+BEGIN_SRC emacs-lisp :tangle (if (and (boundp 'init/ebib-file-search-dirs) (boundp 'init/ebib-preload-bib-files)) "yes" "no")
@@ -1335,7 +1183,7 @@
                                                                       0
                                                                       (- sort-tab-name-max-length (length ellipsis)))
                                                            ellipsis)
-                            nnn                     short-name-formatted)))
+                                                 short-name-formatted)))
                                      'face
                                      (if (eq buf current-buffer)
                                          'sort-tab-current-tab-face

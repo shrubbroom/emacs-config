@@ -247,6 +247,8 @@
       (global-set-key (kbd "C-h d") #'helpful-at-point)
       (define-key helpful-mode-map (kbd "n") #'next-line)
       (define-key helpful-mode-map (kbd "p") #'previous-line)
+      (define-key help-mode-map (kbd "n") #'next-line)
+      (define-key help-mode-map (kbd "p") #'previous-line)
     #+END_SRC
 ** Window management
    #+BEGIN_SRC emacs-lisp
@@ -366,6 +368,7 @@
       (set-face-background 'doom-modeline-bar "#859900" nil)
       (display-time-mode)
       (column-number-mode)
+      (size-indication-mode)
     #+END_SRC
 *** Fire up modeline
     #+BEGIN_SRC emacs-lisp
@@ -507,7 +510,8 @@
              help-mode
              helpful-mode
              compilation-mode
-             Man-mode))
+             Man-mode
+             package-menu-mode))
      (global-set-key (kbd "<C-tab>") 'popper-toggle-latest)
      (define-key popper-mode-map (kbd "<C-tab>") 'popper-cycle)
      (global-set-key (kbd "<C-escape>") 'popper-kill-latest-popup)
@@ -664,35 +668,31 @@
      (add-to-list 'company-transformers #'delete-dups)
    #+END_SRC
 ** Python
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (init/ensure-package 'pyvenv)
-   #+END_SRC
-   This function is defined to manually select virtual environment.
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (if (boundp 'init/python-env-list)
-         (defun init/python-switch-env (&optional args)
-           (interactive)
-           (ivy-read "Env: "
-                     init/python-env-list
-                     :action #'(lambda (arg)
-                                 (pyvenv-deactivate)
-                                 (pyvenv-activate arg)))))
-   #+END_SRC
-   ~yapf~ and ~pyright~ are used to format and complete.
-   #+BEGIN_SRC emacs-lisp :tangle no
-     (init/ensure-package 'lsp-pyright)
-     (defun lsp-pyright-format-buffer ()
-       (interactive)
-       (when (and (executable-find "yapf") buffer-file-name)
-         (call-process "yapf" nil nil nil "-i" buffer-file-name "--style={COLUMN_LIMIT=256}")
-         (revert-buffer t t)))
-     (add-hook 'python-mode-hook
-               #'(lambda ()
-                   (lsp)
-                   (add-hook 'after-save-hook #'lsp-pyright-format-buffer t t)))
-     (when (executable-find "python3")
-       (setq lsp-pyright-python-executable-cmd "python3"))
-   #+END_SRC
+*** Conda
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'conda)
+    #+END_SRC
+    Setup conda
+    #+BEGIN_SRC emacs-lisp
+      (conda-env-initialize-eshell)
+      (conda-env-activate 'base)
+    #+END_SRC
+*** Pyright
+    ~yapf~ and ~pyright~ are used to format and complete.
+    #+BEGIN_SRC emacs-lisp
+      (init/ensure-package 'lsp-pyright)
+      (defun lsp-pyright-format-buffer ()
+        (interactive)
+        (when (and (executable-find "yapf") buffer-file-name)
+          (call-process "yapf" nil nil nil "-i" buffer-file-name "--style={COLUMN_LIMIT=256}")
+          (revert-buffer t t)))
+      (add-hook 'python-mode-hook
+                #'(lambda ()
+                    (lsp)
+                    (add-hook 'after-save-hook #'lsp-pyright-format-buffer t t)))
+      (when (executable-find "python3")
+        (setq lsp-pyright-python-executable-cmd "python3"))
+    #+END_SRC
 ** C/C++
    Installing ~ccls~ if ccls exists.
    #+BEGIN_SRC emacs-lisp :tangle (if (executable-find "ccls") "yes" "no")
@@ -866,8 +866,7 @@
                                               :color "grey75"
                                               :style released-button))))
         (setq org-hide-emphasis-markers t
-              org-pretty-entities t)
-        )
+              org-pretty-entities t))
 
       (with-eval-after-load 'whitespace
         (dolist (face '(whitespace-space whitespace-tab whitespace-newline))
@@ -876,6 +875,11 @@
                               :foreground "grey75")))
       (setq whitespace-style '(face spaces tabs newline space-mark tab-mark newline-mark))
     #+END_SRC
+*** Completion
+    #+begin_src emacs-lisp
+      (with-eval-after-load 'org
+        (require 'org-tempo))
+    #+end_src
 ** Latex
    #+BEGIN_SRC emacs-lisp
      (setq org-latex-pdf-process
@@ -941,73 +945,81 @@
              (eshell-color4 "#7959AE")
              (eshell-color4-lighter (make-color-lighter eshell-color4 1.5)))
 
-        (setq eshell-prompt-function-light #'(lambda nil
-                                               (concat
-                                                (propertize "╭─"
-                                                            'face `(:background (face-background 'default) :weight bold))
-                                                (propertize (user-login-name)
-                                                            'face `(:foreground ,eshell-color1 :weight bold))
-                                                (propertize " at "
-                                                            'face `(:background (face-background 'default)))
-                                                (propertize (system-name)
-                                                            'face `(:foreground  ,eshell-color1 :weight bold))
-                                                (propertize " in "
-                                                            'face `(:background (face-background 'default)))
-                                                (propertize (abbreviate-file-name (eshell/pwd))
-                                                            'face `(:foreground ,eshell-color2 :weight bold :slant italic))
-                                                (if (and (boundp 'url-proxy-services)
-                                                         (assoc "http" url-proxy-services))
-                                                    (concat
-                                                     (propertize " via "
-                                                                 'face `(:background (face-background 'default)))
-                                                     (propertize (cdr (assoc "http" url-proxy-services))
-                                                                 'face `(:foreground ,eshell-color3 :weight bold))))
-                                                (propertize "\n"
-                                                            'face `(:background (face-background 'default)))
-                                                (propertize "╰─["
-                                                            'face `(:background (face-background 'default) :weight bold))
-                                                (propertize (if (= (user-uid) 0) "# " "λ")
-                                                            'face `(:slant default :weight bold :foreground ,eshell-color4))
-                                                (propertize "]"
-                                                            'face `(:background (face-background 'default) :weight bold))
-                                                (propertize " "
-                                                            'face `(:background (face-background 'default))))))
-        (setq eshell-prompt-function-dark #'(lambda nil
-                                              (concat
-                                               (propertize "╭─"
-                                                           'face `(:background (face-background 'default) :weight bold))
-                                               (propertize (user-login-name)
-                                                           'face `(:foreground ,eshell-color1-lighter :weight bold))
-                                               (propertize " at "
-                                                           'face `(:background (face-background 'default)))
-                                               (propertize (system-name)
-                                                           'face `(:foreground  ,eshell-color1-lighter :weight bold))
-                                               (propertize " in "
-                                                           'face `(:background (face-background 'default)))
-                                               (propertize (abbreviate-file-name (eshell/pwd))
-                                                           'face `(:foreground ,eshell-color2-lighter :weight bold :slant italic))
-                                               (if (and (boundp 'url-proxy-services)
-                                                        (assoc "http" url-proxy-services))
-                                                   (concat
-                                                    (propertize " via "
-                                                                'face `(:background (face-background 'default)))
-                                                    (propertize (cdr (assoc "http" url-proxy-services))
-                                                                'face `(:foreground ,eshell-color3-lighter :weight bold))))
-                                               (propertize "\n"
-                                                           'face `(:background (face-background 'default)))
-                                               (propertize "╰─["
-                                                           'face `(:background (face-background 'default) :weight bold))
-                                               (propertize (if (= (user-uid) 0) "# " "λ")
-                                                           'face `(:slant default :weight bold :foreground ,eshell-color4-lighter))
-                                               (propertize "]"
-                                                           'face `(:background (face-background 'default) :weight bold))
-                                               (propertize " "
-                                                           'face `(:background (face-background 'default)))))))
+        (setq eshell-prompt-function-light
+              #'(lambda nil
+                  (concat
+                   (propertize "╭─"
+                               'face `(:background (face-background 'default) :weight bold))
+                   (propertize (user-login-name)
+                               'face `(:foreground ,eshell-color1 :weight bold))
+                   (propertize " at "
+                               'face `(:background (face-background 'default)))
+                   (propertize (system-name)
+                               'face `(:foreground  ,eshell-color1 :weight bold))
+                   (propertize " in "
+                               'face `(:background (face-background 'default)))
+                   (propertize (abbreviate-file-name (eshell/pwd))
+                               'face `(:foreground ,eshell-color2 :weight bold :slant italic))
+                   (if (and (boundp 'url-proxy-services)
+                            (assoc "http" url-proxy-services))
+                       (concat
+                        (propertize " via "
+                                    'face `(:background (face-background 'default)))
+                        (propertize (cdr (assoc "http" url-proxy-services))
+                                    'face `(:foreground ,eshell-color3 :weight bold))))
+                   (propertize "\n"
+                               'face `(:background (face-background 'default)))
+                   (propertize "╰─["
+                               'face `(:background (face-background 'default) :weight bold))
+                   (propertize (if (= (user-uid) 0) "# " "λ")
+                               'face `(:slant default :weight bold :foreground ,eshell-color4))
+                   (propertize "]"
+                               'face `(:background (face-background 'default) :weight bold))
+                   (propertize " "
+                               'face `(:background (face-background 'default))))))
+        (setq eshell-prompt-function-dark
+              #'(lambda nil
+                  (concat
+                   (propertize "╭─"
+                               'face `(:background (face-background 'default) :weight bold))
+                   (propertize (user-login-name)
+                               'face `(:foreground ,eshell-color1-lighter :weight bold))
+                   (propertize " at "
+                               'face `(:background (face-background 'default)))
+                   (propertize (system-name)
+                               'face `(:foreground  ,eshell-color1-lighter :weight bold))
+                   (propertize " in "
+                               'face `(:background (face-background 'default)))
+                   (propertize (abbreviate-file-name (eshell/pwd))
+                               'face `(:foreground ,eshell-color2-lighter :weight bold :slant italic))
+                   (if (and (boundp 'url-proxy-services)
+                            (assoc "http" url-proxy-services))
+                       (concat
+                        (propertize " via "
+                                    'face `(:background (face-background 'default)))
+                        (propertize (cdr (assoc "http" url-proxy-services))
+                                    'face `(:foreground ,eshell-color3-lighter :weight bold))))
+                   (propertize "\n"
+                               'face `(:background (face-background 'default)))
+                   (propertize "╰─["
+                               'face `(:background (face-background 'default) :weight bold))
+                   (propertize (if (= (user-uid) 0) "# " "λ")
+                               'face `(:slant default :weight bold :foreground ,eshell-color4-lighter))
+                   (propertize "]"
+                               'face `(:background (face-background 'default) :weight bold))
+                   (propertize " "
+                               'face `(:background (face-background 'default)))))))
 
       (setq eshell-prompt-regexp "^╰─\\\[[#λ]\\\] ")
       (if (bound-and-true-p init/system-dark-modep)
-          (setq eshell-prompt-function eshell-prompt-function-dark)
-        (setq eshell-prompt-function eshell-prompt-function-light))
+          (setq eshell-prompt-function
+                eshell-prompt-function-dark)
+        (setq eshell-prompt-function
+              eshell-prompt-function-light))
+    #+END_SRC
+    This is just for ~shell~ command
+    #+BEGIN_SRC emacs-lisp
+      (setq comint-prompt-read-only t)
     #+END_SRC
 *** Syntax highlight
     #+BEGIN_SRC emacs-lisp
@@ -1089,10 +1101,36 @@
       (defun eshell/emacs (file)
         (find-file file))
     #+END_SRC
+*** Act
+    #+BEGIN_SRC emacs-lisp
+      (defun act/eshell ()
+        (interactive)
+        (let ((buf (eshell 17)))
+          (with-current-buffer buf
+            (rename-buffer (concat "esh:" (format "%d" (act/eshell-new-index)))))
+          (switch-to-buffer buf)))
+      (defun act/eshell-new-index ()
+        (let* ((index-list (act/eshell-get-index-list))
+               (new-buf-index 0)
+               (index-arr (make-vector 100 0)))
+          (dolist (i index-list)
+            (aset index-arr i 1))
+          (while (= (aref index-arr new-buf-index) 1)
+            (setq new-buf-index (+ new-buf-index 1)))
+          new-buf-index))
+      (defun act/eshell-get-index-list ()
+        (mapcar #'string-to-number
+                (mapcar (apply-partially #'replace-regexp-in-string
+                                         "esh:"
+                                         "")
+                        (seq-filter (apply-partially #'string-match-p
+                                                     "esh:[0-9]+")
+                                    (mapcar #'buffer-name
+                                            (buffer-list))))))
+    #+END_SRC
 *** Issues
     #+BEGIN_SRC emacs-lisp
       (with-eval-after-load 'em-term
-        (push "python" eshell-visual-commands)
         (push "ghci" eshell-visual-commands)
         (push "ssh" eshell-visual-commands)
         (push "htop" eshell-visual-commands)
@@ -1168,8 +1206,9 @@
       (advice-add 'sort-tab-get-tab-name
                   :around #'(lambda (origin buf current-buffer)
                               (let* ((name (buffer-name buf))
-                                     (short-name (replace-regexp-in-string "20[0-9][0-9][01][0-9][0-3][0-9]+-"
-                                                                           "" name)))
+                                     (short-name (and name
+                                                      (replace-regexp-in-string "20[0-9][0-9][01][0-9][0-3][0-9]+-"
+                                                                                "" name))))
                                 (if (eq (length name) (length short-name))
                                     (apply origin `(,buf ,current-buffer))
                                   (let ((short-name-formatted (concat "roam:"
@@ -1263,6 +1302,7 @@
      (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
      (add-hook 'dired-mode-hook #'dired-omit-mode)
      (define-key dired-mode-map (kbd "C-c t") #'dired-omit-mode)
+     (define-key dired-mode-map [remap dired-find-file] #'dired-find-alternate-file)
    #+END_SRC
 ** Word Count
    #+BEGIN_SRC emacs-lisp
@@ -1347,6 +1387,31 @@
              (message--words-count list min max)
            list)))
    #+END_SRC
+** Setup hideshow
+#+BEGIN_SRC emacs-lisp
+  (require 'hideshow)
+  (add-hook 'prog-mode-hook 'hs-minor-mode)
+  (defun hs-toggle-hiding-or-indent-for-tab-command (&optional arg)
+      (interactive "P")
+      (let ((oldpos (point)))
+        (back-to-indentation)
+        (if (hs-looking-at-block-start-p)
+            (hs-toggle-hiding)
+          (progn
+            (goto-char oldpos)
+            (indent-for-tab-command arg)))))
+  (define-key hs-minor-mode-map (kbd "TAB") #'hs-toggle-hiding-or-indent-for-tab-command)
+#+END_SRC
+Make the overlay look nicer
+#+BEGIN_SRC emacs-lisp
+  (defconst hideshow-folded-face '((t (:inherit 'font-lock-comment-face :box t))))
+  (defun hideshow-folded-overlay-fn (ov)
+      (when (eq 'code (overlay-get ov 'hs))
+        (let* ((nlines (count-lines (overlay-start ov) (overlay-end ov)))
+               (info (format " ... #%d " nlines)))
+          (overlay-put ov 'display (propertize info 'face hideshow-folded-face)))))
+  (setq hs-set-up-overlay 'hideshow-folded-overlay-fn)
+#+END_SRC
 ** Writeroom mode
    This package comes with autoload
    #+BEGIN_SRC emacs-lisp
@@ -1359,3 +1424,7 @@
      (advice-add #'writeroom--set-global-effects :after
                  #'sort-tab-refresh)
    #+END_SRC
+** Tramp
+   #+begin_src emacs-lisp
+     (setq-default tramp-verbose 1)
+   #+end_src

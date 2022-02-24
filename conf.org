@@ -511,7 +511,8 @@
              helpful-mode
              compilation-mode
              Man-mode
-             package-menu-mode))
+             package-menu-mode
+             pdf-outline-buffer-mode))
      (global-set-key (kbd "<C-tab>") 'popper-toggle-latest)
      (define-key popper-mode-map (kbd "<C-tab>") 'popper-cycle)
      (global-set-key (kbd "<C-escape>") 'popper-kill-latest-popup)
@@ -879,6 +880,16 @@
     #+begin_src emacs-lisp
       (with-eval-after-load 'org
         (require 'org-tempo))
+      (add-hook 'org-mode-hook (lambda ()
+                                 (setq-local corfu-auto nil)))
+    #+end_src
+*** Export
+    #+begin_src emacs-lisp
+      (add-hook 'org-mode-hook (lambda ()
+                                 (setq-local compile-command
+                                             (concat "pandoc --pdf-engine=xelatex -o "
+                                                     (concat (file-name-sans-extension (buffer-name)) ".pdf ")
+                                                     (buffer-name)))))
     #+end_src
 ** Latex
    #+BEGIN_SRC emacs-lisp
@@ -1137,6 +1148,12 @@
         (add-hook 'eshell-mode-hook (lambda ()
                                       (setq-local corfu-auto nil))))
     #+END_SRC
+** Shell
+   #+begin_src emacs-lisp
+     (add-hook 'shell-mode-hook (lambda ()
+                                  (setq-local corfu-auto nil)
+                                  (compilation-shell-minor-mode +1)))
+   #+end_src
 ** Symbol overlay
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'symbol-overlay)
@@ -1427,4 +1444,9 @@ Make the overlay look nicer
 ** Tramp
    #+begin_src emacs-lisp
      (setq-default tramp-verbose 1)
+   #+end_src
+** Enable disabled feature
+   #+begin_src emacs-lisp
+     (put 'dired-find-alternate-file 'disabled nil)
+     (put 'narrow-to-region 'disabled nil)
    #+end_src

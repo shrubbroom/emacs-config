@@ -34,4 +34,3 @@
 
   ;; Collect garbage when all else is done
   (garbage-collect))
-(put 'dired-find-alternate-file 'disabled nil)

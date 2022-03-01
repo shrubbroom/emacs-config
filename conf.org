@@ -755,6 +755,20 @@
 ** Emacs Rime
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package-lazy 'rime)
+     (with-eval-after-load 'rime
+       (define-key rime-mode-map [escape] #'rime-inline-ascii)
+       (advice-add 'rime-inline-ascii :after
+                   #'(lambda () (if (rime--ascii-mode-p)
+                                    (message "%s"
+                                             (concat "rime inline ascii "
+                                                     (propertize "enabled"
+                                                                 :foreground
+                                                                 "green")))
+                                  (message "%s"
+                                           (concat "rime inline ascii "
+                                                   (propertize "disabled"
+                                                               :foreground
+                                                               "red")))))))
      ;; (define-key rime-mode-map (kbd "C-z") 'rime-force-enable)
      (setq default-input-method "rime")
      (setq rime-show-candidate 'posframe
@@ -766,11 +780,13 @@
            rime-disable-predicates
            '(
              rime-predicate-prog-in-code-p
+             rime-predicate-org-in-src-block-p
              rime-predicate-current-uppercase-letter-p
              rime-predicate-after-alphabet-char-p
              rime-predicate-after-ascii-char-p
              rime-predicate-evil-mode-p
-             rime-predicate-hydra-p rime-predicate-punctuation-line-begin-p
+             rime-predicate-hydra-p
+             rime-predicate-punctuation-line-begin-p
              rime-predicate-space-after-cc-p
              rime-predicate-tex-math-or-command-p))
    #+END_SRC
@@ -877,6 +893,7 @@
       (setq whitespace-style '(face spaces tabs newline space-mark tab-mark newline-mark))
     #+END_SRC
 *** Completion
+    Disable auto completion provided by corfu
     #+begin_src emacs-lisp
       (with-eval-after-load 'org
         (require 'org-tempo))
@@ -890,6 +907,12 @@
                                              (concat "pandoc --pdf-engine=xelatex -o "
                                                      (concat (file-name-sans-extension (buffer-name)) ".pdf ")
                                                      (buffer-name)))))
+    #+end_src
+*** Babel
+    #+begin_src emacs-lisp
+      (org-babel-do-load-languages 'org-babel-load-languages
+                                   '((shell . t)
+                                     (python . t)))
     #+end_src
 ** Latex
    #+BEGIN_SRC emacs-lisp

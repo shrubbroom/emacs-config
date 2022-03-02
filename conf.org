@@ -904,7 +904,7 @@
     #+begin_src emacs-lisp
       (add-hook 'org-mode-hook (lambda ()
                                  (setq-local compile-command
-                                             (concat "pandoc --pdf-engine=xelatex -o "
+                                             (concat "pandoc --pdf-engine=xelatex -o --toc -V mainfont=\'LXGW Bright\' "
                                                      (concat (file-name-sans-extension (buffer-name)) ".pdf ")
                                                      (buffer-name)))))
     #+end_src

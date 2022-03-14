@@ -266,9 +266,9 @@
 *** prog-mode font
     Use separate font for ~prog-mode~
     #+BEGIN_SRC emacs-lisp
-      (defface fsm-font
-        '((t :family "Fantasque Sans Mono"))
-        "Fantasque Sans Mono"
+      (defface cc-font
+        '((t :family "Cascadia Code"))
+        "Cascadia Code"
         :group 'basic-faces)
       (dolist (hook '(eshell-mode-hook prog-mode-hook))
         (add-hook hook
@@ -276,7 +276,7 @@
                       (if (display-graphic-p)
                           (progn
                             ;; (text-scale-set 1)
-                            (set (make-local-variable 'buffer-face-mode-face) 'fsm-font)
+                            (set (make-local-variable 'buffer-face-mode-face) 'cc-font)
                             (buffer-face-mode t))))))
     #+END_SRC
 ** Ligature
@@ -284,6 +284,43 @@
     #+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
       (mac-auto-operator-composition-mode +1)
     #+END_SRC
+*** Linux
+    #+begin_src emacs-lisp :tangle (if (eq system-type 'gnu/linux) "yes" "no")
+      (add-to-list 'load-path
+                   (concat user-emacs-directory "site-packages/ligature"))
+      (require 'ligature)
+      (ligature-set-ligatures 't '("www"))
+      ;; Enable traditional ligature support in eww-mode, if the
+      ;; `variable-pitch' face supports it
+      (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
+      ;; Enable all Cascadia Code ligatures in programming modes
+      (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--"
+                                           "####" "~~>" "***" "||=" "||>"
+                                           ":::" "::=" "=:=" "===" "==>"
+                                           "=!=" "=>>" "=<<" "=/=" "!=="
+                                           "!!." ">=>" ">>=" ">>>" ">>-"
+                                           ">->" "->>" "-->" "---" "-<<"
+                                           "<~~" "<~>" "<*>" "<||" "<|>"
+                                           "<$>" "<==" "<=>" "<=<" "<->"
+                                           "<--" "<-<" "<<=" "<<-" "<<<"
+                                           "<+>" "</>" "###" "#_(" "..<"
+                                           "..." "+++" "/==" "///" "_|_"
+                                           "www" "&&" "^=" "~~" "~@" "~="
+                                           "~>" "~-" "**" "*>" "*/" "||"
+                                           "|}" "|]" "|=" "|>" "|-" "{|"
+                                           "[|" "]#" "::" ":=" ":>" ":<"
+                                           "$>" "==" "=>" "!=" "!!" ">:"
+                                           ">=" ">>" ">-" "-~" "-|" "->"
+                                           "--" "-<" "<~" "<*" "<|" "<:"
+                                           "<$" "<=" "<>" "<-" "<<" "<+"
+                                           "</" "#{" "#[" "#:" "#=" "#!"
+                                           "##" "#(" "#?" "#_" "%%" ".="
+                                           ".-" ".." ".?" "+>" "++" "?:"
+                                           "?=" "?." "??" ";;" "/*" "/="
+                                           "/>" "//" "__" "~~" "(*" "*)"
+                                           "\\\\" "://"))
+      (global-ligature-mode t)
+    #+end_src
 ** Smooth scrolling
    #+BEGIN_SRC emacs-lisp
      (setq scroll-margin 0)
@@ -491,13 +528,13 @@
                           :height (face-attribute 'default :height)
                           :background (face-background 'line-number)
                           :foreground (face-background 'line-number-current-line)
-                          :family "Fantasque Sans Mono")
+                          :family "Cascadia Code")
       (set-face-attribute 'line-number
                           nil
                           :weight 'light
                           :height (face-attribute 'default :height)
                           :background (face-background 'default)
-                          :family "Fantasque Sans Mono")
+                          :family "Cascadia Code")
     #+END_SRC
 ** Popup control
    #+BEGIN_SRC emacs-lisp
@@ -811,7 +848,7 @@
                           ;; (text-scale-set -1)
                           (set (make-local-variable 'buffer-face-mode-face) 'lxwk-font)
                           (buffer-face-mode t)
-                          (face-remap-add-relative 'org-block '(:family "Fantasque Sans Mono"))))))
+                          (face-remap-add-relative 'org-block '(:family "Cascadia Code"))))))
       (defun buffer-toggle-highlight-foreground (&optional args)
         (interactive)
         (if (and (boundp 'face-remap-add-relative-cookie) face-remap-add-relative-cookie)

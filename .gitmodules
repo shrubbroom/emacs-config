@@ -7,3 +7,6 @@
 [submodule "rime"]
 	path = rime
 	url = https://github.com/shrubbroom/rime-config.git
+[submodule "site-packages/ligature"]
+	path = site-packages/ligature
+	url = https://github.com/mickeynp/ligature.el.git

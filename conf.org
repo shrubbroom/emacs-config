@@ -22,8 +22,7 @@
               (package-install pkg))
             (unless (ignore-errors (require pkg))
               nil
-              ;; (warn (format "(init/ensure-package) feature %s doesn't exist" pkg)
-              ;;       )
+              ;; (warn (format "(init/ensure-package) feature %s doesn't exist" pkg))
               )
             nil)))
       (defun init/ensure-package-lazy (pkg)
@@ -259,16 +258,20 @@
 * Look and feel
   *This part should not be changed frequently. Spend time on important things*
 ** Fonts
-   Use Sarasa Term SC as default font
+   Use Sarasa Term SC as default font, the font size configuration is moved to ~local-variables.el~
    #+BEGIN_SRC emacs-lisp
-     (set-frame-font "Sarasa Term Slab SC-18" nil t)
+     (set-frame-font "Junicode" nil t)
+     (set-frame-font "Fantasque Sans Mono" nil t)
+     (dolist (charset '(kana han cjk-misc bopomofo))
+       (set-fontset-font (frame-parameter nil 'font) charset
+                         (font-spec :family "LXGW WenKai")))
    #+END_SRC
 *** prog-mode font
     Use separate font for ~prog-mode~
     #+BEGIN_SRC emacs-lisp
       (defface cc-font
-        '((t :family "Cascadia Code"))
-        "Cascadia Code"
+        '((t :family "Fantasque Sans Mono"))
+        "Fantasque Sans Mono"
         :group 'basic-faces)
       (dolist (hook '(eshell-mode-hook prog-mode-hook))
         (add-hook hook
@@ -293,7 +296,10 @@
       ;; Enable traditional ligature support in eww-mode, if the
       ;; `variable-pitch' face supports it
       (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
-      ;; Enable all Cascadia Code ligatures in programming modes
+      ;; Enable ligature in other documentation mode
+      (dolist (mode '(org-mode markdown-mode))
+        (ligature-set-ligatures mode '("ff" "fi" "ffi")))
+      ;; Enable all Fantasque Sans Mono ligatures in programming modes
       (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--"
                                            "####" "~~>" "***" "||=" "||>"
                                            ":::" "::=" "=:=" "===" "==>"
@@ -358,6 +364,7 @@
     Install themes
     #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'badwolf-theme)
+      (init/ensure-package 'tao-theme)
       (add-to-list 'load-path
                    (concat user-emacs-directory "site-packages/moe-theme"))
       (require 'moe-theme)
@@ -398,10 +405,6 @@
             doom-modeline-mu4e nil
             doom-modeline-hud t
             all-the-icons-scale-factor 1.0)
-      (set-face-attribute 'mode-line nil
-                          :height 140)
-      (set-face-attribute 'mode-line-inactive nil
-                          :height 140)
       (set-face-background 'doom-modeline-bar "#859900" nil)
       (display-time-mode)
       (column-number-mode)
@@ -528,13 +531,13 @@
                           :height (face-attribute 'default :height)
                           :background (face-background 'line-number)
                           :foreground (face-background 'line-number-current-line)
-                          :family "Cascadia Code")
+                          :family "Fantasque Sans Mono")
       (set-face-attribute 'line-number
                           nil
                           :weight 'light
                           :height (face-attribute 'default :height)
                           :background (face-background 'default)
-                          :family "Cascadia Code")
+                          :family "Fantasque Sans Mono")
     #+END_SRC
 ** Popup control
    #+BEGIN_SRC emacs-lisp
@@ -837,18 +840,19 @@
 ** Org mode
 *** Set seperate font for org mode
     #+BEGIN_SRC emacs-lisp
-      (defface lxwk-font
-        '((t :family "LXGW Bright"))
-        "霞鹜文楷"
+      (defface lm-font
+        '((t :family "Junicode"))
+        "LXGW Bright"
         :group 'basic-faces)
       (add-hook 'org-mode-hook
                 #'(lambda ()
                     (if (display-graphic-p)
                         (progn
                           ;; (text-scale-set -1)
-                          (set (make-local-variable 'buffer-face-mode-face) 'lxwk-font)
+                          (set (make-local-variable 'buffer-face-mode-face)
+                               'lm-font)
                           (buffer-face-mode t)
-                          (face-remap-add-relative 'org-block '(:family "Cascadia Code"))))))
+                          (face-remap-add-relative 'org-block '(:family "Fantasque Sans Mono"))))))
       (defun buffer-toggle-highlight-foreground (&optional args)
         (interactive)
         (if (and (boundp 'face-remap-add-relative-cookie) face-remap-add-relative-cookie)
@@ -887,8 +891,11 @@
 *** Preview
     #+BEGIN_SRC emacs-lisp
       (with-eval-after-load 'org
-        (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.4)
+        (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0)
               org-preview-latex-default-process 'dvisvgm))
+      (init/ensure-package 'org-latex-impatient)
+      (setq org-latex-impatient-tex2svg-bin
+            "~/.local/mathjax-node/node_modules/mathjax-node-cli/bin/tex2svg")
     #+END_SRC
 *** Word Wrap
     #+BEGIN_SRC emacs-lisp
@@ -960,10 +967,10 @@
     #+end_src
 ** Latex
    #+BEGIN_SRC emacs-lisp
-     (setq org-latex-pdf-process
-           '("xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"
-             "xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"
-             "xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"))
+     ;; (setq org-latex-pdf-process
+     ;;       '("xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"
+     ;;         "xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"
+     ;;         "xelatex -interaction --synctex=1 nonstopmode -output-directory %o %f"))
      (org-babel-do-load-languages
       'org-babel-load-languages
       '((dot . t)))

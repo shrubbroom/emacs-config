@@ -249,6 +249,14 @@
       (define-key help-mode-map (kbd "n") #'next-line)
       (define-key help-mode-map (kbd "p") #'previous-line)
     #+END_SRC
+** Auto Save
+#+begin_src emacs-lisp
+  (add-to-list 'load-path
+               (concat user-emacs-directory "site-packages/auto-save"))
+  (require 'auto-save)
+  (auto-save-enable)
+  (setq auto-save-silent t)
+#+end_src
 ** Window management
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'winum)
@@ -840,9 +848,9 @@
 ** Org mode
 *** Set seperate font for org mode
     #+BEGIN_SRC emacs-lisp
-      (defface lm-font
+      (defface lt-font
         '((t :family "Junicode"))
-        "LXGW Bright"
+        "Junicode"
         :group 'basic-faces)
       (add-hook 'org-mode-hook
                 #'(lambda ()
@@ -850,7 +858,7 @@
                         (progn
                           ;; (text-scale-set -1)
                           (set (make-local-variable 'buffer-face-mode-face)
-                               'lm-font)
+                               'lt-font)
                           (buffer-face-mode t)
                           (face-remap-add-relative 'org-block '(:family "Fantasque Sans Mono"))))))
       (defun buffer-toggle-highlight-foreground (&optional args)

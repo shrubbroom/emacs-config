@@ -89,12 +89,17 @@
     #+BEGIN_SRC emacs-lisp
       (save-place-mode)
     #+END_SRC
+*** Set cursor style and enable blinking
+#+begin_src emacs-lisp
+  (setq-default cursor-type '(bar . 3))
+  (blink-cursor-mode 1)
+#+end_src
 *** Go to first char instead of line head
     #+BEGIN_SRC emacs-lisp
       (defun smart-beginning-of-line ()
         "Move point to first non-whitespace character or beginning-of-line.
       Move point to the first non-whitespace character on this line.
-      If point was already at that position, move point to beginning of line."
+      If point is already at that position, move point to the beginning of line."
         (interactive)
         (let ((oldpos (point)))
           (back-to-indentation)
@@ -103,22 +108,11 @@
       (global-set-key [home] 'smart-beginning-of-line)
       (global-set-key "\C-a" 'smart-beginning-of-line)
     #+END_SRC
-*** Enable CUA mode
+*** Enable CUA selection mode (delete on selection)
     #+BEGIN_SRC emacs-lisp
       (setq cua-delete-selection t)
       (cua-selection-mode t)
-    #+END_SRC
-*** Revert buffer in daemon-client mode
-    #+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'darwin) "no" "yes")
-      (advice-add #'save-buffers-kill-terminal :before
-                  (lambda (&optional args)
-                    (interactive) (setq client-revert-bufferp (current-buffer))))
-      (defun client-revert-buffer ()
-        "revert the buffer if client-revert-bufferp is defined and its buffer still lives"
-        (interactive)
-        (if (and (boundp 'client-revert-bufferp) (buffer-live-p client-revert-bufferp))
-            (switch-to-buffer client-revert-bufferp)))
-      (add-hook 'server-after-make-frame-hook 'client-revert-buffer)
+      (set-face-attribute 'cua-rectangle nil :background (face-background 'region))
     #+END_SRC
 *** Set frame title
     #+BEGIN_SRC emacs-lisp
@@ -131,10 +125,6 @@
       (setq visible-bell nil
             visible-cursor nil
             ring-bell-function 'ignore)
-    #+END_SRC
-*** Disable cursor blink
-    #+BEGIN_SRC  emacs-lisp
-      (blink-cursor-mode 0)
     #+END_SRC
 *** Use y/n instead of yes/no
     #+BEGIN_SRC emacs-lisp
@@ -270,6 +260,7 @@
    #+BEGIN_SRC emacs-lisp
      (set-frame-font "Junicode" nil t)
      (set-frame-font "Fantasque Sans Mono" nil t)
+     (set-frame-font "Sarasa Mono SC" nil t)
      (dolist (charset '(kana han cjk-misc bopomofo))
        (set-fontset-font (frame-parameter nil 'font) charset
                          (font-spec :family "LXGW WenKai")))
@@ -281,7 +272,7 @@
         '((t :family "Fantasque Sans Mono"))
         "Fantasque Sans Mono"
         :group 'basic-faces)
-      (dolist (hook '(eshell-mode-hook prog-mode-hook))
+      (dolist (hook '(prog-mode-hook))
         (add-hook hook
                   #'(lambda ()
                       (if (display-graphic-p)
@@ -373,6 +364,7 @@
     #+BEGIN_SRC emacs-lisp
       (init/ensure-package 'badwolf-theme)
       (init/ensure-package 'tao-theme)
+      (init/ensure-package 'doom-themes)
       (add-to-list 'load-path
                    (concat user-emacs-directory "site-packages/moe-theme"))
       (require 'moe-theme)
@@ -391,6 +383,10 @@
                             :background (face-background 'default)))
       (init/tone-down-fringes)
     #+END_SRC
+*** Background opacity
+#+begin_src emacs-lisp
+  (setq default-frame-alist '((alpha-background . 80)))
+#+end_src
 ** Icon
    Set up all-the-icons
    #+BEGIN_SRC emacs-lisp
@@ -538,7 +534,6 @@
                           :weight 'bold
                           :height (face-attribute 'default :height)
                           :background (face-background 'line-number)
-                          :foreground (face-background 'line-number-current-line)
                           :family "Fantasque Sans Mono")
       (set-face-attribute 'line-number
                           nil
@@ -837,6 +832,9 @@
              rime-predicate-punctuation-line-begin-p
              rime-predicate-space-after-cc-p
              rime-predicate-tex-math-or-command-p))
+     (setq rime-posframe-properties
+      (list :font "LXGW WenKai"
+            :internal-border-width 1))
    #+END_SRC
 ** Display
    Enable ~visual-line-mode~ in ~text-mode~ and Latex buffer.
@@ -867,7 +865,7 @@
             (progn (face-remap-remove-relative face-remap-add-relative-cookie)
                    (setq face-remap-add-relative-cookie nil))
           (set (make-local-variable 'face-remap-add-relative-cookie) (face-remap-add-relative 'default '(:foreground "#000000")))))
-      (add-hook 'org-mode-hook #'buffer-toggle-highlight-foreground)
+      ;; (add-hook 'org-mode-hook #'buffer-toggle-highlight-foreground)
     #+END_SRC
 *** Table Align
     #+BEGIN_SRC emacs-lisp
@@ -900,7 +898,8 @@
     #+BEGIN_SRC emacs-lisp
       (with-eval-after-load 'org
         (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0)
-              org-preview-latex-default-process 'dvisvgm))
+              org-preview-latex-default-process 'dvisvgm
+              org-image-actual-width nil))
       (init/ensure-package 'org-latex-impatient)
       (setq org-latex-impatient-tex2svg-bin
             "~/.local/mathjax-node/node_modules/mathjax-node-cli/bin/tex2svg")
@@ -924,7 +923,7 @@
       (with-eval-after-load 'org
         ;; Make verbatim with highlight text background.
         (add-to-list 'org-emphasis-alist
-                     '("=" (:background "#fef7ca")))
+                     `("=" (:background ,(face-background 'org-block))))
         ;; Make deletion(obsolote) text foreground with dark gray.
         (add-to-list 'org-emphasis-alist
                      '("+" (:foreground "dark gray"
@@ -1193,6 +1192,8 @@
     #+BEGIN_SRC emacs-lisp
       (defun eshell/emacs (file)
         (find-file file))
+      (defun eshell/vim (file)
+        (find-file file))
     #+END_SRC
 *** Act
     #+BEGIN_SRC emacs-lisp
@@ -1270,6 +1271,7 @@
                                 ("Year" 6 t)))
      (setq ebib-index-column-separator "  ")
      (with-eval-after-load 'ebib
+       (require 'org-ebib)
        (setq ebib-file-associations nil)
        ;; (add-to-list 'ebib-file-associations '("pdf" . "open"))
        (global-set-key (kbd "C-c e i") 'ebib-insert-citation))

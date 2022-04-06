@@ -13,3 +13,6 @@
 [submodule "site-packages/auto-save"]
 	path = site-packages/auto-save
 	url = https://github.com/manateelazycat/auto-save.git
+[submodule "site-packages/grammatical-edit"]
+	path = site-packages/grammatical-edit
+	url = https://github.com/manateelazycat/grammatical-edit.git

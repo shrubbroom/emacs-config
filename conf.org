@@ -658,6 +658,58 @@
               '(flex)))
       (add-hook 'lsp-mode-hook #'init/lsp-mode-setup-completion)
     #+END_SRC
+** Tree-sitter Integration
+
+Tree-sitter is helpful in structual editing and grammar highlighting.
+To install tree-sitter
+
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'tree-sitter)
+  (init/ensure-package-lazy 'tree-sitter-langs)
+#+end_src
+
+We require =grammatical-edit= to enable structual editing
+
+#+begin_src emacs-lisp
+  (add-to-list 'load-path
+               (concat user-emacs-directory "site-packages/grammatical-edit"))
+  (require 'grammatical-edit)
+  (dolist (hook (list
+                 'c-mode-common-hook
+                 'c-mode-hook
+                 'c++-mode-hook))
+    (add-hook hook '(lambda ()
+                      (tree-sitter-mode 1)
+                      (grammatical-edit-mode 1))))
+
+  (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
+  (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
+  (define-key grammatical-edit-mode-map (kbd "{") 'grammatical-edit-open-curly)
+  (define-key grammatical-edit-mode-map (kbd ")") 'grammatical-edit-close-round)
+  (define-key grammatical-edit-mode-map (kbd "]") 'grammatical-edit-close-bracket)
+  (define-key grammatical-edit-mode-map (kbd "}") 'grammatical-edit-close-curly)
+  (define-key grammatical-edit-mode-map (kbd "=") 'grammatical-edit-equal)
+
+  (define-key grammatical-edit-mode-map (kbd "%") 'grammatical-edit-match-paren)
+  (define-key grammatical-edit-mode-map (kbd "\"") 'grammatical-edit-double-quote)
+  (define-key grammatical-edit-mode-map (kbd "'") 'grammatical-edit-single-quote)
+
+  (define-key grammatical-edit-mode-map (kbd "SPC") 'grammatical-edit-space)
+  (define-key grammatical-edit-mode-map (kbd "RET") 'grammatical-edit-newline)
+
+  (define-key grammatical-edit-mode-map (kbd "DEL") 'grammatical-edit-backward-delete)
+  (define-key grammatical-edit-mode-map (kbd "C-d") 'grammatical-edit-forward-delete)
+  (define-key grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
+
+  (define-key grammatical-edit-mode-map (kbd "M-\"") 'grammatical-edit-wrap-double-quote)
+  (define-key grammatical-edit-mode-map (kbd "M-'") 'grammatical-edit-wrap-single-quote)
+  (define-key grammatical-edit-mode-map (kbd "M-[") 'grammatical-edit-wrap-bracket)
+  (define-key grammatical-edit-mode-map (kbd "M-{") 'grammatical-edit-wrap-curly)
+  (define-key grammatical-edit-mode-map (kbd "M-(") 'grammatical-edit-wrap-round)
+  (define-key grammatical-edit-mode-map (kbd "M-)") 'grammatical-edit-unwrap)
+
+  (define-key grammatical-edit-mode-map (kbd "M-p") 'grammatical-edit-jump-up)
+#+end_src
 ** Verilog
    Require built-in ~verilog-mode~.
    #+BEGIN_SRC emacs-lisp :tangle no
@@ -770,7 +822,7 @@
                                    (lsp)))
    #+END_SRC
 ** Emacs-Lisp
-   Use ~paredit~ in ~elisp-mode~
+   Use =paredit= in =elisp-mode=.  Configure =smartparen= mode.
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package 'paredit)
      (setq backward-delete-char-untabify-method 'all)
@@ -778,6 +830,8 @@
      (add-hook 'scheme-mode-hook 'rainbow-delimiters-mode)
      (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
      (add-hook 'emacs-lisp-mode 'rainbow-delimiters-mode)
+     (dolist (mode '(emacs-lisp-mode elisp-mode))
+      (sp-local-pair mode "'" nil :actions nil))
    #+END_SRC
 ** Shell
    Install ~fish-mode~ and config keybindings
@@ -923,7 +977,8 @@
       (with-eval-after-load 'org
         ;; Make verbatim with highlight text background.
         (add-to-list 'org-emphasis-alist
-                     `("=" (:background ,(face-background 'org-block))))
+                     `("=" (:background ,(face-background 'org-block)
+                                        :family ,(face-attribute 'fixed-pitch :family))))
         ;; Make deletion(obsolote) text foreground with dark gray.
         (add-to-list 'org-emphasis-alist
                      '("+" (:foreground "dark gray"

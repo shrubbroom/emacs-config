@@ -205,21 +205,13 @@
       (prescient-persist-mode +1)
     #+END_SRC
 ** Project manager
-   Install ~projectile~
+
+The default project manager is built-in =project.el=
+
    #+BEGIN_SRC emacs-lisp
-     (init/ensure-package 'projectile)
-   #+END_SRC
-   Enable ~projectile-mode~ by default
-   #+BEGIN_SRC emacs-lisp
-     (projectile-mode +1)
-     (setq projectile-enable-caching t)
-   #+END_SRC
-   Keybindings
-   #+BEGIN_SRC emacs-lisp
-     (global-set-key (kbd "C-c p f") #'projectile-find-file)
-     (global-set-key (kbd "C-c p b") #'projectile-switch-to-buffer)
-     (global-set-key (kbd "C-c p C-b") #'projectile-ibuffer)
-     (global-set-key (kbd "C-c p g") #'projectile-switch-project)
+     (global-set-key (kbd "C-c p f") #'project-find-file)
+     (global-set-key (kbd "C-c p b") #'project-switch-to-buffer)
+     (global-set-key (kbd "C-c p g") #'project-switch-project)
    #+END_SRC
 ** Helping System
 *** Basic packages

@@ -248,10 +248,38 @@
   (setq auto-save-silent t)
 #+end_src
 ** Window management
+*** Buffer management
+#+begin_src emacs-lisp
+  (init/ensure-package 'buffer-move)
+  (global-set-key (kbd "<C-S-up>")     'buf-move-up)
+  (global-set-key (kbd "<C-S-down>")   'buf-move-down)
+  (global-set-key (kbd "<C-S-left>")   'buf-move-left)
+  (global-set-key (kbd "<C-S-right>")  'buf-move-right)
+
+  (define-key org-mode-map (kbd "<C-S-up>")     'buf-move-up)
+  (define-key org-mode-map (kbd "<C-S-down>")   'buf-move-down)
+  (define-key org-mode-map (kbd "<C-S-left>")   'buf-move-left)
+  (define-key org-mode-map (kbd "<C-S-right>")  'buf-move-right)
+#+end_src
+*** Popup control
    #+BEGIN_SRC emacs-lisp
-     (init/ensure-package 'winum)
-     (setq winum-auto-setup-mode-line nil)
-     (add-hook 'after-init-hook 'winum-mode)
+     (init/ensure-package 'popper)
+     (init/ensure-package 'popper-echo)
+     (setq popper-reference-buffers
+           '("\\*Messages\\*"
+             "Output\\*$"
+             "\\*Async Shell Command\\*"
+             help-mode
+             helpful-mode
+             compilation-mode
+             Man-mode
+             package-menu-mode
+             pdf-outline-buffer-mode))
+     (global-set-key (kbd "<C-tab>") 'popper-toggle-latest)
+     (define-key popper-mode-map (kbd "<C-tab>") 'popper-cycle)
+     (global-set-key (kbd "<C-escape>") 'popper-kill-latest-popup)
+     (popper-mode +1)
+     (popper-echo-mode +1)
    #+END_SRC
 * Look and feel
   *This part should not be changed frequently. Spend time on important things*
@@ -394,30 +422,16 @@
    #+END_SRC
    I do not manually install the fonts of ~all-the-icons~. System package manager (~pacman~) maintains the font.
 ** Modeline
-*** Install package
-    #+BEGIN_SRC emacs-lisp
-      (init/ensure-package 'doom-modeline)
-    #+END_SRC
-*** Set variables
-    #+TODO: unicode fallback is broken.
-    #+BEGIN_SRC emacs-lisp
-      (setq doom-modeline-buffer-file-name-style 'buffer-name
-            doom-modeline-project-detection 'projectile
-            doom-modeline-modal-icon nil
-            doom-modeline-icon t
-            doom-modeline-unicode-fallback nil
-            doom-modeline-mu4e nil
-            doom-modeline-hud t
-            all-the-icons-scale-factor 1.0)
-      (set-face-background 'doom-modeline-bar "#859900" nil)
-      (display-time-mode)
-      (column-number-mode)
-      (size-indication-mode)
-    #+END_SRC
-*** Fire up modeline
-    #+BEGIN_SRC emacs-lisp
-      (add-hook 'after-init-hook 'doom-modeline-mode)
-    #+END_SRC
+#+begin_src emacs-lisp
+  (init/ensure-package 'moody)
+  (setq x-underline-at-descent-line t)
+  (moody-replace-mode-line-buffer-identification)
+  (moody-replace-vc-mode)
+  (moody-replace-eldoc-minibuffer-message-function)
+  (display-time-mode 1)
+  (column-number-mode 1)
+  (size-indication-mode 1)
+  #+end_src
 ** Tabs
 *** Sort-tab
     #+BEGIN_SRC emacs-lisp
@@ -430,8 +444,6 @@
       (with-eval-after-load 'org
         (define-key org-mode-map (kbd "<S-left>") 'sort-tab-select-prev-tab)
         (define-key org-mode-map (kbd "<S-right>") 'sort-tab-select-next-tab))
-      (add-to-list 'winum-ignored-buffers
-                   "*sort-tab*")
       (defun sort-tab-refresh (&optional args)
         (interactive)
         (if sort-tab-mode
@@ -439,7 +451,7 @@
                    (sort-tab-mode 1))))
 
     #+END_SRC
-    Override hide behavior
+**** Override hide behavior
     #+BEGIN_SRC emacs-lisp
       (advice-add 'sort-tab-buffer-need-hide-p
                   :around #'(lambda (origin buf)
@@ -454,6 +466,24 @@
                                  (t (apply origin `(,buf)))))))
 
     #+END_SRC
+**** Tune down background color
+    #+begin_src emacs-lisp
+      (set-face-attribute 'sort-tab-current-tab-face
+                          nil
+                          :background (face-background 'default)
+                          :foreground (face-foreground 'default))
+      (set-face-attribute 'sort-tab-other-tab-face
+                          nil
+                          :background (face-background 'mode-line)
+                          :foreground (face-foreground 'mode-line))
+      (set-face-attribute 'sort-tab-separator-face
+                          nil
+                          :foreground (face-foreground 'mode-line))
+      (with-current-buffer (sort-tab-get-buffer)
+        (face-remap-add-relative 'default `(:background ,(face-background 'mode-line)))
+        (face-remap-add-relative 'fringe `(:background ,(face-background 'mode-line))))
+      (setq-default sort-tab-separator "")
+    #+end_src
 *** Save and revert buffer state
     #+BEGIN_SRC emacs-lisp
       (defun sort-tab-get-session-and-kill-all-buffers ()
@@ -542,26 +572,7 @@
                           :background (face-background 'default)
                           :family "Fantasque Sans Mono")
     #+END_SRC
-** Popup control
-   #+BEGIN_SRC emacs-lisp
-     (init/ensure-package 'popper)
-     (init/ensure-package 'popper-echo)
-     (setq popper-reference-buffers
-           '("\\*Messages\\*"
-             "Output\\*$"
-             "\\*Async Shell Command\\*"
-             help-mode
-             helpful-mode
-             compilation-mode
-             Man-mode
-             package-menu-mode
-             pdf-outline-buffer-mode))
-     (global-set-key (kbd "<C-tab>") 'popper-toggle-latest)
-     (define-key popper-mode-map (kbd "<C-tab>") 'popper-cycle)
-     (global-set-key (kbd "<C-escape>") 'popper-kill-latest-popup)
-     (popper-mode +1)
-     (popper-echo-mode +1)
-   #+END_SRC
+
 ** Extra features
 *** Rich ivy
     #+BEGIN_SRC emacs-lisp
@@ -865,7 +876,10 @@ We require =grammatical-edit= to enable structual editing
                                            (concat "rime inline ascii "
                                                    (propertize "disabled"
                                                                :foreground
-                                                               "red")))))))
+                                                               "red"))))))
+       (set-face-attribute 'rime-highlight-candidate-face
+                           nil
+                           :weight 'bold))
      ;; (define-key rime-mode-map (kbd "C-z") 'rime-force-enable)
      (setq default-input-method "rime")
      (setq rime-show-candidate 'posframe
@@ -960,7 +974,7 @@ We require =grammatical-edit= to enable structual editing
     #+END_SRC
 *** Word Wrap
     #+BEGIN_SRC emacs-lisp
-      (add-hook 'org-mode-hook #'(lambda () (setq-local word-wrap-by-category t)))
+      (add-hook 'org-mode-hook #'auto-fill-mode)
     #+END_SRC
 *** Local Functions
     #+BEGIN_SRC emacs-lisp
@@ -1447,7 +1461,7 @@ We require =grammatical-edit= to enable structual editing
        (require 'ibuffer-projectile))
    #+END_SRC
 ** Dired
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
      (init/ensure-package-lazy 'all-the-icons-dired)
      (with-eval-after-load 'dired
        (require 'dired-x)
@@ -1572,7 +1586,7 @@ Make the overlay look nicer
    This package comes with autoload
    #+BEGIN_SRC emacs-lisp
      (init/ensure-package-lazy 'writeroom-mode)
-     (setq writeroom-width 120)
+     (setq writeroom-width 82)
      (with-eval-after-load 'writeroom-mode
        (setq writeroom-global-effects
              (delq 'writeroom-set-menu-bar-lines

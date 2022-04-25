@@ -16,3 +16,9 @@
 [submodule "site-packages/grammatical-edit"]
 	path = site-packages/grammatical-edit
 	url = https://github.com/manateelazycat/grammatical-edit.git
+[submodule "site-packages/org-bars"]
+	path = site-packages/org-bars
+	url = https://github.com/tonyaldon/org-bars.git
+[submodule "site-packages/eaf"]
+	path = site-packages/eaf
+	url = https://github.com/emacs-eaf/emacs-application-framework.git

@@ -13,7 +13,7 @@
    
 ** User defined actions
 
-User defined actions begin with ~init~.
+User defined actions begin with =init=.
 
 *** Auto install packages
 
@@ -137,7 +137,8 @@ These actions are done with package =pulse.el=.
              recenter-top-bottom
              org-goto
              push-button
-             symbol-overlay-jump-call))
+             symbol-overlay-jump-call
+             ace-window))
     (advice-add cmd :after #'(lambda (&rest _)
                                (pulse-momentary-highlight-one-line))))
 
@@ -263,7 +264,6 @@ of Emacs. For example (this function is not tangled)
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package 'ivy)
   ;; (init/ensure-package 'swiper)
-  (init/ensure-package-lazy 'ctrlf)
   (init/ensure-package 'counsel)
   (init/ensure-package 'ivy-prescient)
 #+END_SRC
@@ -294,10 +294,15 @@ Enable ~escape~ as quit in ivy
   (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
 #+END_SRC
 
-*** Config ctrlf
+*** Config isearch
 
 #+BEGIN_SRC emacs-lisp
-  (ctrlf-mode +1)
+  (define-key isearch-mode-map
+    [remap isearch-delete-char]
+    #'isearch-del-char)
+  (setq isearch-lazy-count t)
+  (setq lazy-count-prefix-format "%s/%s ")
+  (setq lazy-highlight-cleanup t)
 #+END_SRC
 
 *** Configure counsel
@@ -353,7 +358,6 @@ searching.
             (or dirs (list (project-root project)))))
 
 #+end_src
-
 
 The keymap starts with =C-c=.
 
@@ -420,7 +424,7 @@ The keymap starts with =C-c=.
   (init/ensure-package 'popper)
   (init/ensure-package 'popper-echo)
   (setq popper-reference-buffers
-        '("\\*Messages\\*"
+        `("\\*Messages\\*"
           "Output\\*$"
           "\\*Async Shell Command\\*"
           help-mode
@@ -435,25 +439,67 @@ The keymap starts with =C-c=.
   (global-set-key (kbd "<C-escape>") 'popper-kill-latest-popup)
   (popper-mode +1)
   (popper-echo-mode +1)
-  ;; (setq popper-display-function #'display-buffer-in-child-frame)
 #+END_SRC
 
+*** Window switching
+
+#+begin_src emacs-lisp
+  (init/ensure-package 'ace-window)
+  (global-set-key [remap other-window] 'ace-window)
+  (add-to-list 'aw-ignored-buffers "*sort-tab*")
+  (setq aw-ignore-current t)
+#+end_src
+
+*** Resize
+#+begin_src emacs-lisp
+  (defun transient-enlarge-window-horizontally ()
+    "Transient version of `enlarge-window-horizontally"
+    (interactive)
+    (let ((echo-keystrokes nil))
+      (enlarge-window-horizontally 1)
+      (message "Resize: [{] Shrink, [}] Enlarge")
+      (set-transient-map
+       (let ((map (make-sparse-keymap)))
+         (define-key map [?{] #'shrink-window-horizontally)
+         (define-key map [?}] #'enlarge-window-horizontally)
+         map)
+       t)))
+
+  (defun transient-shrink-window-horizontally ()
+    "Transient version of `shrink-window-horizontally"
+    (interactive)
+    (let ((echo-keystrokes nil))
+      (shrink-window-horizontally 1)
+      (message "Resize: [{] Shrink, [}] Enlarge")
+      (set-transient-map
+       (let ((map (make-sparse-keymap)))
+         (define-key map [?{] #'shrink-window-horizontally)
+         (define-key map [?}] #'enlarge-window-horizontally)
+         map)
+       t)))
+
+  (global-set-key [remap enlarge-window-horizontally]
+                  'transient-enlarge-window-horizontally)
+
+  (global-set-key [remap shrink-window-horizontally]
+                  'transient-shrink-window-horizontally)
+#+end_src
 * Look and feel
 *This part should not be changed frequently. Spend time on important things*
 ** Fonts
-Use Roboto Mono as default font, the font size configuration is moved to ~local-variables.el~
+ Set default font, the font size configuration is moved to ~local-variables.el~
 #+BEGIN_SRC emacs-lisp
-  (set-frame-font "Liga SFMono Nerd Font" nil t)
   (dolist (charset '(kana han cjk-misc bopomofo))
     (set-fontset-font (frame-parameter nil 'font) charset
                       (font-spec :family "LXGW WenKai")))
+  (set-frame-font "Sarasa Mono SC" nil t)
 #+END_SRC
 *** prog-mode font
 
 Use separate font for ~prog-mode~
 #+BEGIN_SRC emacs-lisp
   (defface cc-font
-    '((t :family "Monofur"))
+    '((t :family "Sarasa Mono SC"))
     "program fonts"
     :group 'basic-faces)
   (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
@@ -463,7 +509,8 @@ Use separate font for ~prog-mode~
                       (progn
                         (set (make-local-variable 'buffer-face-mode-face) 'cc-font)
                         (buffer-face-mode t)
-                        (text-scale-increase +1))))))
+                        ;; (text-scale-increase +1)
+                        )))))
 #+END_SRC
 
 ** Ligature
@@ -563,11 +610,6 @@ Install themes
 
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package 'badwolf-theme)
-  (init/ensure-package 'tao-theme)
-  (init/ensure-package 'doom-themes)
-  (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/moe-theme"))
-  (require 'moe-theme)
 #+END_SRC
 
 Setup theme.
@@ -592,11 +634,7 @@ Setup theme.
   (set-face-attribute 'header-line nil
                       :background (face-background 'default))
 #+end_src
-*** Background opacity
 
-#+begin_src emacs-lisp
-  (setq default-frame-alist '((alpha-background . 80)))
-#+end_src
 ** Icon
 Set up all-the-icons
 #+BEGIN_SRC emacs-lisp
@@ -733,16 +771,23 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (setq awesome-tray-input-method-en-style "")
   (setq awesome-tray-input-method-zh-style "ㄓ")
   (setq awesome-tray-file-name-max-length 40)
-  (setq awesome-tray-active-modules '("location" "belong" "file-path" "buffer-read-only" "mode-name" "input-method"))
+  (setq awesome-tray-git-update-duration 1)
+  (setq awesome-tray-active-modules '("location" "belong" "file-path" "buffer-read-only" "git" "mode-name" "input-method"))
+  (setq awesome-tray-info-padding-right 1)
+  (set-face-attribute 'mode-line nil
+                      :foreground (face-background 'mode-line))
+  (set-face-attribute 'mode-line-inactive nil
+                      :foreground (face-background 'mode-line-inactive))
+  (set-face-attribute 'mode-line-buffer-id nil
+                      :foreground (face-background 'mode-line))
+  (setq-default mode-line-format
+                '("%e" mode-line-front-space
+                 (:propertize
+                  ("" mode-line-mule-info mode-line-client mode-line-modified mode-line-remote)
+                  display
+                  (min-width
+                   (5.0)))))
   (awesome-tray-mode 1)
-  ;; (init/ensure-package 'moody)
-  ;; (setq x-underline-at-descent-line t)
-  ;; (moody-replace-mode-line-buffer-identification)
-  ;; (moody-replace-vc-mode)
-  ;; (moody-replace-eldoc-minibuffer-message-function)
-  ;; (display-time-mode 1)
-  ;; (column-number-mode 1)
-  ;; (size-indication-mode 1)
 #+end_src
 ** Line number
 #+BEGIN_SRC emacs-lisp
@@ -756,13 +801,14 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
                       :weight 'bold
                       :height (face-attribute 'default :height)
                       :background (face-background 'line-number)
-                      :family "monofur")
+                      :foreground (face-foreground 'line-number)
+                      :family (face-attribute 'cc-font :family))
   (set-face-attribute 'line-number
                       nil
                       :weight 'light
                       :height (face-attribute 'default :height)
                       :background (face-background 'default)
-                      :family "monofur")
+                      :family (face-attribute 'cc-font :family))
 #+END_SRC
 *** Scaling as text-scaling happens
 #+begin_src emacs-lisp
@@ -821,7 +867,7 @@ Install ~corfu~ and globally enable corfu
   (init/ensure-package 'yasnippet)
   (yas-reload-all)
   (add-hook 'prog-mode-hook 'yas-minor-mode)
-  (corfu-global-mode)
+  (global-corfu-mode)
 #+END_SRC
 
 Configurations
@@ -1078,6 +1124,13 @@ Install ~yaml-mode~
   (init/ensure-package 'yaml-mode)
 #+END_SRC
 * Documentation
+** Spell Check
+
+#+begin_src emacs-lisp
+  (setq ispell-dictionary "en_US"
+        ispell-program-name "hunspell"
+        ispell-personal-dictionary (expand-file-name "hunspell_dict.txt" user-emacs-directory))
+#+end_src
 ** Emacs Rime
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'rime)
@@ -1093,15 +1146,7 @@ Install ~yaml-mode~
                                          (propertize "enabled" 'face '(:foreground "green"))))
                       (message "%s"
                                (concat "rime inline ascii "
-                                       (propertize "disabled" 'face '(:foreground "red")))))))
-    (set-face-attribute 'rime-default-face
-                        nil
-                        :height (round (* 1.3 (face-attribute 'default :height))))
-    (set-face-attribute 'rime-highlight-candidate-face
-                        nil
-                        :weight 'bold
-                        :height (round (* 1.3 (face-attribute 'default :height)))))
-  ;; (define-key rime-mode-map (kbd "C-z") 'rime-force-enable)
+                                       (propertize "disabled" 'face '(:foreground "red"))))))))
   (setq default-input-method "rime")
   (setq rime-show-candidate 'posframe
         rime-librime-root (concat user-emacs-directory "librime/dist/")
@@ -1120,19 +1165,11 @@ Install ~yaml-mode~
           rime-predicate-hydra-p
           rime-predicate-punctuation-line-begin-p
           rime-predicate-space-after-cc-p
-          rime-predicate-tex-math-or-command-p))
+          ;;rime-predicate-tex-math-or-command-p
+          ))
   (setq rime-posframe-properties
         (list :font "LXGW WenKai"
               :internal-border-width 1))
-#+END_SRC
-** Display
-
-Enable ~visual-line-mode~ in ~text-mode~ and Latex buffer.
-
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'text-mode-hook 'visual-line-mode)
-  (dolist (hook '(TeX-mode-hook LaTeX-mode-hook bibtex-mode-hook))
-    (add-hook hook visual-line-mode))
 #+END_SRC
 
 ** Org mode
@@ -1144,7 +1181,7 @@ sequence of mode loading should be well taken care of.
 
 #+BEGIN_SRC emacs-lisp
   (defface lt-font
-    '((t :family "Alegreya"))
+    '((t :family "Bookerly"))
     "Font for literature"
     :group 'basic-faces)
   (defun buffer-toggle-highlight-foreground (&optional args)
@@ -1167,7 +1204,6 @@ sequence of mode loading should be well taken care of.
   (init/ensure-package-lazy 'valign)
   (if (display-graphic-p)
       (add-hook 'org-mode-hook #'valign-mode))
-  (setq valign-fancy-bar +1)
 #+END_SRC
 
 *** Org Download
@@ -1214,11 +1250,8 @@ I use ~"C-j"~ to invoke jump.
   (with-eval-after-load 'org
     (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0)
           org-preview-latex-default-process 'dvisvgm
-          org-image-actual-width nil)
+          org-image-actual-width 600)
     (require 'latex))
-  (init/ensure-package 'org-latex-impatient)
-  (setq org-latex-impatient-tex2svg-bin
-        "~/.local/mathjax-node/node_modules/mathjax-node-cli/bin/tex2svg")
 
   (org-babel-do-load-languages
    'org-babel-load-languages
@@ -1276,9 +1309,9 @@ I use ~"C-j"~ to invoke jump.
                                    (set (make-local-variable 'buffer-face-mode-face)
                                         'lt-font)
                                    (buffer-face-mode t)
-                                   (face-remap-add-relative 'org-block '(:family "monofur"))))
+                                   (face-remap-add-relative 'org-block `(:family ,(face-attribute 'cc-font :family)))))
                              (org-bars-mode +1)
-                             (text-scale-increase +1)
+                             ;; (text-scale-increase +1)
                              (org-bars-indent)))
 #+END_SRC
 
@@ -1339,12 +1372,17 @@ Define export processes
   (with-eval-after-load 'latex
     (add-to-list
      'TeX-command-list
-     '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t)))
+     '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
+    (add-to-list
+     'TeX-command-list
+     '("Make" "make" TeX-run-compile nil t)))
   (dolist
       (hook '(TeX-mode-hook LaTeX-mode-hook bibtex-mode-hook))
     (add-hook hook #'(lambda ()
                        (yas-minor-mode)
                        (lsp))))
+  (add-hook 'TeX-mode-hook 'auto-fill-mode)
+  (add-hook 'LaTeX-mode-hook 'auto-fill-mode)
 #+END_SRC
 * Extra features
 ** Set up magit
@@ -1557,6 +1595,10 @@ This is just for ~shell~ command
                 ;;                                     ,(round (* 1.5 (face-attribute 'default :height)))))
                 )))
 #+END_SRC
+*** Eshell toggle
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'eshell-toggle)
+#+end_src
 ** Shell
 #+begin_src emacs-lisp
   (add-hook 'shell-mode-hook (lambda ()
@@ -1590,7 +1632,7 @@ Install all packages.
   ;; (require 'eaf-org-previewer)
   ;; (require 'eaf-file-manager)
   (require 'eaf-all-the-icons)
-  (require 'eaf-browser)
+  ;; (require 'eaf-browser)
   (require 'eaf-org)
 #+end_src
 
@@ -1615,7 +1657,7 @@ Change background color.
 
 #+begin_src emacs-lisp
   (setq eaf-pdf-dark-mode nil)
-  (setq eaf-buffer-background-color "#FFFFFF")
+  (setq eaf-buffer-background-color (face-background 'default))
 #+end_src
 
 Emacs style keybindings
@@ -1664,8 +1706,6 @@ Emacs style keybindings
   (init/ensure-package 'pdf-tools)
   (pdf-loader-install)
   (setq pdf-view-use-scaling t)
-  (add-hook 'pdf-isearch-minor-mode-hook
-            (lambda () (ctrlf-local-mode -1)))
 #+END_SRC
 ** lua-mode
 #+BEGIN_SRC emacs-lisp
@@ -1850,13 +1890,12 @@ Emacs style keybindings
           (while (and (< (point) end) (re-search-forward regexp end t))
             (setq count (1+ count)))))
       count))
-  (require 'pos-tip)
   (defun message--words-count (list start end)
     "Display the word count message.
   Using the LIST passed form `advance-words-count'. START & END are
   required to call extra functions, see `count-lines' &
   `count-words'. When ARG is specified, display a verbose buffer."
-    (pos-tip-show
+    (message
      (format
       "
   -----------~*~ Words Count ~*~---------
@@ -1977,4 +2016,19 @@ Pin posfram to left-bottom
 #+begin_src emacs-lisp
   (setq ivy-posframe-display-functions-alist
         '((t . ivy-posframe-display-at-frame-bottom-left)))
+#+end_src
+** Telega
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'telega)
+  (if (bound-and-true-p init/local-proxies)
+      (let ((http_proxy (cdr (assoc "http" init/local-proxies))))
+        (if http_proxy
+            (setq telega-proxies
+                  (list
+                   `(:server
+                     ,(car (split-string http_proxy ":"))
+                     :port
+                     ,(string-to-number (cadr (split-string http_proxy ":")))
+                     :enable t
+                     :type (:@type "proxyTypeHttp")))))))
 #+end_src

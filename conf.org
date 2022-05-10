@@ -450,6 +450,13 @@ The keymap starts with =C-c=.
   (setq aw-ignore-current t)
 #+end_src
 
+#+begin_src emacs-lisp :tangle no
+  (init/ensure-package 'switch-window)
+  (global-set-key [remap other-window] 'switch-window)
+  (setq switch-window-threshold 2)
+  (setq switch-window-shortcut-appearance 'image)
+#+end_src
+
 *** Resize
 #+begin_src emacs-lisp
   (defun transient-enlarge-window-horizontally ()
@@ -457,11 +464,13 @@ The keymap starts with =C-c=.
     (interactive)
     (let ((echo-keystrokes nil))
       (enlarge-window-horizontally 1)
-      (message "Resize: [{] Shrink, [}] Enlarge")
+      (message "Resize: [{] Shrink-h, [}] Enlarge-h, [&] Shrink-v, [^] Enlarge-v")
       (set-transient-map
        (let ((map (make-sparse-keymap)))
          (define-key map [?{] #'shrink-window-horizontally)
          (define-key map [?}] #'enlarge-window-horizontally)
+         (define-key map [?&] #'shrink-window)
+         (define-key map [?^] #'enlarge-window)
          map)
        t)))
 
@@ -470,29 +479,66 @@ The keymap starts with =C-c=.
     (interactive)
     (let ((echo-keystrokes nil))
       (shrink-window-horizontally 1)
-      (message "Resize: [{] Shrink, [}] Enlarge")
+      (message "Resize: [{] Shrink-h, [}] Enlarge-h, [&] Shrink-v, [^] Enlarge-v")
       (set-transient-map
        (let ((map (make-sparse-keymap)))
          (define-key map [?{] #'shrink-window-horizontally)
          (define-key map [?}] #'enlarge-window-horizontally)
+         (define-key map [?&] #'shrink-window)
+         (define-key map [?^] #'enlarge-window)
+         map)
+       t)))
+
+  (defun transient-shrink-window ()
+    "Transient version of `shrink-window"
+    (interactive)
+    (let ((echo-keystrokes nil))
+      (shrink-window 1)
+      (message "Resize: [{] Shrink-h, [}] Enlarge-h, [&] Shrink-v, [^] Enlarge-v")
+      (set-transient-map
+       (let ((map (make-sparse-keymap)))
+         (define-key map [?{] #'shrink-window-horizontally)
+         (define-key map [?}] #'enlarge-window-horizontally)
+         (define-key map [?&] #'shrink-window)
+         (define-key map [?^] #'enlarge-window)
+         map)
+       t)))
+
+  (defun transient-enlarge-window ()
+    "Transient version of `enlarge-window"
+    (interactive)
+    (let ((echo-keystrokes nil))
+      (enlarge-window 1)
+      (message "Resize: [{] Shrink-h, [}] Enlarge-h, [&] Shrink-v, [^] Enlarge-v")
+      (set-transient-map
+       (let ((map (make-sparse-keymap)))
+         (define-key map [?{] #'shrink-window-horizontally)
+         (define-key map [?}] #'enlarge-window-horizontally)
+         (define-key map [?&] #'shrink-window)
+         (define-key map [?^] #'enlarge-window)
          map)
        t)))
 
   (global-set-key [remap enlarge-window-horizontally]
                   'transient-enlarge-window-horizontally)
-
   (global-set-key [remap shrink-window-horizontally]
                   'transient-shrink-window-horizontally)
+  (global-set-key [remap enlarge-window]
+                  'transient-enlarge-window)
+  (global-set-key [remap shrink-window]
+                  'transient-shrink-window)
 #+end_src
 * Look and feel
 *This part should not be changed frequently. Spend time on important things*
 ** Fonts
  Set default font, the font size configuration is moved to ~local-variables.el~
 #+BEGIN_SRC emacs-lisp
-  (dolist (charset '(kana han cjk-misc bopomofo))
-    (set-fontset-font (frame-parameter nil 'font) charset
-                      (font-spec :family "LXGW WenKai")))
-  (set-frame-font "Sarasa Mono SC" nil t)
+  (if (display-graphic-p)
+      (progn
+        (dolist (charset '(kana han cjk-misc bopomofo))
+          (set-fontset-font (frame-parameter nil 'font) charset
+                            (font-spec :family "LXGW WenKai")))
+        (set-frame-font "Sarasa Mono SC" nil t)))
 #+END_SRC
 *** prog-mode font
 
@@ -566,8 +612,8 @@ Use separate font for ~prog-mode~
 *** pagebreak
 #+begin_src emacs-lisp
   (init/ensure-package 'page-break-lines)
-  (if (eq system-type 'gnu/linux)
-   (setq-default page-break-lines-char 9596))
+  ;; (if (eq system-type 'gnu/linux)
+  ;;  (setq-default page-break-lines-char 9596))
   (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
    (add-hook hook 'page-break-lines-mode))
 #+end_src
@@ -610,14 +656,19 @@ Install themes
 
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package 'badwolf-theme)
+  (add-to-list 'load-path
+               (concat user-emacs-directory "site-packages/moe-theme"))
+  (require 'moe-theme)
 #+END_SRC
 
 Setup theme.
 
-#+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/theme-light) "yes" "no")
-  (if (bound-and-true-p init/system-dark-modep)
+#+BEGIN_SRC emacs-lisp
+  (if (and (boundp 'init/theme-dark)
+           (bound-and-true-p init/system-dark-modep))
       (load-theme init/theme-dark 1)
-    (load-theme init/theme-light 1))
+    (if (boundp 'init/theme-light)
+        (load-theme init/theme-light 1)))
 #+END_SRC
 
 *** Tone down fringe
@@ -672,6 +723,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
                               nil)
                              ((string-equal name "TAGS")
                               t)
+                             ((string-suffix-p "syntex.gz" name)
+                              t)
                              ((string-prefix-p "*eww" name)
                               nil)
                              (t (apply origin `(,buf)))))))
@@ -689,7 +742,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   ;;                     nil
   ;;                     :foreground (face-foreground 'mode-line))
   (setq-default sort-tab-separator "⦚")
-#+end_src
+  #+end_src
 *** Save and revert buffer state
 
 #+BEGIN_SRC emacs-lisp
@@ -1326,7 +1379,7 @@ Disable completion backends other than =company-files=. Turn on yasnippet mode.
             (lambda ()
               (setq-local completion-at-point-functions
                           (list #'cape-file))
-              ;; (setq-local corfu-auto nil)
+              (setq-local yas-indent-line 'fixed)
               (yas-minor-mode 1)))
 #+end_src
 
@@ -1384,6 +1437,18 @@ Define export processes
   (add-hook 'TeX-mode-hook 'auto-fill-mode)
   (add-hook 'LaTeX-mode-hook 'auto-fill-mode)
 #+END_SRC
+
+***  External pdf viewer
+
+=EAF= may be broken when the output file is being compiled.
+
+#+begin_src emacs-lisp
+  (setq TeX-source-correlate-mode t)
+  (setq TeX-source-correlate-start-server t)
+  (setq TeX-view-program-selection
+        (quote
+         ((output-pdf "Okular"))))
+#+end_src
 * Extra features
 ** Set up magit
 #+BEGIN_SRC emacs-lisp
@@ -1615,7 +1680,107 @@ This is just for ~shell~ command
   (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
    (add-hook hook 'symbol-overlay-mode))
 #+END_SRC
-** EAF
+
+** COMMENT Pdf tools
+
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'pdf-tools)
+  (pdf-loader-install)
+  (setq pdf-view-use-scaling t)
+  ;; Use pdf-tools to open PDF files
+  (setq TeX-view-program-selection '((output-pdf "PDF Tools"))
+        TeX-source-correlate-start-server t)
+  ;; Update PDF buffers after successful LaTeX runs
+  (add-hook 'TeX-after-compilation-finished-functions
+             #'TeX-revert-document-buffer)
+#+end_src
+
+Restore session
+
+#+begin_src emacs-lisp
+  ;; workaround for pdf-tools not reopening to last-viewed page of the pdf:
+  ;; https://github.com/politza/pdf-tools/issues/18#issuecomment-269515117
+  (defun brds/pdf-set-last-viewed-bookmark ()
+    (interactive)
+    (when (eq major-mode 'pdf-view-mode)
+      (bookmark-set (brds/pdf-generate-bookmark-name))))
+
+  (defun brds/pdf-jump-last-viewed-bookmark ()
+    (bookmark-set "fake") ; this is new
+    (when
+        (brds/pdf-has-last-viewed-bookmark)
+      (bookmark-jump (brds/pdf-generate-bookmark-name))))
+
+  (defun brds/pdf-has-last-viewed-bookmark ()
+    (assoc
+     (brds/pdf-generate-bookmark-name) bookmark-alist))
+
+  (defun brds/pdf-generate-bookmark-name ()
+    (concat "PDF-LAST-VIEWED: " (buffer-file-name)))
+
+  (defun brds/pdf-set-all-last-viewed-bookmarks ()
+    (dolist (buf (buffer-list))
+      (with-current-buffer buf
+        (brds/pdf-set-last-viewed-bookmark))))
+
+  (add-hook 'kill-buffer-hook 'brds/pdf-set-last-viewed-bookmark)
+  (add-hook 'pdf-view-mode-hook 'brds/pdf-jump-last-viewed-bookmark)
+  (unless noninteractive  ; as `save-place-mode' does
+    (add-hook 'kill-emacs-hook #'brds/pdf-set-all-last-viewed-bookmarks))
+#+end_src
+
+Two page mode
+
+#+begin_src emacs-lisp
+  (defun turn-two-windows-backward ()
+    "Go back a page in each buffer when in dual view mode."
+    (interactive)
+    (progn
+      (funcall-interactively #'pdf-view-previous-page)
+      (funcall-interactively #'pdf-view-previous-page)
+      (other-window 1)
+      (funcall-interactively #'pdf-view-previous-page)
+      (funcall-interactively #'pdf-view-previous-page)
+      (other-window 1)))
+
+  (defun turn-two-windows-forward ()
+    "Go forward a page in each buffer when in dual view mode."
+    (interactive)
+    (progn
+      (funcall-interactively #'pdf-view-next-page)
+      (funcall-interactively #'pdf-view-next-page)
+      (other-window 1)
+      (funcall-interactively #'pdf-view-next-page)
+      (funcall-interactively #'pdf-view-next-page)
+      (other-window 1)))
+
+
+  (defvar pdf-view-dual-mode-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "n") #'turn-two-windows-forward)
+      (define-key map (kbd "p") #'turn-two-windows-backward)
+      map)
+    "Keymap for dual page.")
+
+  (define-minor-mode pdf-view-dual-mode
+    "Minor mode to enable dual page"
+    :keymap pdf-view-dual-mode-map
+    (if pdf-view-dual-mode
+        (progn (delete-other-windows)
+               (split-window-right)
+               (other-window 1)
+               (funcall-interactively #'pdf-view-next-page)
+               (other-window 1))))
+#+end_src
+
+Disable fringe
+#+begin_src emacs-lisp
+  (add-hook 'pdf-view-mode-hook '(lambda ()
+                                   (setq left-fringe-width 0
+                                         right-fringe-width 0)))
+#+end_src
+
+** COMMENT EAF
 
 Install all packages.
 
@@ -1647,7 +1812,7 @@ Configure the package with a more emacs-like keybindings.
 
 Configure latex preview.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (with-eval-after-load 'latex
    (add-to-list 'TeX-view-program-list '("eaf" eaf-pdf-synctex-forward-view))
    (add-to-list 'TeX-view-program-selection '(output-pdf "eaf")))
@@ -1701,12 +1866,6 @@ Emacs style keybindings
     (add-to-list 'org-file-apps '("\\.jpg\\'" . eaf-org-open-file))
     (add-to-list 'org-file-apps '("\\.png\\'" . eaf-org-open-file)))
 #+end_src
-** pdf-tools
-#+BEGIN_SRC emacs-lisp :tangle no
-  (init/ensure-package 'pdf-tools)
-  (pdf-loader-install)
-  (setq pdf-view-use-scaling t)
-#+END_SRC
 ** lua-mode
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package 'lua-mode)
@@ -1727,8 +1886,8 @@ Emacs style keybindings
   (setq ebib-index-column-separator "  ")
   (with-eval-after-load 'ebib
     (require 'org-ebib)
-    (setq ebib-file-associations nil)
-    ;; (add-to-list 'ebib-file-associations '("pdf" . "open"))
+    ;; (setq ebib-file-associations nil)
+    (setq ebib-file-associations '(("pdf" . "okular")))
     (global-set-key (kbd "C-c e i") 'ebib-insert-citation))
 #+END_SRC
 ** Org Roam
@@ -1849,6 +2008,7 @@ Emacs style keybindings
 #+END_SRC
 ** Dired
 #+BEGIN_SRC emacs-lisp
+  (init/ensure-package-lazy 'fd-dired)
   (init/ensure-package-lazy 'all-the-icons-dired)
   (with-eval-after-load 'dired
     (require 'dired-x)

@@ -160,8 +160,8 @@ These actions are done with package =pulse.el=.
 *** Set cursor style and enable blinking
 
 #+begin_src emacs-lisp
-  ;; (setq-default cursor-type '(bar . 3))
-  (blink-cursor-mode -1)
+  (setq-default cursor-type '(bar . 3))
+  (blink-cursor-mode 1)
 #+end_src
 
 *** Go to first char instead of line head
@@ -294,9 +294,9 @@ Enable ~escape~ as quit in ivy
   (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
 #+END_SRC
 
-*** Config isearch
+*** Config ctrlf
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (define-key isearch-mode-map
     [remap isearch-delete-char]
     #'isearch-del-char)
@@ -305,6 +305,10 @@ Enable ~escape~ as quit in ivy
   (setq lazy-highlight-cleanup t)
 #+END_SRC
 
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'ctrlf)
+  (ctrlf-mode +1)
+#+end_src
 *** Configure counsel
 
 **** Hook at startup
@@ -447,7 +451,7 @@ The keymap starts with =C-c=.
   (init/ensure-package 'ace-window)
   (global-set-key [remap other-window] 'ace-window)
   (add-to-list 'aw-ignored-buffers "*sort-tab*")
-  (setq aw-ignore-current t)
+  (setq aw-ignore-current nil)
 #+end_src
 
 #+begin_src emacs-lisp :tangle no
@@ -815,7 +819,19 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+END_SRC
 
 ** Modeline
+
 #+begin_src emacs-lisp
+  (init/ensure-package 'moody)
+  (setq x-underline-at-descent-line t)
+  (moody-replace-mode-line-buffer-identification)
+  (moody-replace-vc-mode)
+  (moody-replace-eldoc-minibuffer-message-function)
+  (display-time-mode 1)
+  (column-number-mode 1)
+  (size-indication-mode 1)
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/awesome-tray"))
   (setq awesome-tray-mode-line-active-color (face-background 'mode-line))
@@ -1276,7 +1292,7 @@ sequence of mode loading should be well taken care of.
                (concat user-emacs-directory "site-packages/org-bars"))
   (require 'org-bars)
   (add-hook 'org-mode-hook 'org-indent-mode)
-  ;; (add-hook 'org-mode-hook 'org-bars-mode)
+  (add-hook 'org-mode-hook 'org-bars-mode)
 #+END_SRC
 
 *** Quick jump to specific headline via ivy and fuzzy search
@@ -1309,6 +1325,9 @@ I use ~"C-j"~ to invoke jump.
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((latex . t)))
+
+  (setq org-latex-create-formula-image-program 'imagemagick)
+  (setq org-highlight-latex-and-related '(latex))
 #+END_SRC
 
 
@@ -1663,6 +1682,7 @@ This is just for ~shell~ command
 *** Eshell toggle
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'eshell-toggle)
+  (global-set-key (kbd "s-e") 'eshell-toggle)
 #+end_src
 ** Shell
 #+begin_src emacs-lisp
@@ -1681,106 +1701,8 @@ This is just for ~shell~ command
    (add-hook hook 'symbol-overlay-mode))
 #+END_SRC
 
-** COMMENT Pdf tools
 
-#+begin_src emacs-lisp
-  (init/ensure-package-lazy 'pdf-tools)
-  (pdf-loader-install)
-  (setq pdf-view-use-scaling t)
-  ;; Use pdf-tools to open PDF files
-  (setq TeX-view-program-selection '((output-pdf "PDF Tools"))
-        TeX-source-correlate-start-server t)
-  ;; Update PDF buffers after successful LaTeX runs
-  (add-hook 'TeX-after-compilation-finished-functions
-             #'TeX-revert-document-buffer)
-#+end_src
-
-Restore session
-
-#+begin_src emacs-lisp
-  ;; workaround for pdf-tools not reopening to last-viewed page of the pdf:
-  ;; https://github.com/politza/pdf-tools/issues/18#issuecomment-269515117
-  (defun brds/pdf-set-last-viewed-bookmark ()
-    (interactive)
-    (when (eq major-mode 'pdf-view-mode)
-      (bookmark-set (brds/pdf-generate-bookmark-name))))
-
-  (defun brds/pdf-jump-last-viewed-bookmark ()
-    (bookmark-set "fake") ; this is new
-    (when
-        (brds/pdf-has-last-viewed-bookmark)
-      (bookmark-jump (brds/pdf-generate-bookmark-name))))
-
-  (defun brds/pdf-has-last-viewed-bookmark ()
-    (assoc
-     (brds/pdf-generate-bookmark-name) bookmark-alist))
-
-  (defun brds/pdf-generate-bookmark-name ()
-    (concat "PDF-LAST-VIEWED: " (buffer-file-name)))
-
-  (defun brds/pdf-set-all-last-viewed-bookmarks ()
-    (dolist (buf (buffer-list))
-      (with-current-buffer buf
-        (brds/pdf-set-last-viewed-bookmark))))
-
-  (add-hook 'kill-buffer-hook 'brds/pdf-set-last-viewed-bookmark)
-  (add-hook 'pdf-view-mode-hook 'brds/pdf-jump-last-viewed-bookmark)
-  (unless noninteractive  ; as `save-place-mode' does
-    (add-hook 'kill-emacs-hook #'brds/pdf-set-all-last-viewed-bookmarks))
-#+end_src
-
-Two page mode
-
-#+begin_src emacs-lisp
-  (defun turn-two-windows-backward ()
-    "Go back a page in each buffer when in dual view mode."
-    (interactive)
-    (progn
-      (funcall-interactively #'pdf-view-previous-page)
-      (funcall-interactively #'pdf-view-previous-page)
-      (other-window 1)
-      (funcall-interactively #'pdf-view-previous-page)
-      (funcall-interactively #'pdf-view-previous-page)
-      (other-window 1)))
-
-  (defun turn-two-windows-forward ()
-    "Go forward a page in each buffer when in dual view mode."
-    (interactive)
-    (progn
-      (funcall-interactively #'pdf-view-next-page)
-      (funcall-interactively #'pdf-view-next-page)
-      (other-window 1)
-      (funcall-interactively #'pdf-view-next-page)
-      (funcall-interactively #'pdf-view-next-page)
-      (other-window 1)))
-
-
-  (defvar pdf-view-dual-mode-map
-    (let ((map (make-sparse-keymap)))
-      (define-key map (kbd "n") #'turn-two-windows-forward)
-      (define-key map (kbd "p") #'turn-two-windows-backward)
-      map)
-    "Keymap for dual page.")
-
-  (define-minor-mode pdf-view-dual-mode
-    "Minor mode to enable dual page"
-    :keymap pdf-view-dual-mode-map
-    (if pdf-view-dual-mode
-        (progn (delete-other-windows)
-               (split-window-right)
-               (other-window 1)
-               (funcall-interactively #'pdf-view-next-page)
-               (other-window 1))))
-#+end_src
-
-Disable fringe
-#+begin_src emacs-lisp
-  (add-hook 'pdf-view-mode-hook '(lambda ()
-                                   (setq left-fringe-width 0
-                                         right-fringe-width 0)))
-#+end_src
-
-** COMMENT EAF
+** EAF
 
 Install all packages.
 
@@ -1834,6 +1756,13 @@ Emacs style keybindings
   (eaf-bind-key jump_to_page "j" eaf-pdf-viewer-keybinding)
 #+end_src
 
+Use native search method
+
+#+begin_src emacs-lisp
+  (add-hook 'eaf-mode-hook
+            (lambda () (ctrlf-local-mode -1)))
+#+end_src
+
 *** Configure Browser
 #+begin_src emacs-lisp
   (if (bound-and-true-p init/local-proxies)
@@ -1875,6 +1804,9 @@ Emacs style keybindings
   (init/ensure-package 'scala-mode)
 #+END_SRC
 ** ebib
+
+=eaf= cannot restore session, use okular instead
+
 #+BEGIN_SRC emacs-lisp :tangle (if (and (boundp 'init/ebib-file-search-dirs) (boundp 'init/ebib-preload-bib-files)) "yes" "no")
   (init/ensure-package-lazy 'ebib)
   (setq ebib-file-search-dirs init/ebib-file-search-dirs)
@@ -1886,8 +1818,8 @@ Emacs style keybindings
   (setq ebib-index-column-separator "  ")
   (with-eval-after-load 'ebib
     (require 'org-ebib)
-    ;; (setq ebib-file-associations nil)
-    (setq ebib-file-associations '(("pdf" . "okular")))
+    (setq ebib-file-associations nil)
+    ;; (setq ebib-file-associations '(("pdf" . "okular")))
     (global-set-key (kbd "C-c e i") 'ebib-insert-citation))
 #+END_SRC
 ** Org Roam

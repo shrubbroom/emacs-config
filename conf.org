@@ -138,7 +138,7 @@ These actions are done with package =pulse.el=.
              org-goto
              push-button
              symbol-overlay-jump-call
-             ace-window))
+             ace-windowp))
     (advice-add cmd :after #'(lambda (&rest _)
                                (pulse-momentary-highlight-one-line))))
 
@@ -160,7 +160,7 @@ These actions are done with package =pulse.el=.
 *** Set cursor style and enable blinking
 
 #+begin_src emacs-lisp
-  (setq-default cursor-type '(bar . 3))
+  (add-hook 'org-mode-hook (lambda () (setq cursor-type '(bar . 3))))
   (blink-cursor-mode 1)
 #+end_src
 
@@ -258,6 +258,11 @@ of Emacs. For example (this function is not tangled)
   (init/define-path)
 #+END_SRC
 
+*** Disable suspend-frame
+
+#+begin_src emacs-lisp
+  (global-unset-key (kbd "C-z"))
+#+end_src
 ** Navigation & Searching system
 *** Basic packages
 
@@ -281,10 +286,11 @@ of Emacs. For example (this function is not tangled)
 #+BEGIN_SRC emacs-lisp
   (setq-default ivy-use-virtual-buffers t
                 ivy-virtual-abbreviate 'fullpath
-                ivy-count-format ""
+                ivy-count-format "%-4d "
                 ivy-magic-tilde nil
                 ivy-dynamic-exhibit-delay-ms 150
-                ivy-use-selectable-prompt t)
+                ivy-use-selectable-prompt t
+                ivy-switch-buffer-faces-alist nil)
 #+END_SRC
 
 **** Issues
@@ -451,6 +457,7 @@ The keymap starts with =C-c=.
   (init/ensure-package 'ace-window)
   (global-set-key [remap other-window] 'ace-window)
   (add-to-list 'aw-ignored-buffers "*sort-tab*")
+  (add-to-list 'aw-ignored-buffers " SPEEDBAR")
   (setq aw-ignore-current nil)
 #+end_src
 
@@ -541,7 +548,7 @@ The keymap starts with =C-c=.
       (progn
         (dolist (charset '(kana han cjk-misc bopomofo))
           (set-fontset-font (frame-parameter nil 'font) charset
-                            (font-spec :family "LXGW WenKai")))
+                            (font-spec :family "LXGW Wenkai")))
         (set-frame-font "Sarasa Mono SC" nil t)))
 #+END_SRC
 *** prog-mode font
@@ -690,6 +697,14 @@ Setup theme.
                       :background (face-background 'default))
 #+end_src
 
+** Dimmer
+
+#+begin_src emacs-lisp :tangle no
+  (init/ensure-package 'dimmer)
+  (dimmer-configure-posframe)
+  (dimmer-mode 1)
+#+end_src
+
 ** Icon
 Set up all-the-icons
 #+BEGIN_SRC emacs-lisp
@@ -820,6 +835,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 
 ** Modeline
 
+Use =moody=
+
 #+begin_src emacs-lisp
   (init/ensure-package 'moody)
   (setq x-underline-at-descent-line t)
@@ -829,6 +846,13 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (display-time-mode 1)
   (column-number-mode 1)
   (size-indication-mode 1)
+#+end_src
+
+Hide minor-modes
+
+#+begin_src emacs-lisp
+  (init/ensure-package 'minions)
+  (minions-mode +1)
 #+end_src
 
 #+begin_src emacs-lisp :tangle no
@@ -869,8 +893,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
                       nil
                       :weight 'bold
                       :height (face-attribute 'default :height)
-                      :background (face-background 'line-number)
-                      :foreground (face-foreground 'line-number)
+                      ; :background (face-background 'line-number)
+                      ; :foreground (face-foreground 'line-number)
                       :family (face-attribute 'cc-font :family))
   (set-face-attribute 'line-number
                       nil
@@ -963,6 +987,7 @@ Configurations
       (corfu-mode 1)))
   (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
 #+END_SRC
+
 *** LSP
 
 Install ~lsp-mode~.
@@ -1234,10 +1259,11 @@ Install ~yaml-mode~
           rime-predicate-hydra-p
           rime-predicate-punctuation-line-begin-p
           rime-predicate-space-after-cc-p
-          ;;rime-predicate-tex-math-or-command-p
+          rime-predicate-tex-math-or-command-p
           ))
   (setq rime-posframe-properties
         (list :font "LXGW WenKai"
+              ;; :background (face-background 'mode-line)
               :internal-border-width 1))
 #+END_SRC
 
@@ -1250,9 +1276,12 @@ sequence of mode loading should be well taken care of.
 
 #+BEGIN_SRC emacs-lisp
   (defface lt-font
-    '((t :family "Bookerly"))
+    '((t :family "LXGW Bright"))
     "Font for literature"
     :group 'basic-faces)
+  (set-face-attribute 'variable-pitch nil
+                      :family (face-attribute 'lt-font :family))
+  (variable-pitch-mode 1)
   (defun buffer-toggle-highlight-foreground (&optional args)
     (interactive)
     (if (and (boundp 'face-remap-add-relative-cookie) face-remap-add-relative-cookie)
@@ -1271,8 +1300,9 @@ sequence of mode loading should be well taken care of.
 
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'valign)
-  (if (display-graphic-p)
-      (add-hook 'org-mode-hook #'valign-mode))
+  ; valign mode should be enabled as file local variable
+  ;; (if (display-graphic-p)
+  ;;     (add-hook 'org-mode-hook #'valign-mode))
 #+END_SRC
 
 *** Org Download
@@ -1280,6 +1310,8 @@ sequence of mode loading should be well taken care of.
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'org-download)
   (add-hook 'org-mode-hook 'org-download-enable)
+  (with-eval-after-load 'org
+   (define-key org-mode-map (kbd "C-c C-v") 'org-download-clipboard))
 #+END_SRC
 
 *** Org Bars
@@ -1328,6 +1360,18 @@ I use ~"C-j"~ to invoke jump.
 
   (setq org-latex-create-formula-image-program 'imagemagick)
   (setq org-highlight-latex-and-related '(latex))
+
+  (defun wrap-region-with-added (&optional args)
+    "wrap `region' with [[changes:added][`region']]"
+    (interactive)
+    (when (region-active-p)
+      (let ((BEG (region-beginning))
+            (END (region-end)))
+        (setq mark-active nil)
+        (goto-char END)
+        (insert "]]")
+        (goto-char BEG)
+        (insert "[[changes:added]["))))
 #+END_SRC
 
 
@@ -1385,6 +1429,7 @@ I use ~"C-j"~ to invoke jump.
                              (org-bars-mode +1)
                              ;; (text-scale-increase +1)
                              (org-bars-indent)))
+  (setq org-ellipsis "  ⇲")
 #+END_SRC
 
 *** Completion
@@ -1883,7 +1928,7 @@ Use native search method
     (find-file init/org-drill-file))
 #+END_SRC
 ** English Helper
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/company-english-helper"))
   (defvaralias 'company-candidates 'corfu--candidates)
@@ -1913,6 +1958,16 @@ Use native search method
     (require 'company-english-helper)
     (toggle-company-english-helper))
 #+END_SRC
+
+#+begin_src emacs-lisp
+  (add-to-list 'load-path
+               (concat user-emacs-directory "site-packages/corfu-english-helper"))
+  (defun toggle-corfu-english-helper (&optional args)
+      "Lazy load wrapper for english helper"
+      (interactive)
+      (require 'corfu-english-helper)
+      (toggle-corfu-english-helper))
+#+end_src
 ** Ripgrep
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'rg)
@@ -2093,14 +2148,6 @@ This package comes with autoload
     (with-current-buffer ivy-posframe-buffer
       (face-remap-add-relative 'fringe `(:background
                                          ,(face-background 'ivy-posframe)))))
-#+end_src
-
-Change minimal width
-
-#+begin_src emacs-lisp
-  (add-hook 'after-make-frame-functions
-            (lambda ()
-              (setq ivy-posframe-min-width (round (* .5 (frame-width))))))
 #+end_src
 
 Pin posfram to left-bottom

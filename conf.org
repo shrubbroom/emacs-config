@@ -2115,18 +2115,7 @@ Make the overlay look nicer
         (overlay-put ov 'display (propertize info 'face hideshow-folded-face)))))
   (setq hs-set-up-overlay 'hideshow-folded-overlay-fn)
 #+END_SRC
-** Writeroom mode
-This package comes with autoload
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package-lazy 'writeroom-mode)
-  (setq writeroom-width 82)
-  (with-eval-after-load 'writeroom-mode
-    (setq writeroom-global-effects
-          (delq 'writeroom-set-menu-bar-lines
-                (delq 'writeroom-set-fullscreen writeroom-global-effects))))
-  (advice-add #'writeroom--set-global-effects :after
-              #'sort-tab-refresh)
-#+END_SRC
+
 ** Tramp
 #+begin_src emacs-lisp
   (setq-default tramp-verbose 1)

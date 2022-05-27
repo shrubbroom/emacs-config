@@ -28,3 +28,6 @@
 [submodule "site-packages/lambda-themes"]
 	path = site-packages/lambda-themes
 	url = https://github.com/Lambda-Emacs/lambda-themes.git
+[submodule "rime"]
+	path = rime
+	url = git@github.com:shrubbroom/rime-config.git

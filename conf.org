@@ -547,7 +547,7 @@ The keymap starts with =C-c=.
   (if (display-graphic-p)
       (progn
         (dolist (charset '(kana han cjk-misc bopomofo))
-          (set-fontset-font (frame-parameter nil 'font) charset
+          (set-fontset-font t charset
                             (font-spec :family "LXGW Wenkai")))
         (set-frame-font "Sarasa Term SC" nil t)))
 #+END_SRC
@@ -1863,8 +1863,13 @@ Use native search method
   (with-eval-after-load 'ebib
     (require 'org-ebib)
     (setq ebib-file-associations nil)
+    (if (not (bound-and-true-p init/enable-eaf))
+        (cl-case system-type
+          ('gnu/linux (setq ebib-file-associations '(("pdf" . "okular"))))
+          ('darwin (setq ebib-file-associations '(("pdf" . "open"))))
+          (otherwise t))))
     ;; (setq ebib-file-associations '(("pdf" . "okular")))
-    (global-set-key (kbd "C-c e i") 'ebib-insert-citation))
+    (global-set-key (kbd "C-c e i") 'ebib-insert-citation)
 #+END_SRC
 ** Org Roam
 #+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/org-roam-directory) "yes" "no")

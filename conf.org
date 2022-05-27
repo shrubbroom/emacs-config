@@ -549,14 +549,14 @@ The keymap starts with =C-c=.
         (dolist (charset '(kana han cjk-misc bopomofo))
           (set-fontset-font (frame-parameter nil 'font) charset
                             (font-spec :family "LXGW Wenkai")))
-        (set-frame-font "Sarasa Mono SC" nil t)))
+        (set-frame-font "Sarasa Term SC" nil t)))
 #+END_SRC
 *** prog-mode font
 
 Use separate font for ~prog-mode~
 #+BEGIN_SRC emacs-lisp
   (defface cc-font
-    '((t :family "Sarasa Mono SC"))
+    '((t :family "Sarasa Term SC"))
     "program fonts"
     :group 'basic-faces)
   (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
@@ -666,10 +666,9 @@ We need to advice the theme changer so that theme can be completely changed in r
 Install themes
 
 #+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'badwolf-theme)
   (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/moe-theme"))
-  (require 'moe-theme)
+               (concat user-emacs-directory "site-packages/lambda-themes"))
+  (require 'lambda-themes)
 #+END_SRC
 
 Setup theme.
@@ -843,7 +842,7 @@ Use =moody=
   (moody-replace-mode-line-buffer-identification)
   (moody-replace-vc-mode)
   (moody-replace-eldoc-minibuffer-message-function)
-  (display-time-mode 1)
+  (display-time-mode -1)
   (column-number-mode 1)
   (size-indication-mode 1)
 #+end_src
@@ -1751,7 +1750,7 @@ This is just for ~shell~ command
 
 Install all packages.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
   (add-to-list 'load-path
                (concat user-emacs-directory
                        "site-packages/eaf"))
@@ -1770,7 +1769,7 @@ Install all packages.
 
 Configure the package with a more emacs-like keybindings.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
   (eaf-bind-key scroll_to_begin "M-<" eaf-pdf-viewer-keybinding)
   (eaf-bind-key scroll_to_end "M->" eaf-pdf-viewer-keybinding)
 #+end_src
@@ -1779,7 +1778,7 @@ Configure the package with a more emacs-like keybindings.
 
 Configure latex preview.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
   (with-eval-after-load 'latex
    (add-to-list 'TeX-view-program-list '("eaf" eaf-pdf-synctex-forward-view))
    (add-to-list 'TeX-view-program-selection '(output-pdf "eaf")))
@@ -1787,13 +1786,13 @@ Configure latex preview.
 
 Change background color.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
   (setq eaf-pdf-dark-mode nil)
   (setq eaf-buffer-background-color (face-background 'default))
 #+end_src
 
 Emacs style keybindings
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
   (eaf-bind-key scroll_to_begin "M-<" eaf-pdf-viewer-keybinding)
   (eaf-bind-key scroll_to_end "M->" eaf-pdf-viewer-keybinding)
   (eaf-bind-key scroll_up "n" eaf-pdf-viewer-keybinding)
@@ -1803,13 +1802,13 @@ Emacs style keybindings
 
 Use native search method
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
   (add-hook 'eaf-mode-hook
             (lambda () (ctrlf-local-mode -1)))
 #+end_src
 
 *** Configure Browser
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
   (if (bound-and-true-p init/local-proxies)
       (let ((http_proxy (cdr (assoc "http" init/local-proxies))))
         (if http_proxy
@@ -1820,7 +1819,7 @@ Use native search method
 #+end_src
 
 *** Configure previewer
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
   (defun preview-current-buffer (&optional args)
     (interactive)
     (eaf-open (buffer-file-name (current-buffer))))
@@ -1828,7 +1827,7 @@ Use native search method
 
 *** Integration with org-mode
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
   (defun eaf-org-open-file (file &optional link)
     "An wrapper function on `eaf-open'."
     (eaf-open file))

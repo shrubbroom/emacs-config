@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: <lateximage
+# key: <lateximage
+# --
+#+CAPTION: ${1:title}
+#+NAME: fig:${2:figname}
+#+ATTR_LaTeX: :width ${3:.7}\textwidth :placement [!htpb]
+[[${4}]]
+$0

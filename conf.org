@@ -161,7 +161,7 @@ These actions are done with package =pulse.el=.
 
 #+begin_src emacs-lisp
   (add-hook 'org-mode-hook (lambda () (setq cursor-type '(bar . 3))))
-  (blink-cursor-mode 1)
+  (blink-cursor-mode -1)
 #+end_src
 
 *** Go to first char instead of line head
@@ -693,7 +693,8 @@ Setup theme.
 #+begin_src emacs-lisp
   (dolist (hook '(prog-mode-hook
                   text-mode-hook
-                  telega-chat-mode-hook))
+                  telega-chat-mode-hook
+                  wl-summary-mode-hook))
    (add-hook hook
              (lambda ()
                (setq indicate-buffer-boundaries 'left))))
@@ -2068,7 +2069,7 @@ Restore session
   (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
   (add-hook 'dired-mode-hook #'dired-omit-mode)
   (define-key dired-mode-map (kbd "C-c t") #'dired-omit-mode)
-  (define-key dired-mode-map [remap dired-find-file] #'dired-find-alternate-file)
+  ;; (define-key dired-mode-map [remap dired-find-file] #'dired-find-alternate-file)
 #+END_SRC
 ** Word Count
 #+BEGIN_SRC emacs-lisp

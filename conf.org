@@ -1229,6 +1229,7 @@ Install ~yaml-mode~
   (init/ensure-package-lazy 'rime)
   (with-eval-after-load 'rime
     (add-hook 'kill-emacs-hook #'rime-lib-finalize) ;; avoid crash on exit
+    (set-face-attribute 'rime-highlight-candidate-face nil :weight 'bold)
     (define-key rime-mode-map [escape] #'rime-inline-ascii)
     (advice-add 'rime-inline-ascii :after
                 #'(lambda ()
@@ -1275,7 +1276,7 @@ sequence of mode loading should be well taken care of.
 
 #+BEGIN_SRC emacs-lisp
   (defface lt-font
-    '((t :family "LXGW Bright"))
+    '((t :family "Bookerly"))
     "Font for literature"
     :group 'basic-faces)
   (set-face-attribute 'variable-pitch nil
@@ -2137,6 +2138,7 @@ Make the overlay look nicer
   (setq ivy-posframe-parameters
         '((left-fringe . 8)
           (right-fringe . 8)))
+  (setq posframe-mouse-banish-function #'posframe-mouse-banish-simple)
   (with-eval-after-load 'ivy-posframe
     (with-current-buffer ivy-posframe-buffer
       (face-remap-add-relative 'fringe `(:background

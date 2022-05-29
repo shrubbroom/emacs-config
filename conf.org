@@ -1817,6 +1817,55 @@ Use native search method
             (lambda () (ctrlf-local-mode -1)))
 #+end_src
 
+*** Pdf-tools
+This package is only used in OS X
+
+#+begin_src emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
+  (init/ensure-package-lazy 'pdf-tools)
+  (pdf-loader-install)
+  (setq pdf-view-use-scaling t)
+  ;; Use pdf-tools to open PDF files
+  (setq TeX-view-program-selection '((output-pdf "PDF Tools"))
+        TeX-source-correlate-start-server t)
+  ;; Update PDF buffers after successful LaTeX runs
+  (add-hook 'TeX-after-compilation-finished-functions
+             #'TeX-revert-document-buffer)
+#+end_src
+
+Restore session
+
+#+begin_src emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
+  ;; workaround for pdf-tools not reopening to last-viewed page of the pdf:
+  ;; https://github.com/politza/pdf-tools/issues/18#issuecomment-269515117
+  (defun brds/pdf-set-last-viewed-bookmark ()
+    (interactive)
+    (when (eq major-mode 'pdf-view-mode)
+      (bookmark-set (brds/pdf-generate-bookmark-name))))
+
+  (defun brds/pdf-jump-last-viewed-bookmark ()
+    (bookmark-set "fake") ; this is new
+    (when
+        (brds/pdf-has-last-viewed-bookmark)
+      (bookmark-jump (brds/pdf-generate-bookmark-name))))
+
+  (defun brds/pdf-has-last-viewed-bookmark ()
+    (assoc
+     (brds/pdf-generate-bookmark-name) bookmark-alist))
+
+  (defun brds/pdf-generate-bookmark-name ()
+    (concat "PDF-LAST-VIEWED: " (buffer-file-name)))
+
+  (defun brds/pdf-set-all-last-viewed-bookmarks ()
+    (dolist (buf (buffer-list))
+      (with-current-buffer buf
+        (brds/pdf-set-last-viewed-bookmark))))
+
+  (add-hook 'kill-buffer-hook 'brds/pdf-set-last-viewed-bookmark)
+  (add-hook 'pdf-view-mode-hook 'brds/pdf-jump-last-viewed-bookmark)
+  (unless noninteractive  ; as `save-place-mode' does
+    (add-hook 'kill-emacs-hook #'brds/pdf-set-all-last-viewed-bookmarks))
+#+end_src
+
 *** Configure Browser
 #+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
   (if (bound-and-true-p init/local-proxies)
@@ -1859,8 +1908,6 @@ Use native search method
 #+END_SRC
 ** ebib
 
-=eaf= cannot restore session, use okular instead
-
 #+BEGIN_SRC emacs-lisp :tangle (if (and (boundp 'init/ebib-file-search-dirs) (boundp 'init/ebib-preload-bib-files)) "yes" "no")
   (init/ensure-package-lazy 'ebib)
   (setq ebib-file-search-dirs init/ebib-file-search-dirs)
@@ -1873,11 +1920,12 @@ Use native search method
   (with-eval-after-load 'ebib
     (require 'org-ebib)
     (setq ebib-file-associations nil)
-    (if (not (bound-and-true-p init/enable-eaf))
-        (cl-case system-type
-          ('gnu/linux (setq ebib-file-associations '(("pdf" . "okular"))))
-          ('darwin (setq ebib-file-associations '(("pdf" . "open"))))
-          (otherwise t))))
+    ;; (if (not (bound-and-true-p init/enable-eaf))
+    ;;     (cl-case system-type
+    ;;       ('gnu/linux (setq ebib-file-associations '(("pdf" . "okular"))))
+    ;;       ('darwin (setq ebib-file-associations '(("pdf" . "open"))))
+    ;;       (otherwise t)))
+    )
     ;; (setq ebib-file-associations '(("pdf" . "okular")))
     (global-set-key (kbd "C-c e i") 'ebib-insert-citation)
 #+END_SRC
@@ -2174,6 +2222,10 @@ Pin posfram to left-bottom
                      ,(string-to-number (cadr (split-string http_proxy ":")))
                      :enable t
                      :type (:@type "proxyTypeHttp")))))))
+  (defun my-telega-chat-mode ()
+    (add-hook 'completion-at-point-functions
+              #'telega-chatbuf-complete-at-point nil 'local))
+  (add-hook 'telega-chat-mode-hook 'my-telega-chat-mode)
 #+end_src
 ** Wonderlust
 

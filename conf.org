@@ -689,6 +689,15 @@ Setup theme.
                       :background (face-background 'default))
 #+END_SRC
 
+*** Add fringe indicators
+#+begin_src emacs-lisp
+  (dolist (hook '(prog-mode-hook
+                  text-mode-hook
+                  telega-chat-mode-hook))
+   (add-hook hook
+             (lambda ()
+               (setq indicate-buffer-boundaries 'left))))
+#+end_src
 *** Tone down headerline
 
 #+begin_src emacs-lisp
@@ -2138,7 +2147,7 @@ Make the overlay look nicer
   (setq ivy-posframe-parameters
         '((left-fringe . 8)
           (right-fringe . 8)))
-  (setq posframe-mouse-banish-function #'posframe-mouse-banish-simple)
+  (setq posframe-mouse-banish-function #'posframe-mouse-banish-default)
   (with-eval-after-load 'ivy-posframe
     (with-current-buffer ivy-posframe-buffer
       (face-remap-add-relative 'fringe `(:background
@@ -2165,4 +2174,18 @@ Pin posfram to left-bottom
                      ,(string-to-number (cadr (split-string http_proxy ":")))
                      :enable t
                      :type (:@type "proxyTypeHttp")))))))
+#+end_src
+** Wonderlust
+
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'wanderlust)
+  (if (boundp 'mail-user-agent)
+      (setq mail-user-agent 'wl-user-agent))
+  (if (fboundp 'define-mail-user-agent)
+      (define-mail-user-agent
+        'wl-user-agent
+        'wl-user-agent-compose
+        'wl-draft-send
+        'wl-draft-kill
+        'mail-send-hook))
 #+end_src

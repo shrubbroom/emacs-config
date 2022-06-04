@@ -73,16 +73,24 @@ User defined actions begin with =init=.
   (defun init/open-file-in-external-application (&optional args)
     "Open current buffer in external applications"
     (interactive)
-    (ivy-read "App: "
-              '("Thunar" "Code" "Zathura")
+    (ivy-read "Type"
+              '("File" "Dir")
               :action #'open-file-in-external-application-action))
-  (defun open-file-in-external-application-action (arg)
-    (if (buffer-file-name)
-        (pcase arg
-          ("Thunar" (async-shell-command (concat "thunar " "\"" default-directory "\"")))
-          ("Code" (async-shell-command (concat "code " "\"" (buffer-file-name) "\"")))
-          ("Zathura" (async-shell-command (concat "za " "\"" (buffer-file-name) "\""))))
-      (message "The buffer is not a file")))
+  (pcase system-type
+    ('darwin
+     (defun open-file-in-external-application-action (arg)
+      (if (buffer-file-name)
+          (pcase arg
+            ("Dir" (async-shell-command (concat "open " "\"" default-directory "\"")))
+            ("File" (async-shell-command (concat "open " "\"" (buffer-file-name) "\""))))
+        (message "The buffer is not a file"))))
+    ('gnu/linux
+     (defun open-file-in-external-application-action (arg)
+      (if (buffer-file-name)
+          (pcase arg
+            ("Dir" (async-shell-command (concat "xdg-open " "\"" default-directory "\"")))
+            ("File" (async-shell-command (concat "xdg-open " "\"" (buffer-file-name) "\""))))
+        (message "The buffer is not a file")))))
 #+END_SRC
 
 *** Toggle proxy
@@ -548,7 +556,7 @@ The keymap starts with =C-c=.
       (progn
         (dolist (charset '(kana han cjk-misc bopomofo))
           (set-fontset-font t charset
-                            (font-spec :family "LXGW Wenkai")))
+                            (font-spec :family "LXGW Bright")))
         (set-frame-font "Sarasa Term SC" nil t)))
 #+END_SRC
 *** prog-mode font
@@ -697,7 +705,7 @@ Setup theme.
                   wl-summary-mode-hook))
    (add-hook hook
              (lambda ()
-               (setq indicate-buffer-boundaries 'left))))
+               (setq indicate-buffer-boundaries 'right))))
 #+end_src
 *** Tone down headerline
 
@@ -2194,7 +2202,7 @@ Make the overlay look nicer
 #+end_src
 ** Ivy-posframe
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (init/ensure-package-lazy 'ivy-posframe)
   (ivy-posframe-mode 1)
   (setq ivy-posframe-parameters
@@ -2209,7 +2217,7 @@ Make the overlay look nicer
 
 Pin posfram to left-bottom
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (setq ivy-posframe-display-functions-alist
         '((t . ivy-posframe-display-at-frame-bottom-left)))
 #+end_src

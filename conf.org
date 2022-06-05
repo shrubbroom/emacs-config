@@ -854,20 +854,21 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 
 Use =moody=
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (init/ensure-package 'moody)
   (setq x-underline-at-descent-line t)
   (moody-replace-mode-line-buffer-identification)
   (moody-replace-vc-mode)
   (moody-replace-eldoc-minibuffer-message-function)
-  (display-time-mode -1)
+  (display-time-mode 1)
+  ;;(moody-replace-element )
   (column-number-mode 1)
   (size-indication-mode 1)
 #+end_src
 
 Hide minor-modes
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (init/ensure-package 'minions)
   (minions-mode +1)
 #+end_src
@@ -899,11 +900,31 @@ Hide minor-modes
                    (5.0)))))
   (awesome-tray-mode 1)
 #+end_src
+
+
+=doom-modeline=
+#+begin_src emacs-lisp
+  (init/ensure-package 'doom-modeline)
+  (setq doom-modeline-icon t
+        doom-modeline-unicode-fallback nil
+        doom-modeline-height 1
+        doom-modeline-buffer-modification-icon nil
+        doom-modeline-project-detection 'project)
+  (display-time-mode +1)
+  (column-number-mode +1)
+  (defun my-doom-modeline--font-height ()
+    "Calculate the actual char height of the mode-line."
+    (+ (frame-char-height) 2))
+  (advice-add #'doom-modeline--font-height :override #'my-doom-modeline--font-height)
+  (add-hook 'after-init-hook 'doom-modeline-mode)
+
+#+end_src
 ** Line number
 #+BEGIN_SRC emacs-lisp
   (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
     (add-hook hook 'display-line-numbers-mode))
 #+END_SRC
+
 *** Tone down background, modify font
 #+BEGIN_SRC emacs-lisp
   (set-face-attribute 'line-number-current-line

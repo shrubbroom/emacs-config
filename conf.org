@@ -236,9 +236,10 @@ These actions are done with package =pulse.el=.
   (add-hook 'emacs-startup-hook (lambda ()
                                   (switch-to-buffer "*scratch*")
                                   (goto-char (point-min))
-                                  (insert (concat ";; start up cost: "
+                                  (insert (concat "# start up cost: "
                                                   (emacs-init-time)
                                                   "\n\n"))))
+  (setq-default initial-major-mode 'org-mode)
 #+END_SRC
 
 *** Define path
@@ -1953,11 +1954,11 @@ Restore session
   (with-eval-after-load 'ebib
     (require 'org-ebib)
     (setq ebib-file-associations nil)
-    ;; (if (not (bound-and-true-p init/enable-eaf))
-    ;;     (cl-case system-type
-    ;;       ('gnu/linux (setq ebib-file-associations '(("pdf" . "okular"))))
-    ;;       ('darwin (setq ebib-file-associations '(("pdf" . "open"))))
-    ;;       (otherwise t)))
+    (if (not (bound-and-true-p init/enable-eaf))
+        (cl-case system-type
+          ('gnu/linux (setq ebib-file-associations '(("pdf" . "okular"))))
+          ;; ('darwin (setq ebib-file-associations '(("pdf" . "open"))))
+          (otherwise t)))
     )
     ;; (setq ebib-file-associations '(("pdf" . "okular")))
     (global-set-key (kbd "C-c e i") 'ebib-insert-citation)

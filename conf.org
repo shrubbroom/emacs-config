@@ -239,7 +239,6 @@ These actions are done with package =pulse.el=.
                                   (insert (concat "# start up cost: "
                                                   (emacs-init-time)
                                                   "\n\n"))))
-  (setq-default initial-major-mode 'org-mode)
 #+END_SRC
 
 *** Define path
@@ -907,15 +906,20 @@ Hide minor-modes
 #+begin_src emacs-lisp
   (init/ensure-package 'doom-modeline)
   (setq doom-modeline-icon nil
-        doom-modeline-unicode-fallback t
+        doom-modeline-unicode-fallback (eq system-type 'darwin)
         doom-modeline-height 1
         doom-modeline-buffer-modification-icon nil
         doom-modeline-project-detection 'project)
   (display-time-mode +1)
   (column-number-mode +1)
-  (defun my-doom-modeline--font-height ()
-    "Calculate the actual char height of the mode-line."
-    (+ (frame-char-height) 2))
+  (if (eq system-type 'darwin)
+   (defun my-doom-modeline--font-height ()
+     "Calculate the actual char height of the mode-line."
+     (+ (frame-char-height) 2))
+   (defun my-doom-modeline--font-height ()
+     "Calculate the actual char height of the mode-line."
+     (+ (/ (* (frame-char-height) 1080) (display-pixel-height)) 2))
+   )
   (advice-add #'doom-modeline--font-height :override #'my-doom-modeline--font-height)
   (add-hook 'after-init-hook 'doom-modeline-mode)
 

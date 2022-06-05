@@ -905,8 +905,8 @@ Hide minor-modes
 =doom-modeline=
 #+begin_src emacs-lisp
   (init/ensure-package 'doom-modeline)
-  (setq doom-modeline-icon t
-        doom-modeline-unicode-fallback nil
+  (setq doom-modeline-icon nil
+        doom-modeline-unicode-fallback t
         doom-modeline-height 1
         doom-modeline-buffer-modification-icon nil
         doom-modeline-project-detection 'project)

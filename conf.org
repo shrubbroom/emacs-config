@@ -2112,6 +2112,16 @@ Restore session
 #+END_SRC
 
 #+begin_src emacs-lisp
+  (defun dired-insert-kill-current-dir (DIRNAME)
+    (interactive
+     (list (dired-get-filename)))
+    (call-interactively 'dired-prev-subdir)
+    (dired-kill-subdir)
+    (dired-insert-subdir DIRNAME))
+  (define-key dired-mode-map (kbd "I") 'dired-insert-kill-current-dir)
+#+end_src
+
+#+begin_src emacs-lisp
   (defun xah-open-in-external-app (&optional @fname)
     "Open the current file or dired marked files in external app.
   When called in emacs lisp, if @fname is given, open that.

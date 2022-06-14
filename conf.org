@@ -1775,7 +1775,7 @@ This is just for ~shell~ command
 *** Eshell toggle
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'eshell-toggle)
-  (global-set-key (kbd "s-e") 'eshell-toggle)
+  (global-set-key (kbd "M-e") 'eshell-toggle)
 #+end_src
 ** Shell
 #+begin_src emacs-lisp

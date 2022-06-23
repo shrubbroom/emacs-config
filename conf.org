@@ -81,15 +81,15 @@ User defined actions begin with =init=.
      (defun open-file-in-external-application-action (arg)
       (if (buffer-file-name)
           (pcase arg
-            ("Dir" (async-shell-command (concat "open " "\"" default-directory "\"")))
-            ("File" (async-shell-command (concat "open " "\"" (buffer-file-name) "\""))))
+            ("Dir" (call-process "open" nil 0 nil default-directory))
+            ("File" (call-process "open" nil 0 nil (buffer-file-name))))
         (message "The buffer is not a file"))))
     ('gnu/linux
      (defun open-file-in-external-application-action (arg)
       (if (buffer-file-name)
           (pcase arg
-            ("Dir" (async-shell-command (concat "xdg-open " "\"" default-directory "\"")))
-            ("File" (async-shell-command (concat "xdg-open " "\"" (buffer-file-name) "\""))))
+            ("Dir" (call-process "xdg-open" nil 0 nil default-directory))
+            ("File" (call-process "xdg-open" nil 0 nil (buffer-file-name))))
         (message "The buffer is not a file")))))
 #+END_SRC
 
@@ -247,6 +247,7 @@ These actions are done with package =pulse.el=.
 of Emacs. For example (this function is not tangled)
 
 #+begin_src emacs-lisp :tangle no
+  (error "This part should not be tangled: init/define-path")
   (defun init/define-path ()
     "Example of `init/define-path', this function is not tangled"
     (custom-set-variables
@@ -558,14 +559,14 @@ The keymap starts with =C-c=.
     (dolist (charset '(kana han cjk-misc bopomofo))
       (set-fontset-font t charset
                         (font-spec :family "LXGW Bright")))
-    (set-frame-font "Sarasa Term SC" nil t))
+    (set-frame-font "CMU Typewriter text" nil t))
 #+END_SRC
 *** prog-mode font
 
 Use separate font for ~prog-mode~
 #+BEGIN_SRC emacs-lisp
   (defface cc-font
-    '((t :family "Sarasa Term SC"))
+    '((t :family "Courier New"))
     "program fonts"
     :group 'basic-faces)
   (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
@@ -581,7 +582,7 @@ Use separate font for ~prog-mode~
 
 ** Ligature
 
-*** MasOS
+*** MacOS
 
 #+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
   (mac-auto-operator-composition-mode +1)
@@ -778,7 +779,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   ;; (set-face-attribute 'sort-tab-separator-face
   ;;                     nil
   ;;                     :foreground (face-foreground 'mode-line))
-  (setq-default sort-tab-separator "⦚")
+  ;; (setq-default sort-tab-separator "⦚")
   #+end_src
 *** Save and revert buffer state
 
@@ -855,6 +856,18 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 
 =doom-modeline=
 
+#+begin_src emacs-lisp :tangle (if (not (eq system-type 'darwin)) "yes" "no")
+  (defun my-doom-modeline--font-height ()
+    "Calculate the actual char height of the mode-line."
+    (+ (/ (* (frame-char-height) 1080) (display-pixel-height)) 2))
+#+end_src
+
+#+begin_src emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
+  (defun my-doom-modeline--font-height ()
+    "Calculate the actual char height of the mode-line."
+    (+ (frame-char-height) 2))
+#+end_src
+
 #+begin_src emacs-lisp
   (init/ensure-package 'doom-modeline)
   (setq doom-modeline-icon nil
@@ -864,14 +877,14 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
         doom-modeline-project-detection 'project)
   (display-time-mode +1)
   (column-number-mode +1)
-  (if (eq system-type 'darwin)
-   (defun my-doom-modeline--font-height ()
-     "Calculate the actual char height of the mode-line."
-     (+ (frame-char-height) 2))
-   (defun my-doom-modeline--font-height ()
-     "Calculate the actual char height of the mode-line."
-     (+ (/ (* (frame-char-height) 1080) (display-pixel-height)) 2))
-   )
+  ;; (if (eq system-type 'darwin)
+  ;;  (defun my-doom-modeline--font-height ()
+  ;;    "Calculate the actual char height of the mode-line."
+  ;;    (+ (frame-char-height) 0))
+  ;;  (defun my-doom-modeline--font-height ()
+  ;;    "Calculate the actual char height of the mode-line."
+  ;;    (+ (/ (* (frame-char-height) 1080) (display-pixel-height)) 2))
+  ;;  )
   (advice-add #'doom-modeline--font-height :override #'my-doom-modeline--font-height)
   (add-hook 'after-init-hook 'doom-modeline-mode)
 #+end_src
@@ -1271,7 +1284,7 @@ sequence of mode loading should be well taken care of.
 
 #+BEGIN_SRC emacs-lisp
   (defface lt-font
-    '((t :family "Bookerly"))
+    '((t :family "CMU Typewriter Text"))
     "Font for literature"
     :group 'basic-faces)
   (set-face-attribute 'variable-pitch nil
@@ -1559,7 +1572,7 @@ Define export processes
   (setq eshell-prompt-function-light
           #'(lambda nil
               (concat
-               (propertize "╭─"
+               (propertize "# "
                            'face `(:background (face-background 'default) :weight bold))
                (propertize (user-login-name)
                            'face `(:foreground ,(face-foreground 'font-lock-keyword-face) :weight bold))
@@ -1580,7 +1593,7 @@ Define export processes
                                 'face `(:foreground ,(face-foreground 'font-lock-doc-face) :weight bold))))
                (propertize "\n"
                            'face `(:background (face-background 'default)))
-               (propertize "╰─["
+               (propertize "["
                            'face `(:background (face-background 'default) :weight bold))
                (propertize (if (= (user-uid) 0) "# " "λ")
                            'face `(:slant default :weight bold :foreground ,(face-foreground 'font-lock-constant-face)))
@@ -1589,7 +1602,7 @@ Define export processes
                (propertize " "
                            'face `(:background (face-background 'default))))))
 
-  (setq eshell-prompt-regexp "^╰─\\\[[#λ]\\\] ")
+  (setq eshell-prompt-regexp "^\\\[[#λ]\\\] ")
   (if (bound-and-true-p init/system-dark-modep)
       (setq eshell-prompt-function
             eshell-prompt-function-dark)
@@ -1819,8 +1832,8 @@ This package is only used in OS X
   ;; Update PDF buffers after successful LaTeX runs
   (add-hook 'TeX-after-compilation-finished-functions
             #'TeX-revert-document-buffer)
-  (add-hook 'pdf-view-mode #'(lambda ()
-                               (ctrlf-local-mode -1)))
+  (add-hook 'pdf-view-mode-hook #'(lambda ()
+                                    (ctrlf-local-mode -1)))
 #+end_src
 
 Restore session
@@ -1916,9 +1929,13 @@ Restore session
           ('gnu/linux (setq ebib-file-associations '(("pdf" . "okular"))))
           ;; ('darwin (setq ebib-file-associations '(("pdf" . "open"))))
           (otherwise t)))
-    )
-    ;; (setq ebib-file-associations '(("pdf" . "okular")))
-    (global-set-key (kbd "C-c e i") 'ebib-insert-citation)
+    (define-key ebib-index-mode-map (kbd "F") '(lambda () (interactive)
+                                                 (let ((ebib-file-associations '(("pdf" . "open"))))
+                                                   (call-interactively 'ebib-view-file)))))
+
+  ;; (setq ebib-file-associations '(("pdf" . "okular")))
+  (global-set-key (kbd "C-c e i") 'ebib-insert-citation)
+
 #+END_SRC
 ** Org Roam
 #+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/org-roam-directory) "yes" "no")
@@ -2074,11 +2091,9 @@ Restore session
 #+end_src
 
 #+begin_src emacs-lisp
-  (defun xah-open-in-external-app (&optional @fname)
+  (defun open-in-external-app (&optional @fname)
     "Open the current file or dired marked files in external app.
-  When called in emacs lisp, if @fname is given, open that.
-  URL `http://xahlee.info/emacs/emacs/emacs_dired_open_file_in_ext_apps.html'
-  Version 2019-11-04 2021-02-16"
+  When called in emacs lisp, if @fname is given, open that."
     (interactive)
     (let* (
            ($file-list
@@ -2092,20 +2107,15 @@ Restore session
                        (y-or-n-p "Open more than 5 files? "))))
       (when $do-it-p
         (cond
-         ((string-equal system-type "windows-nt")
-          (mapc
-           (lambda ($fpath)
-             (shell-command (concat "PowerShell -Command \"Invoke-Item -LiteralPath\" " "'" (shell-quote-argument (expand-file-name $fpath )) "'")))
-           $file-list))
          ((string-equal system-type "darwin")
           (mapc
            (lambda ($fpath)
-             (shell-command
-              (concat "open " (shell-quote-argument $fpath))))  $file-list))
+             (call-process "open" nil 0 nil $fpath))  $file-list))
          ((string-equal system-type "gnu/linux")
           (mapc
-           (lambda ($fpath) (let ((process-connection-type nil))
-                              (start-process "" nil "xdg-open" $fpath))) $file-list))))))
+           (lambda ($fpath)
+             (call-process "xdg-open" nil 0 nil $fpath))
+           $file-list))))))
 
   (defun xah-show-in-desktop ()
     "Show current file in desktop.
@@ -2140,7 +2150,8 @@ Restore session
         ))))
 
 
-  (define-key dired-mode-map [remap browse-url-of-dired-file] 'xah-open-in-external-app)
+  (define-key dired-mode-map [remap browse-url-of-dired-file] 'open-in-external-app)
+  ;; Most case "W"
   (define-key dired-mode-map (kbd "C-^") 'xah-show-in-desktop)
 #+end_src
 ** Word Count

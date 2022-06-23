@@ -2049,18 +2049,18 @@ Restore session
 ** Dired
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'fd-dired)
-  (init/ensure-package-lazy 'all-the-icons-dired)
+  (add-to-list 'load-path
+               (concat user-emacs-directory "site-packages/diredp"))
+  (setq-default diredp-hide-details-initially-flag nil)
   (with-eval-after-load 'dired
     (require 'dired-x)
-    (require 'all-the-icons-dired))
+    (require 'dired+))
   (when (string= system-type "darwin")
     (setq dired-use-ls-dired nil))
   (setq dired-omit-files "^\\\.")
-  (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
   (add-hook 'dired-mode-hook #'dired-omit-mode)
   (define-key dired-mode-map (kbd "C-c t") #'dired-omit-mode)
   (setq-default dired-listing-switches "-alh")
-  ;; (define-key dired-mode-map [remap dired-find-file] #'dired-find-alternate-file)
 #+END_SRC
 
 #+begin_src emacs-lisp

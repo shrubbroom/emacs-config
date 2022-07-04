@@ -549,7 +549,10 @@ The keymap starts with =C-c=.
                   'transient-shrink-window)
 #+end_src
 * Look and feel
-*This part should not be changed frequently. Spend time on important things*
+
+*This part should not be changed frequently. Spend time on important
+ things*
+ 
 ** Fonts
  Set default font, the font size configuration is moved to ~local-variables.el~
 #+BEGIN_SRC emacs-lisp
@@ -566,7 +569,7 @@ The keymap starts with =C-c=.
 Use separate font for ~prog-mode~
 #+BEGIN_SRC emacs-lisp
   (defface cc-font
-    '((t :family "Courier New"))
+    '((t :family "Sarasa Term Slab SC"))
     "program fonts"
     :group 'basic-faces)
   (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
@@ -655,7 +658,8 @@ Use separate font for ~prog-mode~
 #+END_SRC
 ** Theme
 *** Issues
-We need to advice the theme changer so that theme can be completely changed in runtime.
+We need to advice the theme changer so that theme can be completely
+changed in runtime.
 #+BEGIN_SRC emacs-lisp
   (defcustom load-theme-before-hook nil
     "Functions to run before load theme."
@@ -766,7 +770,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
                              ((string-prefix-p "*eww" name)
                               nil)
                              (t (apply origin `(,buf)))))))
-
+  
 #+END_SRC
 
 
@@ -854,21 +858,42 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 
 ** Modeline
 
+#+begin_src emacs-lisp
+  (init/ensure-package 'minions)
+  (display-time-mode 1)
+  (column-number-mode 1)
+  (size-indication-mode 1)
+  (minions-mode +1)
+  (with-eval-after-load 'subr-x
+    (setq-default mode-line-buffer-identification
+                  '(:eval
+                    (format-mode-line
+                     (propertized-buffer-identification
+                      (or (when-let* ((buffer-file-truename buffer-file-truename)
+                                      (prj (cdr-safe (project-current)))
+                                      (prj-parent (file-name-directory
+                                                   (directory-file-name (expand-file-name prj)))))
+                            (concat (file-relative-name
+                                     (file-name-directory buffer-file-truename) prj-parent)
+                                    (file-name-nondirectory buffer-file-truename)))
+                          "%b"))))))
+#+end_src
+
 =doom-modeline=
 
-#+begin_src emacs-lisp :tangle (if (not (eq system-type 'darwin)) "yes" "no")
+#+begin_src emacs-lisp :tangle no
   (defun my-doom-modeline--font-height ()
     "Calculate the actual char height of the mode-line."
     (+ (/ (* (frame-char-height) 1080) (display-pixel-height)) 2))
 #+end_src
 
-#+begin_src emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
+#+begin_src emacs-lisp :tangle no
   (defun my-doom-modeline--font-height ()
     "Calculate the actual char height of the mode-line."
     (+ (frame-char-height) 2))
 #+end_src
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (init/ensure-package 'doom-modeline)
   (setq doom-modeline-icon nil
         doom-modeline-unicode-fallback nil
@@ -1197,6 +1222,11 @@ Add lsp to cc-mode hook
                                 (setq-local compile-command "cargo build")
                                 (lsp)))
 #+END_SRC
+** Haskell
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'haskell-mode)
+  (setq haskell-process-type 'stack-ghci)
+#+end_src
 ** Emacs-Lisp
 Use =paredit= in =elisp-mode=.  Configure =smartparen= mode.
 #+BEGIN_SRC emacs-lisp
@@ -1695,33 +1725,7 @@ This is just for ~shell~ command
   (defun eshell/vim (file)
     (find-file file))
 #+END_SRC
-*** Act
-#+BEGIN_SRC emacs-lisp
-  (defun act/eshell ()
-    (interactive)
-    (let ((buf (eshell 17)))
-      (with-current-buffer buf
-        (rename-buffer (concat "esh:" (format "%d" (act/eshell-new-index)))))
-      (switch-to-buffer buf)))
-  (defun act/eshell-new-index ()
-    (let* ((index-list (act/eshell-get-index-list))
-           (new-buf-index 0)
-           (index-arr (make-vector 100 0)))
-      (dolist (i index-list)
-        (aset index-arr i 1))
-      (while (= (aref index-arr new-buf-index) 1)
-        (setq new-buf-index (+ new-buf-index 1)))
-      new-buf-index))
-  (defun act/eshell-get-index-list ()
-    (mapcar #'string-to-number
-            (mapcar (apply-partially #'replace-regexp-in-string
-                                     "esh:"
-                                     "")
-                    (seq-filter (apply-partially #'string-match-p
-                                                 "esh:[0-9]+")
-                                (mapcar #'buffer-name
-                                        (buffer-list))))))
-#+END_SRC
+
 *** Issues
 #+BEGIN_SRC emacs-lisp
   (with-eval-after-load 'em-term
@@ -1740,6 +1744,15 @@ This is just for ~shell~ command
   (init/ensure-package-lazy 'eshell-toggle)
   (global-set-key (kbd "M-e") 'eshell-toggle)
 #+end_src
+
+#+BEGIN_SRC emacs-lisp
+  (defun eshell-project ()
+    (interactive)
+    (let ((eshell-name (eshell-toggle--make-buffer-name)))
+      (unless (gnus-buffer-live-p eshell-name)
+        (eshell-toggle--new-buffer eshell-name))
+      (switch-to-buffer eshell-name)))
+#+END_SRC
 ** Shell
 #+begin_src emacs-lisp
   (add-hook 'shell-mode-hook (lambda ()
@@ -2329,4 +2342,5 @@ Pin posfram to left-bottom
 #+begin_src emacs-lisp
   (init/ensure-package 'vterm)
   (define-key vterm-mode-map (kbd "C-y") 'vterm-send-C-S-v)
+  (define-key vterm-mode-map (kbd "C-x C-q") 'vterm-copy-mode)
 #+end_src

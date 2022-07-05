@@ -992,7 +992,16 @@ Configurations
       (corfu-mode 1)))
   (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
 #+END_SRC
-
+**** Teminal Corfu
+#+begin_src emacs-lisp
+  (unless (display-graphic-p)
+    (add-to-list 'load-path
+                 (concat user-emacs-directory "site-packages/emacs-corfu-terminal"))
+    (add-to-list 'load-path
+               (concat user-emacs-directory "site-packages/emacs-popon"))
+    (require 'corfu-terminal)
+    (corfu-terminal-mode +1))
+#+end_src
 *** LSP
 
 Install ~lsp-mode~.

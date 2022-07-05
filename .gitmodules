@@ -31,3 +31,9 @@
 [submodule "rime"]
 	path = rime
 	url = git@github.com:shrubbroom/rime-config.git
+[submodule "site-packages/emacs-corfu-terminal"]
+	path = site-packages/emacs-corfu-terminal
+	url = https://codeberg.org/akib/emacs-corfu-terminal.git
+[submodule "site-packages/emacs-popon"]
+	path = site-packages/emacs-popon
+	url = https://codeberg.org/akib/emacs-popon.git

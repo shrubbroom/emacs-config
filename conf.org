@@ -752,7 +752,6 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
     (if sort-tab-mode
         (progn (sort-tab-mode -1)
                (sort-tab-mode 1))))
-
 #+END_SRC
 
 **** Override hide behavior
@@ -856,62 +855,36 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
     (act/save-session "/dev/null"))
 #+END_SRC
 
-** Modeline
+** Modeline/awesome-tray
 
 #+begin_src emacs-lisp
-  (init/ensure-package 'minions)
-  (display-time-mode 1)
-  (column-number-mode 1)
-  (size-indication-mode 1)
-  (minions-mode +1)
-  (with-eval-after-load 'subr-x
-    (setq-default mode-line-buffer-identification
-                  '(:eval
-                    (format-mode-line
-                     (propertized-buffer-identification
-                      (or (when-let* ((buffer-file-truename buffer-file-truename)
-                                      (prj (cdr-safe (project-current)))
-                                      (prj-parent (file-name-directory
-                                                   (directory-file-name (expand-file-name prj)))))
-                            (concat (file-relative-name
-                                     (file-name-directory buffer-file-truename) prj-parent)
-                                    (file-name-nondirectory buffer-file-truename)))
-                          "%b"))))))
-#+end_src
-
-=doom-modeline=
-
-#+begin_src emacs-lisp :tangle no
-  (defun my-doom-modeline--font-height ()
-    "Calculate the actual char height of the mode-line."
-    (+ (/ (* (frame-char-height) 1080) (display-pixel-height)) 2))
-#+end_src
-
-#+begin_src emacs-lisp :tangle no
-  (defun my-doom-modeline--font-height ()
-    "Calculate the actual char height of the mode-line."
-    (+ (frame-char-height) 2))
-#+end_src
-
-#+begin_src emacs-lisp :tangle no
-  (init/ensure-package 'doom-modeline)
-  (setq doom-modeline-icon nil
-        doom-modeline-unicode-fallback nil
-        doom-modeline-height 1
-        doom-modeline-buffer-modification-icon nil
-        doom-modeline-project-detection 'project)
-  (display-time-mode +1)
-  (column-number-mode +1)
-  ;; (if (eq system-type 'darwin)
-  ;;  (defun my-doom-modeline--font-height ()
-  ;;    "Calculate the actual char height of the mode-line."
-  ;;    (+ (frame-char-height) 0))
-  ;;  (defun my-doom-modeline--font-height ()
-  ;;    "Calculate the actual char height of the mode-line."
-  ;;    (+ (/ (* (frame-char-height) 1080) (display-pixel-height)) 2))
-  ;;  )
-  (advice-add #'doom-modeline--font-height :override #'my-doom-modeline--font-height)
-  (add-hook 'after-init-hook 'doom-modeline-mode)
+  (add-to-list 'load-path
+               (concat user-emacs-directory "site-packages/awesome-tray"))
+  (setq awesome-tray-mode-line-active-color (face-background 'mode-line))
+  (setq awesome-tray-mode-line-inactive-color (face-background 'mode-line-inactive))
+  (require 'awesome-tray)
+  (setq awesome-tray-input-method-en-style "")
+  (setq awesome-tray-input-method-zh-style "ㄓ")
+  (setq awesome-tray-file-name-max-length 40)
+  (setq awesome-tray-git-update-duration 1)
+  (setq awesome-tray-date-format "%H:%M %a")
+  (setq awesome-tray-active-modules '("date" "location" "pdf-view-page" "belong"
+                                      "file-path" "buffer-read-only" "git" "mode-name" "input-method"))
+  (setq awesome-tray-info-padding-right 1)
+  (set-face-attribute 'mode-line nil
+                      :foreground (face-background 'mode-line))
+  (set-face-attribute 'mode-line-inactive nil
+                      :foreground (face-background 'mode-line-inactive))
+  (set-face-attribute 'mode-line-buffer-id nil
+                      :foreground (face-background 'mode-line))
+  (setq-default mode-line-format
+                '("%e" mode-line-front-space
+                 (:propertize
+                  ("" mode-line-mule-info mode-line-client mode-line-modified mode-line-remote)
+                  display
+                  (min-width
+                   (5.0)))))
+  (awesome-tray-mode 1)
 #+end_src
 ** Line number
 #+BEGIN_SRC emacs-lisp
@@ -1004,7 +977,7 @@ Configurations
         corfu-quit-at-boundary t
         corfu-quit-no-match nil)
   (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-tex)
+  ;; (add-to-list 'completion-at-point-functions #'cape-tex)
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-keyword)
   (setq dabbrev-ignored-buffer-regexps
@@ -2343,4 +2316,5 @@ Pin posfram to left-bottom
   (init/ensure-package 'vterm)
   (define-key vterm-mode-map (kbd "C-y") 'vterm-send-C-S-v)
   (define-key vterm-mode-map (kbd "C-x C-q") 'vterm-copy-mode)
+  (setq telega-symbol-telegram nil)
 #+end_src

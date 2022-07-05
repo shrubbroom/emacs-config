@@ -877,13 +877,16 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
                       :foreground (face-background 'mode-line-inactive))
   (set-face-attribute 'mode-line-buffer-id nil
                       :foreground (face-background 'mode-line))
-  (setq-default mode-line-format
-                '("%e" mode-line-front-space
-                 (:propertize
-                  ("" mode-line-mule-info mode-line-client mode-line-modified mode-line-remote)
-                  display
-                  (min-width
-                   (5.0)))))
+  (if (display-graphic-p)
+      (setq-default mode-line-format '(" "))
+    (setq-default mode-line-format nil))
+  ;; (setq-default mode-line-format
+  ;;               '("%e" mode-line-front-space
+  ;;                (:propertize
+  ;;                 ("" mode-line-mule-info mode-line-client mode-line-modified mode-line-remote)
+  ;;                 display
+  ;;                 (min-width
+  ;;                  (5.0)))))
   (awesome-tray-mode 1)
 #+end_src
 ** Line number

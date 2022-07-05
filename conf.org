@@ -855,39 +855,35 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
     (act/save-session "/dev/null"))
 #+END_SRC
 
-** Modeline/awesome-tray
+** Modeline(awesome-tray)
 
 #+begin_src emacs-lisp
-  (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/awesome-tray"))
-  (setq awesome-tray-mode-line-active-color (face-background 'mode-line))
-  (setq awesome-tray-mode-line-inactive-color (face-background 'mode-line-inactive))
-  (require 'awesome-tray)
-  (setq awesome-tray-input-method-en-style "")
-  (setq awesome-tray-input-method-zh-style "ㄓ")
-  (setq awesome-tray-file-name-max-length 40)
-  (setq awesome-tray-git-update-duration 1)
-  (setq awesome-tray-date-format "%H:%M %a")
-  (setq awesome-tray-active-modules '("date" "location" "pdf-view-page" "belong"
-                                      "file-path" "buffer-read-only" "git" "mode-name" "input-method"))
-  (setq awesome-tray-info-padding-right 1)
-  (set-face-attribute 'mode-line nil
-                      :foreground (face-background 'mode-line))
-  (set-face-attribute 'mode-line-inactive nil
-                      :foreground (face-background 'mode-line-inactive))
-  (set-face-attribute 'mode-line-buffer-id nil
-                      :foreground (face-background 'mode-line))
-  (if (display-graphic-p)
-      (setq-default mode-line-format '(" "))
-    (setq-default mode-line-format nil))
-  ;; (setq-default mode-line-format
-  ;;               '("%e" mode-line-front-space
-  ;;                (:propertize
-  ;;                 ("" mode-line-mule-info mode-line-client mode-line-modified mode-line-remote)
-  ;;                 display
-  ;;                 (min-width
-  ;;                  (5.0)))))
-  (awesome-tray-mode 1)
+  (when (display-graphic-p)
+   (add-to-list 'load-path
+                (concat user-emacs-directory "site-packages/awesome-tray"))
+   (setq awesome-tray-mode-line-active-color (face-background 'mode-line))
+   (setq awesome-tray-mode-line-inactive-color (face-background 'mode-line-inactive))
+   (require 'awesome-tray)
+   (setq awesome-tray-input-method-en-style "")
+   (setq awesome-tray-input-method-zh-style "ㄓ")
+   (setq awesome-tray-file-name-max-length 40)
+   (setq awesome-tray-git-update-duration 1)
+   (setq awesome-tray-date-format "%H:%M %a")
+   (setq awesome-tray-active-modules '("date" "location" "pdf-view-page" "belong"
+                                       "file-path" "buffer-read-only" "git" "mode-name" "input-method"))
+   (setq awesome-tray-info-padding-right 1)
+   (set-face-attribute 'mode-line nil
+                       :foreground (face-background 'mode-line))
+   (set-face-attribute 'mode-line-inactive nil
+                       :foreground (face-background 'mode-line-inactive))
+   (set-face-attribute 'mode-line-buffer-id nil
+                       :foreground (face-background 'mode-line))
+   (setq-default mode-line-format '(" "))
+   (awesome-tray-mode 1))
+
+  (unless (display-graphic-p)
+    (init/ensure-package 'minions)
+    (minions-mode))
 #+end_src
 ** Line number
 #+BEGIN_SRC emacs-lisp

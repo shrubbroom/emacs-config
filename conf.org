@@ -735,7 +735,7 @@ Set up all-the-icons
 #+END_SRC
 I do not manually install the fonts of ~all-the-icons~. System package manager (~pacman~) maintains the font.
 ** Tabs
-*** Sort-tab
+*** COMMENT Sort-tab
 
 #+BEGIN_SRC emacs-lisp
   (add-to-list 'load-path
@@ -772,7 +772,6 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   
 #+END_SRC
 
-
 **** Tone down background color
 #+begin_src emacs-lisp
   (set-face-attribute 'sort-tab-current-tab-face
@@ -784,7 +783,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   ;;                     :foreground (face-foreground 'mode-line))
   ;; (setq-default sort-tab-separator "⦚")
   #+end_src
-*** Save and revert buffer state
+**** Save and revert buffer state
 
 #+BEGIN_SRC emacs-lisp
   (defun sort-tab-get-session-and-kill-all-buffers ()
@@ -854,7 +853,43 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
     (interactive)
     (act/save-session "/dev/null"))
 #+END_SRC
-
+*** Centaur tabs
+#+begin_src emacs-lisp
+  (init/ensure-package 'centaur-tabs)
+  (global-set-key (kbd "<S-left>")  'centaur-tabs-backward)
+  (global-set-key (kbd "<S-right>") 'centaur-tabs-forward)
+  (with-eval-after-load 'org
+      (define-key org-mode-map (kbd "<S-left>") 'centaur-tabs-backward)
+      (define-key org-mode-map (kbd "<S-right>") 'centaur-tabs-forward))
+  (setq centaur-tabs-style "bar")
+  (centaur-tabs-mode t)
+  (centaur-tabs-headline-match)
+  (defun centaur-tabs-buffer-groups ()
+    "`centaur-tabs-buffer-groups' control buffers' group rules.
+      Group centaur-tabs with mode if buffer is derived from `eshell-mode' `emacs-lisp-mode' `dired-mode' `org-mode' `magit-mode'.
+      All buffer name start with * will group to \"Emacs\".
+      Other buffer group by `centaur-tabs-get-group-name' with project name."
+    (list
+     (cond
+      ((or (string-equal "*" (substring (buffer-name) 0 1))
+           (memq major-mode '(magit-process-mode
+                              magit-status-mode
+                              magit-diff-mode
+                              magit-log-mode
+                              magit-file-mode
+                              magit-blob-mode
+                              magit-blame-mode
+                              )))
+       "Emacs")
+      ((memq major-mode '(telega-chat-mode
+                          telega-root-mode
+                          telega-image-mode)))
+      ((memq major-mode '(helpful-mode
+                          help-mode))
+       "Help")
+      (t
+       (centaur-tabs-get-group-name (current-buffer))))))
+#+end_src
 ** Modeline(awesome-tray)
 
 #+begin_src emacs-lisp
@@ -1486,6 +1521,12 @@ Define export processes
     (setq org-latex-default-packages-alist
           (remove '("AUTO" "inputenc" t)
                   org-latex-default-packages-alist)))
+#+end_src
+
+*** Preview
+
+#+begin_src emacs-lisp
+  (setq org-latex-create-formula-image-program 'imagemagick)
 #+end_src
 
 *** Babel
@@ -2238,7 +2279,9 @@ Restore session
     (interactive "P")
     (let ((oldpos (point)))
       (back-to-indentation)
-      (if (hs-looking-at-block-start-p)
+      (if (and
+           (not (region-active-p))
+           (hs-looking-at-block-start-p))
           (hs-toggle-hiding)
         (progn
           (goto-char oldpos)

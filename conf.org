@@ -2116,37 +2116,6 @@ Restore session
     (find-file init/org-drill-file))
 #+END_SRC
 ** English Helper
-#+BEGIN_SRC emacs-lisp :tangle no
-  (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/company-english-helper"))
-  (defvaralias 'company-candidates 'corfu--candidates)
-  (defalias 'company-mode 'corfu-mode) ;; should be deleted
-  (defvaralias 'company-mode 'corfu-mode) ;; should be deleted
-  (setq company-backends '())
-  (setq completion-at-point-functions-backup completion-at-point-functions)
-  (provide 'company)
-
-  (defun set-completion-functions ()
-    (setq completion-at-point-functions
-          (cl-concatenate 'list (mapcar #'cape-company-to-capf company-backends) completion-at-point-functions-backup)))
-
-  (defun company-grab-symbol ()
-    "If point is at the end of a symbol, return it.
-      Otherwise, if point is not inside a symbol, return an empty string."
-    (if (looking-at "\\_>")
-        (buffer-substring (point) (save-excursion (skip-syntax-backward "w_")
-                                                  (point)))
-      (unless (and (char-after) (memq (char-syntax (char-after)) '(?w ?_)))
-        "")))
-  (advice-add 'toggle-company-english-helper :after #'set-completion-functions)
-  (defun toggle-company-english-helper (&optional args)
-    "Lazy load wrapper for english helper"
-    (interactive)
-    (set-completion-functions)
-    (require 'company-english-helper)
-    (toggle-company-english-helper))
-#+END_SRC
-
 #+begin_src emacs-lisp
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/corfu-english-helper"))
@@ -2426,10 +2395,11 @@ Pin posfram to left-bottom
                      ,(string-to-number (cadr (split-string http_proxy ":")))
                      :enable t
                      :type (:@type "proxyTypeHttp")))))))
-  (defun my-telega-chat-mode ()
-    (add-hook 'completion-at-point-functions
-              #'telega-chatbuf-complete-at-point nil 'local))
-  (add-hook 'telega-chat-mode-hook 'my-telega-chat-mode)
+  (add-hook 'telega-chat-mode-hook '(lambda ()
+                                      (setq-local company-minimum-prefix-length 1)
+                                      (add-to-list (make-local-variable 'completion-at-point-functions)
+                                                   (cape-company-to-capf 'telega-company-username))))
+
 #+end_src
 ** Wonderlust
 

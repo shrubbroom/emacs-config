@@ -550,8 +550,8 @@ The keymap starts with =C-c=.
 #+end_src
 * Look and feel
 
-*This part should not be changed frequently. Spend time on important
- things*
+*This part should not be changed frequently.
+Spend time on important things.*
  
 ** Fonts
  Set default font, the font size configuration is moved to ~local-variables.el~
@@ -859,8 +859,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (global-set-key (kbd "<S-left>")  'centaur-tabs-backward)
   (global-set-key (kbd "<S-right>") 'centaur-tabs-forward)
   (with-eval-after-load 'org
-      (define-key org-mode-map (kbd "<S-left>") 'centaur-tabs-backward)
-      (define-key org-mode-map (kbd "<S-right>") 'centaur-tabs-forward))
+      (define-key org-mode-map (kbd "<S-left>") 'centaur-tabs-backward-tab)
+      (define-key org-mode-map (kbd "<S-right>") 'centaur-tabs-forward-tab))
   (setq centaur-tabs-style "bar")
   (centaur-tabs-mode t)
   (centaur-tabs-headline-match)
@@ -871,6 +871,16 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
       Other buffer group by `centaur-tabs-get-group-name' with project name."
     (list
      (cond
+      ((memq major-mode '(telega-chat-mode
+                          telega-root-mode
+                          telega-image-mode))
+       "Telega")
+      ((memq major-mode '(ebib-index-mode
+                          ebib-entry-mode))
+       "Ebib")
+      ((memq major-mode '(helpful-mode
+                          help-mode))
+       "Help")
       ((or (string-equal "*" (substring (buffer-name) 0 1))
            (memq major-mode '(magit-process-mode
                               magit-status-mode
@@ -881,14 +891,41 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
                               magit-blame-mode
                               )))
        "Emacs")
-      ((memq major-mode '(telega-chat-mode
-                          telega-root-mode
-                          telega-image-mode)))
-      ((memq major-mode '(helpful-mode
-                          help-mode))
-       "Help")
       (t
        (centaur-tabs-get-group-name (current-buffer))))))
+
+  (defun centaur-tabs-hide-tab (x)
+    "Do no to show buffer X in tabs."
+    (let ((name (format "%s" x)))
+      (or
+       ;; Current window is not dedicated window.
+       (window-dedicated-p (selected-window))
+
+       ;; Buffer name not match below blacklist.
+       (string-prefix-p "*epc" name)
+       (string-prefix-p "*helm" name)
+       (string-prefix-p "*Helm" name)
+       (string-prefix-p "*Compile-Log*" name)
+       (string-prefix-p "*lsp" name)
+       (string-prefix-p "*company" name)
+       (string-prefix-p "*Flycheck" name)
+       (string-prefix-p "*tramp" name)
+       (string-prefix-p " *Mini" name)
+       ;; (string-prefix-p "*help" name)
+       (string-prefix-p "*straight" name)
+       (string-prefix-p " *temp" name)
+       ;; (string-prefix-p "*Help" name)
+       (string-prefix-p "*mybuf" name)
+       (string-prefix-p "*Calc" name)
+       (string-prefix-p "*Ebib" name)
+       (string-prefix-p "*et" name)
+       (string-prefix-p "*Telegram Sticker Set" name)
+       (string-prefix-p "*Org Preview" name)
+
+       ;; Is not magit buffer.
+       (and (string-prefix-p "magit" name)
+            (not (file-name-extension name)))
+       )))
 #+end_src
 ** Modeline(awesome-tray)
 
@@ -1056,13 +1093,14 @@ We need to set ~idle-delay~ to tell LSP when it can update.
   (setq lsp-idle-delay 1)
 #+END_SRC
 
-Disable some annoying feature
+Disable some annoying feature, tune performance
 
 #+BEGIN_SRC emacs-lisp
   (setq lsp-diagnostic-package :none)
   ;; (setq lsp-headerline-breadcrumb-enable nil)
   (setq lsp-headerline-breadcrumb-enable-diagnostics nil)
   (setq lsp-lens-enable nil)
+  (setq read-process-output-max (* 1024 1024))
 #+END_SRC
 
 Disable default company completion provider
@@ -1074,6 +1112,7 @@ Disable default company completion provider
           '(flex)))
   (add-hook 'lsp-mode-hook #'init/lsp-mode-setup-completion)
 #+END_SRC
+
 ** Tree-sitter Integration
 
 Tree-sitter is helpful in structual editing and grammar highlighting.
@@ -1086,7 +1125,7 @@ To install tree-sitter
 
 We require =grammatical-edit= to enable structual editing
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/grammatical-edit"))
   (require 'grammatical-edit)
@@ -1193,7 +1232,7 @@ Setup conda
 *** Pyright
 ~yapf~ and ~pyright~ are used to format and complete.
 #+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'lsp-pyright)
+  (init/ensure-package-lazy 'lsp-pyright)
   (defun lsp-pyright-format-buffer ()
     (interactive)
     (when (and (executable-find "yapf") buffer-file-name)
@@ -1325,8 +1364,7 @@ Install ~yaml-mode~
 
 *** Define seperate font for org mode
 
-The hook for =buffer-face-mode= is moved to session [[*Beautify]] since the
-sequence of mode loading should be well taken care of.
+The hook for =buffer-face-mode= is moved to session [[*Beautify]] since the sequence of mode loading should be well taken care of.
 
 #+BEGIN_SRC emacs-lisp
   (defface lt-font
@@ -1432,10 +1470,40 @@ I use ~"C-j"~ to invoke jump.
 #+END_SRC
 
 
-*** Word Wrap
+*** Fill paragraph
 
 #+BEGIN_SRC emacs-lisp
-  (add-hook 'org-mode-hook #'auto-fill-mode)
+  (add-hook 'org-mode-hook #'toggle-truncate-lines)
+  (defun fill-paragraph-ospl (&optional P)
+    "When called with prefix argument call `fill-paragraph'.
+  Otherwise split the current paragraph into one sentence per line."
+    (interactive "P")
+    (if (not P)
+        (save-excursion 
+          (let ((fill-column 12345678)) ;; relies on dynamic binding
+            (fill-paragraph) ;; this will not work correctly if the paragraph is
+            ;; longer than 12345678 characters (in which case the
+            ;; file must be at least 12MB long. This is unlikely.)
+            (let ((end (save-excursion
+                         (end-of-line 1)
+                         (point-marker)))   ;; remember where to stop
+                  (indent (pcase major-mode
+                            ('org-mode 'org-indent-line)
+                            ('markdown-mode 'markdown-indent-line)
+                            ('LaTeX-mode 'LaTeX-indent-line)
+                            (otherwise nil))))
+              (beginning-of-line)
+              (while (progn (forward-sentence)
+                            (< (point) (marker-position end)))
+                (just-one-space) ;; leaves only one space, point is after it
+                (delete-char -1) ;; delete the space
+                (newline)        ;; and insert a newline
+                (when indent (funcall indent))))))
+      ;; otherwise do ordinary fill paragraph
+      (fill-paragraph P)))
+  ;; (add-hook 'org-mode-hook (lambda ()
+  ;;                                   (setq-local sentence-end (rx (or "。" "？" "！" "；" ".  " ".\n" "?" "!" ";")))))
+  (define-key org-mode-map (kbd "M-q") 'fill-paragraph-ospl)
 #+END_SRC
 
 *** Local Functions
@@ -1548,7 +1616,7 @@ Define export processes
         TeX-source-correlate-method '((dvi . source-specials)
                                       (pdf . synctex)))
   (setq-default TeX-master nil)
-  (init/ensure-package 'lsp-latex)
+  (init/ensure-package-lazy 'lsp-latex)
   (with-eval-after-load 'latex
     (add-to-list
      'TeX-command-list
@@ -1945,6 +2013,21 @@ Restore session
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package 'scala-mode)
 #+END_SRC
+** markdown-mode
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'markdown-mode)
+  (with-eval-after-load 'markdown-mode
+    ;; (add-hook 'markdown-mode-hook (lambda ()
+    ;;                                 (setq-local sentence-end (rx (or "。"
+    ;;                                                                  "？"
+    ;;                                                                  "！"
+    ;;                                                                  "；"
+    ;;                                                                  ".  "
+    ;;                                                                  "?"
+    ;;                                                                  "!"
+    ;;                                                                  ";")))))
+    (define-key markdown-mode-map (kbd "M-q") 'fill-paragraph-ospl))
+#+end_src
 ** ebib
 
 #+BEGIN_SRC emacs-lisp :tangle (if (and (boundp 'init/ebib-file-search-dirs) (boundp 'init/ebib-preload-bib-files)) "yes" "no")

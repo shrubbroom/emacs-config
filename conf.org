@@ -1583,8 +1583,7 @@ Define export processes
                                                  (concat (file-name-sans-extension (buffer-name)) ".pdf ")
                                                  (buffer-name)))))
   (setq org-latex-pdf-process
-        '("xelatex -interaction=nonstopmode %f"
-          "xelatex -interaction=nonstopmode %f"))
+        '("latexmk -f -pdf -%latex -interaction=nonstopmode -shell-escape -output-directory=%o %f"))
   (with-eval-after-load 'org
     (setq org-latex-default-packages-alist
           (remove '("AUTO" "inputenc" t)
@@ -2384,6 +2383,8 @@ Pin posfram to left-bottom
 ** Telega
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'telega)
+  (with-eval-after-load 'telega
+    (define-key telega-chat-mode-map [remap telega-msg-resend] 'telega-msg-forward-marked-or-at-point))
   (if (bound-and-true-p init/local-proxies)
       (let ((http_proxy (cdr (assoc "http" init/local-proxies))))
         (if http_proxy

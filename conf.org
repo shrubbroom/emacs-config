@@ -11,6 +11,20 @@
   (package-initialize)
 #+END_SRC
    
+** Macros
+
+#+begin_src emacs-lisp
+  (defmacro add-hook-lambda (hook arg &rest rest-args)
+    `(add-hook (quote ,hook) (lambda ()
+                               ,arg
+                               ,@rest-args)))
+  (defmacro add-hook-list-lambda (hook-list arg &rest rest-args)
+    `(dolist (hook (quote ,hook-list))
+             (add-hook hook
+                       (lambda ()
+                         ,arg
+                         ,@rest-args))))
+#+end_src
 ** User defined actions
 
 User defined actions begin with =init=.
@@ -168,7 +182,7 @@ These actions are done with package =pulse.el=.
 *** Set cursor style and enable blinking
 
 #+begin_src emacs-lisp
-  (add-hook 'org-mode-hook (lambda () (setq cursor-type '(bar . 3))))
+  (add-hook-lambda org-mode-hook (setq cursor-type '(bar . 3)))
   (blink-cursor-mode -1)
 #+end_src
 
@@ -233,12 +247,12 @@ These actions are done with package =pulse.el=.
 
 #+BEGIN_SRC emacs-lisp
   (setq-default initial-scratch-message "")
-  (add-hook 'emacs-startup-hook (lambda ()
-                                  (switch-to-buffer "*scratch*")
-                                  (goto-char (point-min))
-                                  (insert (concat ";; start up cost: "
-                                                  (emacs-init-time)
-                                                  "\n\n"))))
+  (add-hook-lambda emacs-startup-hook
+                   (switch-to-buffer "*scratch*")
+                   (goto-char (point-min))
+                   (insert (concat ";; start up cost: "
+                                   (emacs-init-time)
+                                   "\n\n")))
 #+END_SRC
 
 *** Define path
@@ -572,15 +586,19 @@ Use separate font for ~prog-mode~
     '((t :family "Sarasa Term Slab SC"))
     "program fonts"
     :group 'basic-faces)
-  (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
-    (add-hook hook
-              #'(lambda ()
-                  (if (display-graphic-p)
-                      (progn
-                        (set (make-local-variable 'buffer-face-mode-face) 'cc-font)
-                        (buffer-face-mode t)
-                        ;; (text-scale-increase +1)
-                        )))))
+  (when (display-graphic-p)
+   (add-hook-list-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
+                         (set (make-local-variable 'buffer-face-mode-face) 'cc-font)
+                         (buffer-face-mode t)))
+  ;; (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
+  ;;   (add-hook hook
+  ;;             #'(lambda ()
+  ;;                 (if (display-graphic-p)
+  ;;                     (progn
+  ;;                       (set (make-local-variable 'buffer-face-mode-face) 'cc-font)
+  ;;                       (buffer-face-mode t)
+  ;;                       ;; (text-scale-increase +1)
+  ;;                       )))))
 #+END_SRC
 
 ** Ligature
@@ -638,8 +656,10 @@ Use separate font for ~prog-mode~
   (init/ensure-package 'page-break-lines)
   ;; (if (eq system-type 'gnu/linux)
   ;;  (setq-default page-break-lines-char 9596))
-  (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
-   (add-hook hook 'page-break-lines-mode))
+  (add-hook-list-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
+                        (page-break-lines-mode))
+  ;; (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
+  ;;  (add-hook hook 'page-break-lines-mode))
 #+end_src
 ** Smooth scrolling
 #+BEGIN_SRC emacs-lisp
@@ -705,13 +725,15 @@ Setup theme.
 
 *** Add fringe indicators
 #+begin_src emacs-lisp
-  (dolist (hook '(prog-mode-hook
-                  text-mode-hook
-                  telega-chat-mode-hook
-                  wl-summary-mode-hook))
-   (add-hook hook
-             (lambda ()
-               (setq indicate-buffer-boundaries 'right))))
+  (add-hook-list-lambda (prog-mode-hook text-mode-hook telega-chat-mode-hook wl-summary-mode-hook)
+                        (setq indicate-buffer-boundaries 'right))
+  ;; (dolist (hook '(prog-mode-hook
+  ;;                 text-mode-hook
+  ;;                 telega-chat-mode-hook
+  ;;                 wl-summary-mode-hook))
+  ;;  (add-hook hook
+  ;;            (lambda ()
+  ;;              (setq indicate-buffer-boundaries 'right))))
 #+end_src
 *** Tone down headerline
 
@@ -959,8 +981,10 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+end_src
 ** Line number
 #+BEGIN_SRC emacs-lisp
-  (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
-    (add-hook hook 'display-line-numbers-mode))
+  (add-hook-list-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
+                        (display-line-numbers-mode))
+  ;; (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
+  ;;   (add-hook hook 'display-line-numbers-mode))
 #+END_SRC
 
 *** Tone down background, modify font
@@ -1007,9 +1031,12 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+END_SRC
 **** Display
 #+BEGIN_SRC emacs-lisp
-  (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
-   (add-hook hook #'show-paren-mode)
-   (add-hook hook #'highlight-parentheses-mode))
+  ;; (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
+  ;;  (add-hook hook #'show-paren-mode)
+  ;;  (add-hook hook #'highlight-parentheses-mode))
+  (add-hook-list-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
+                        (show-paren-mode)
+                        (highlight-parentheses-mode))
 #+END_SRC
 **** Smart parens
 #+BEGIN_SRC emacs-lisp
@@ -1129,14 +1156,17 @@ We require =grammatical-edit= to enable structual editing
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/grammatical-edit"))
   (require 'grammatical-edit)
-  (dolist (hook (list
-                 'c-mode-common-hook
-                 'c-mode-hook
-                 'c++-mode-hook
-                 'python-mode-hook))
-    (add-hook hook #'(lambda ()
-                       (tree-sitter-mode 1)
-                       (grammatical-edit-mode 1))))
+  (add-hook-list-lambda (c-mode-common-hook c-mode-hook c++-mode-hook python-mode-hook)
+                        (tree-sitter-mode 1)
+                        (grammatical-edit-mode 1))
+  ;; (dolist (hook (list
+  ;;                'c-mode-common-hook
+  ;;                'c-mode-hook
+  ;;                'c++-mode-hook
+  ;;                'python-mode-hook))
+  ;;   (add-hook hook #'(lambda ()
+  ;;                      (tree-sitter-mode 1)
+  ;;                      (grammatical-edit-mode 1))))
 
   (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
   (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
@@ -1238,10 +1268,9 @@ Setup conda
     (when (and (executable-find "yapf") buffer-file-name)
       (call-process "yapf" nil nil nil "-i" buffer-file-name "--style={COLUMN_LIMIT=256}")
       (revert-buffer t t)))
-  (add-hook 'python-mode-hook
-            #'(lambda ()
-                (lsp)
-                (add-hook 'after-save-hook #'lsp-pyright-format-buffer t t)))
+  (add-hook-lambda python-mode-hook
+                   (lsp)
+                   (add-hook 'after-save-hook #'lsp-pyright-format-buffer t t))
   (when (executable-find "python3")
     (setq lsp-pyright-python-executable-cmd "python3"))
 #+END_SRC
@@ -1273,9 +1302,9 @@ Add lsp to cc-mode hook
                       (s-join "" it))))
       (lsp--render-element (concat "```rust\n" sig "\n```"))))
 
-  (add-hook 'rust-mode-hook #'(lambda ()
-                                (setq-local compile-command "cargo build")
-                                (lsp)))
+  (add-hook-lambda rust-mode-hook
+                   (setq-local compile-command "cargo build")
+                   (lsp))
 #+END_SRC
 ** Haskell
 #+begin_src emacs-lisp
@@ -1544,16 +1573,14 @@ I use ~"C-j"~ to invoke jump.
                           :background (face-background 'default)
                           :foreground "grey75")))
   (setq whitespace-style '(face spaces tabs newline space-mark tab-mark newline-mark))
-  (add-hook 'org-mode-hook (lambda ()
-                             (if (display-graphic-p)
-                                 (progn
-                                   (set (make-local-variable 'buffer-face-mode-face)
-                                        'lt-font)
-                                   (buffer-face-mode t)
-                                   (face-remap-add-relative 'org-block `(:family ,(face-attribute 'cc-font :family)))))
-                             (org-bars-mode +1)
-                             ;; (text-scale-increase +1)
-                             (org-bars-indent)))
+  (when (display-graphic-p)
+    (add-hook-lambda org-mode-hook 
+                     (set (make-local-variable 'buffer-face-mode-face)
+                          'lt-font)
+                     (buffer-face-mode t)
+                     (face-remap-add-relative 'org-block `(:family ,(face-attribute 'cc-font :family)))
+                     (org-bars-mode +1)
+                     (org-bars-indent)))
   (setq org-ellipsis "  ⇲")
 #+END_SRC
 
@@ -1564,12 +1591,11 @@ Disable completion backends other than =company-files=. Turn on yasnippet mode.
 #+begin_src emacs-lisp
   (with-eval-after-load 'org
     (require 'org-tempo))
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (setq-local completion-at-point-functions
-                          (list #'cape-file))
-              (setq-local yas-indent-line 'fixed)
-              (yas-minor-mode 1)))
+  (add-hook-lambda org-mode-hook
+                   (setq-local completion-at-point-functions
+                               (list #'cape-file))
+                   (setq-local yas-indent-line 'fixed)
+                   (yas-minor-mode 1))
 #+end_src
 
 *** Export
@@ -1577,11 +1603,11 @@ Disable completion backends other than =company-files=. Turn on yasnippet mode.
 Define export processes
 
 #+begin_src emacs-lisp
-  (add-hook 'org-mode-hook (lambda ()
-                             (setq-local compile-command
-                                         (concat "pandoc --pdf-engine=xelatex --toc -V mainfont=\'LXGW Bright\' -o "
-                                                 (concat (file-name-sans-extension (buffer-name)) ".pdf ")
-                                                 (buffer-name)))))
+  (add-hook-lambda org-mode-hook
+                   (setq-local compile-command
+                               (concat "pandoc --pdf-engine=xelatex --toc -V mainfont=\'LXGW Bright\' -o "
+                                       (concat (file-name-sans-extension (buffer-name)) ".pdf ")
+                                       (buffer-name))))
   (setq org-latex-pdf-process
         '("latexmk -f -pdf -%latex -interaction=nonstopmode -shell-escape -output-directory=%o %f"))
   (with-eval-after-load 'org
@@ -1623,11 +1649,9 @@ Define export processes
     (add-to-list
      'TeX-command-list
      '("Make" "make" TeX-run-compile nil t)))
-  (dolist
-      (hook '(TeX-mode-hook LaTeX-mode-hook bibtex-mode-hook))
-    (add-hook hook #'(lambda ()
-                       (yas-minor-mode)
-                       (lsp))))
+  (add-hook-list-lambda (TeX-mode-hook LaTeX-mode-hook bibtex-mode-hook)
+                        (yas-minor-mode)
+                        (lsp))
   (add-hook 'TeX-mode-hook 'auto-fill-mode)
   (add-hook 'LaTeX-mode-hook 'auto-fill-mode)
 #+END_SRC
@@ -1803,9 +1827,8 @@ This is just for ~shell~ command
 #+END_SRC
 *** Keybindings
 #+BEGIN_SRC emacs-lisp
-  (add-hook 'eshell-mode-hook
-            #'(lambda ()
-                (local-set-key (kbd "C-r") #'init/ivy-eshell-history)))
+  (add-hook-lambda eshell-mode-hook
+                   (local-set-key (kbd "C-r") #'init/ivy-eshell-history))
 #+END_SRC
 *** Alias
 #+BEGIN_SRC emacs-lisp
@@ -1821,12 +1844,8 @@ This is just for ~shell~ command
     (push "ghci" eshell-visual-commands)
     (push "ssh" eshell-visual-commands)
     (push "htop" eshell-visual-commands)
-    (add-hook 'eshell-mode-hook
-              (lambda ()
-                (setq-local corfu-auto nil)
-                ;; (face-remap-add-relative 'default `(:height
-                ;;                                     ,(round (* 1.5 (face-attribute 'default :height)))))
-                )))
+    (add-hook-lambda eshell-mode-hook
+                     (setq-local corfu-auto nil)))
 #+END_SRC
 *** Eshell toggle
 #+begin_src emacs-lisp
@@ -1844,9 +1863,9 @@ This is just for ~shell~ command
 #+END_SRC
 ** Shell
 #+begin_src emacs-lisp
-  (add-hook 'shell-mode-hook (lambda ()
-                               (setq-local corfu-auto nil)
-                               (compilation-shell-minor-mode +1)))
+  (add-hook-lambda shell-mode-hook
+                   (setq-local corfu-auto nil)
+                   (compilation-shell-minor-mode +1))
 #+end_src
 ** Symbol overlay
 #+BEGIN_SRC emacs-lisp
@@ -1855,8 +1874,8 @@ This is just for ~shell~ command
   (global-set-key (kbd "M-n") 'symbol-overlay-switch-forward)
   (global-set-key (kbd "M-p") 'symbol-overlay-switch-backward)
   (global-set-key (kbd "M-k") 'symbol-overlay-remove-all)
-  (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
-   (add-hook hook 'symbol-overlay-mode))
+  (add-hook-list-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
+                        (symbol-overlay-mode))
 #+END_SRC
 
 
@@ -1917,8 +1936,8 @@ Emacs style keybindings
 Use native search method
 
 #+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
-  (add-hook 'eaf-mode-hook
-            (lambda () (ctrlf-local-mode -1)))
+  (add-hook-lambda eaf-mode-hook
+                   (ctrlf-local-mode -1))
 #+end_src
 
 *** Pdf-tools
@@ -1934,8 +1953,8 @@ This package is only used in OS X
   ;; Update PDF buffers after successful LaTeX runs
   (add-hook 'TeX-after-compilation-finished-functions
             #'TeX-revert-document-buffer)
-  (add-hook 'pdf-view-mode-hook #'(lambda ()
-                                    (ctrlf-local-mode -1)))
+  (add-hook-lambda pdf-view-mode-hook
+                   (ctrlf-local-mode -1))
 #+end_src
 
 Restore session
@@ -2046,7 +2065,7 @@ Restore session
           ('gnu/linux (setq ebib-file-associations '(("pdf" . "okular"))))
           ;; ('darwin (setq ebib-file-associations '(("pdf" . "open"))))
           (otherwise t)))
-    (define-key ebib-index-mode-map (kbd "F") '(lambda () (interactive)
+    (define-key ebib-index-mode-map (kbd "F") (lambda () (interactive)
                                                  (let ((ebib-file-associations '(("pdf" . "open"))))
                                                    (call-interactively 'ebib-view-file)))))
 
@@ -2139,12 +2158,11 @@ Restore session
   (init/ensure-package-lazy 'ibuffer-project)
   (setq-default ibuffer-project-use-cache t)
   (global-set-key (kbd "C-x C-b") #'ibuffer)
-  (add-hook 'ibuffer-hook
-            (lambda ()
-              (all-the-icons-ibuffer-mode)
-              (setq ibuffer-filter-groups (ibuffer-project-generate-filter-groups))
-              (unless (eq ibuffer-sorting-mode 'alphabetic)
-                (ibuffer-do-sort-by-alphabetic))))
+  (add-hook-lambda ibuffer-hook
+                   (all-the-icons-ibuffer-mode)
+                   (setq ibuffer-filter-groups (ibuffer-project-generate-filter-groups))
+                   (unless (eq ibuffer-sorting-mode 'alphabetic)
+                     (ibuffer-do-sort-by-alphabetic)))
   (with-eval-after-load 'ibuffer
     (require 'all-the-icons-ibuffer)
     (require 'ibuffer-project))
@@ -2396,10 +2414,10 @@ Pin posfram to left-bottom
                      ,(string-to-number (cadr (split-string http_proxy ":")))
                      :enable t
                      :type (:@type "proxyTypeHttp")))))))
-  (add-hook 'telega-chat-mode-hook '(lambda ()
-                                      (setq-local company-minimum-prefix-length 1)
-                                      (add-to-list (make-local-variable 'completion-at-point-functions)
-                                                   (cape-company-to-capf 'telega-company-username))))
+  (add-hook-lambda telega-chat-mode-hook
+                   (setq-local company-minimum-prefix-length 1)
+                   (add-to-list (make-local-variable 'completion-at-point-functions)
+                                (cape-company-to-capf 'telega-company-username)))
 
 #+end_src
 ** Wonderlust

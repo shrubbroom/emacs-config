@@ -15,15 +15,15 @@
 
 #+begin_src emacs-lisp
   (defmacro add-hook-lambda (hook arg &rest rest-args)
-    `(add-hook (quote ,hook) (lambda ()
-                               ,arg
-                               ,@rest-args)))
-  (defmacro add-hook-list-lambda (hook-list arg &rest rest-args)
-    `(dolist (hook (quote ,hook-list))
-             (add-hook hook
-                       (lambda ()
-                         ,arg
-                         ,@rest-args))))
+    `(if (listp (quote ,hook))
+         (dolist (hook (quote ,hook))
+           (add-hook hook
+                     (lambda ()
+                       ,arg
+                       ,@rest-args)))
+       (add-hook (quote ,hook) (lambda ()
+                                 ,arg
+                                 ,@rest-args))))
 #+end_src
 ** User defined actions
 
@@ -587,18 +587,9 @@ Use separate font for ~prog-mode~
     "program fonts"
     :group 'basic-faces)
   (when (display-graphic-p)
-   (add-hook-list-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
+   (add-hook-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
                          (set (make-local-variable 'buffer-face-mode-face) 'cc-font)
                          (buffer-face-mode t)))
-  ;; (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
-  ;;   (add-hook hook
-  ;;             #'(lambda ()
-  ;;                 (if (display-graphic-p)
-  ;;                     (progn
-  ;;                       (set (make-local-variable 'buffer-face-mode-face) 'cc-font)
-  ;;                       (buffer-face-mode t)
-  ;;                       ;; (text-scale-increase +1)
-  ;;                       )))))
 #+END_SRC
 
 ** Ligature
@@ -654,12 +645,8 @@ Use separate font for ~prog-mode~
 *** pagebreak
 #+begin_src emacs-lisp
   (init/ensure-package 'page-break-lines)
-  ;; (if (eq system-type 'gnu/linux)
-  ;;  (setq-default page-break-lines-char 9596))
-  (add-hook-list-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
+  (add-hook-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
                         (page-break-lines-mode))
-  ;; (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
-  ;;  (add-hook hook 'page-break-lines-mode))
 #+end_src
 ** Smooth scrolling
 #+BEGIN_SRC emacs-lisp
@@ -725,15 +712,8 @@ Setup theme.
 
 *** Add fringe indicators
 #+begin_src emacs-lisp
-  (add-hook-list-lambda (prog-mode-hook text-mode-hook telega-chat-mode-hook wl-summary-mode-hook)
+  (add-hook-lambda (prog-mode-hook text-mode-hook telega-chat-mode-hook wl-summary-mode-hook)
                         (setq indicate-buffer-boundaries 'right))
-  ;; (dolist (hook '(prog-mode-hook
-  ;;                 text-mode-hook
-  ;;                 telega-chat-mode-hook
-  ;;                 wl-summary-mode-hook))
-  ;;  (add-hook hook
-  ;;            (lambda ()
-  ;;              (setq indicate-buffer-boundaries 'right))))
 #+end_src
 *** Tone down headerline
 
@@ -981,10 +961,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+end_src
 ** Line number
 #+BEGIN_SRC emacs-lisp
-  (add-hook-list-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
+  (add-hook-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
                         (display-line-numbers-mode))
-  ;; (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
-  ;;   (add-hook hook 'display-line-numbers-mode))
 #+END_SRC
 
 *** Tone down background, modify font
@@ -1031,10 +1009,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+END_SRC
 **** Display
 #+BEGIN_SRC emacs-lisp
-  ;; (dolist (hook '(prog-mode-hook conf-mode-hook yaml-mode-hook))
-  ;;  (add-hook hook #'show-paren-mode)
-  ;;  (add-hook hook #'highlight-parentheses-mode))
-  (add-hook-list-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
+  (add-hook-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
                         (show-paren-mode)
                         (highlight-parentheses-mode))
 #+END_SRC
@@ -1156,18 +1131,9 @@ We require =grammatical-edit= to enable structual editing
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/grammatical-edit"))
   (require 'grammatical-edit)
-  (add-hook-list-lambda (c-mode-common-hook c-mode-hook c++-mode-hook python-mode-hook)
+  (add-hook-lambda (c-mode-common-hook c-mode-hook c++-mode-hook python-mode-hook)
                         (tree-sitter-mode 1)
                         (grammatical-edit-mode 1))
-  ;; (dolist (hook (list
-  ;;                'c-mode-common-hook
-  ;;                'c-mode-hook
-  ;;                'c++-mode-hook
-  ;;                'python-mode-hook))
-  ;;   (add-hook hook #'(lambda ()
-  ;;                      (tree-sitter-mode 1)
-  ;;                      (grammatical-edit-mode 1))))
-
   (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
   (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
   (define-key grammatical-edit-mode-map (kbd "{") 'grammatical-edit-open-curly)
@@ -1649,7 +1615,7 @@ Define export processes
     (add-to-list
      'TeX-command-list
      '("Make" "make" TeX-run-compile nil t)))
-  (add-hook-list-lambda (TeX-mode-hook LaTeX-mode-hook bibtex-mode-hook)
+  (add-hook-lambda (TeX-mode-hook LaTeX-mode-hook bibtex-mode-hook)
                         (yas-minor-mode)
                         (lsp))
   (add-hook 'TeX-mode-hook 'auto-fill-mode)
@@ -1874,7 +1840,7 @@ This is just for ~shell~ command
   (global-set-key (kbd "M-n") 'symbol-overlay-switch-forward)
   (global-set-key (kbd "M-p") 'symbol-overlay-switch-backward)
   (global-set-key (kbd "M-k") 'symbol-overlay-remove-all)
-  (add-hook-list-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
+  (add-hook-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
                         (symbol-overlay-mode))
 #+END_SRC
 

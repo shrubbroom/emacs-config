@@ -154,13 +154,13 @@ These actions are done with package =pulse.el=.
 #+begin_src emacs-lisp
   (dolist (cmd
            '(other-window
-             sort-tab-select-next-tab
-             sort-tab-select-prev-tab
+             centaur-tabs-forward-tab
+             centaur-tabs-backward-tab
              recenter-top-bottom
              org-goto
              push-button
              symbol-overlay-jump-call
-             ace-windowp))
+             ace-window))
     (advice-add cmd :after #'(lambda (&rest _)
                                (pulse-momentary-highlight-one-line))))
 
@@ -858,8 +858,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 *** Centaur tabs
 #+begin_src emacs-lisp
   (init/ensure-package 'centaur-tabs)
-  (global-set-key (kbd "<S-left>")  'centaur-tabs-backward)
-  (global-set-key (kbd "<S-right>") 'centaur-tabs-forward)
+  (global-set-key (kbd "<S-left>")  'centaur-tabs-backward-tab)
+  (global-set-key (kbd "<S-right>") 'centaur-tabs-forward-tab)
   (with-eval-after-load 'org
       (define-key org-mode-map (kbd "<S-left>") 'centaur-tabs-backward-tab)
       (define-key org-mode-map (kbd "<S-right>") 'centaur-tabs-forward-tab))
@@ -1118,11 +1118,18 @@ Disable default company completion provider
 ** Tree-sitter Integration
 
 Tree-sitter is helpful in structual editing and grammar highlighting.
-To install tree-sitter
+To install tree-sitter.
 
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'tree-sitter)
   (init/ensure-package-lazy 'tree-sitter-langs)
+#+end_src
+
+Enable tree-sitter in =prog-mode=.
+
+#+begin_src emacs-lisp :tangle no
+  (add-hook-lambda (c-mode-common-hook c-mode-hook c++-mode-hook python-mode-hook rust-mode-hook shell-mode-hook scala-mode-hook)
+                   (tree-sitter-mode 1))
 #+end_src
 
 We require =grammatical-edit= to enable structual editing
@@ -1132,8 +1139,8 @@ We require =grammatical-edit= to enable structual editing
                (concat user-emacs-directory "site-packages/grammatical-edit"))
   (require 'grammatical-edit)
   (add-hook-lambda (c-mode-common-hook c-mode-hook c++-mode-hook python-mode-hook)
-                        (tree-sitter-mode 1)
-                        (grammatical-edit-mode 1))
+                   (tree-sitter-mode 1)
+                   (grammatical-edit-mode 1))
   (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
   (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
   (define-key grammatical-edit-mode-map (kbd "{") 'grammatical-edit-open-curly)

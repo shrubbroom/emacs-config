@@ -233,6 +233,7 @@ These actions are done with package =pulse.el=.
 #+END_SRC
 
 *** Follow symbolic link by default
+
 #+begin_src emacs-lisp
   (setq vc-follow-symlinks t)
 #+end_src
@@ -583,13 +584,11 @@ Spend time on important things.*
 Use separate font for ~prog-mode~
 #+BEGIN_SRC emacs-lisp
   (defface cc-font
-    '((t :family "Sarasa Term Slab SC"))
+    '((t :family "Latin Modern Mono"))
     "program fonts"
     :group 'basic-faces)
-  (when (display-graphic-p)
-   (add-hook-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
-                         (set (make-local-variable 'buffer-face-mode-face) 'cc-font)
-                         (buffer-face-mode t)))
+  (set-face-attribute 'fixed-pitch nil
+                      :family (face-attribute 'cc-font :family))
 #+END_SRC
 
 ** Ligature
@@ -1366,16 +1365,15 @@ Install ~yaml-mode~
 
 *** Define seperate font for org mode
 
-The hook for =buffer-face-mode= is moved to session [[*Beautify]] since the sequence of mode loading should be well taken care of.
+The hook for =variable-pitch-mode= is moved to session [[*Beautify]] since the sequence of mode loading should be well taken care of.
 
 #+BEGIN_SRC emacs-lisp
   (defface lt-font
-    '((t :family "Latin Modern Mono"))
+    '((t :family "Latin Modern Roman"))
     "Font for literature"
     :group 'basic-faces)
   (set-face-attribute 'variable-pitch nil
                       :family (face-attribute 'lt-font :family))
-  (variable-pitch-mode 1)
   (defun buffer-toggle-highlight-foreground (&optional args)
     (interactive)
     (if (and (boundp 'face-remap-add-relative-cookie) face-remap-add-relative-cookie)
@@ -1394,9 +1392,6 @@ The hook for =buffer-face-mode= is moved to session [[*Beautify]] since the sequ
 
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'valign)
-  ; valign mode should be enabled as file local variable
-  ;; (if (display-graphic-p)
-  ;;     (add-hook 'org-mode-hook #'valign-mode))
 #+END_SRC
 
 *** Org Download
@@ -1547,11 +1542,8 @@ I use ~"C-j"~ to invoke jump.
                           :foreground "grey75")))
   (setq whitespace-style '(face spaces tabs newline space-mark tab-mark newline-mark))
   (when (display-graphic-p)
-    (add-hook-lambda org-mode-hook 
-                     (set (make-local-variable 'buffer-face-mode-face)
-                          'lt-font)
-                     (buffer-face-mode t)
-                     (face-remap-add-relative 'org-block `(:family ,(face-attribute 'cc-font :family)))
+    (add-hook-lambda org-mode-hook
+                     (variable-pitch-mode +1)
                      (org-bars-mode +1)
                      (org-bars-indent)))
   (setq org-ellipsis "  ⇲")
@@ -2008,16 +2000,9 @@ Restore session
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'markdown-mode)
   (with-eval-after-load 'markdown-mode
-    ;; (add-hook 'markdown-mode-hook (lambda ()
-    ;;                                 (setq-local sentence-end (rx (or "。"
-    ;;                                                                  "？"
-    ;;                                                                  "！"
-    ;;                                                                  "；"
-    ;;                                                                  ".  "
-    ;;                                                                  "?"
-    ;;                                                                  "!"
-    ;;                                                                  ";")))))
-    (define-key markdown-mode-map (kbd "M-q") 'fill-paragraph-ospl))
+    (define-key markdown-mode-map (kbd "M-q") 'fill-paragraph-ospl)
+    (add-hook-lambda markdown-mode-hook
+                     (variable-pitch-mode)))
 #+end_src
 ** ebib
 

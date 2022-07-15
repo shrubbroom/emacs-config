@@ -1,4 +1,7 @@
 ;;; init.el --- Emacs configuration -*- lexical-binding: t; -*-
+(add-to-list
+ 'default-frame-alist
+ `(menu-bar-lines . ,(if (and window-system (eq system-type 'darwin)) 1 0)))
 (let ((default-directory user-emacs-directory)
       (file-name-handler-alist nil)
       (read-process-output-max (* 1024 1024)))

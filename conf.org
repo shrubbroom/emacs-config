@@ -1257,6 +1257,8 @@ Add lsp to cc-mode hook
 #+BEGIN_SRC emacs-lisp
   (dolist (hook '(c-mode-hook c++-mode-hook))
     (add-hook hook #'lsp))
+  (setq lsp-clients-clangd-args
+        '("--header-insertion=never"))
 #+END_SRC
 ** Rust
 #+BEGIN_SRC emacs-lisp

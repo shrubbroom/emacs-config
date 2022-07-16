@@ -958,10 +958,12 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
     (init/ensure-package 'minions)
     (minions-mode))
 #+end_src
-** Line number
+** Line number & Highlight current line
 #+BEGIN_SRC emacs-lisp
+  (require 'hl-line)
   (add-hook-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
-                        (display-line-numbers-mode))
+                   (display-line-numbers-mode)
+                   (hl-line-mode))
 #+END_SRC
 
 *** Tone down background, modify font
@@ -970,14 +972,13 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
                       nil
                       :weight 'bold
                       :height (face-attribute 'default :height)
-                      ; :background (face-background 'line-number)
-                      ; :foreground (face-foreground 'line-number)
+                      :background (face-background 'hl-line nil t)
                       :family (face-attribute 'cc-font :family))
   (set-face-attribute 'line-number
                       nil
-                      :weight 'light
+                      :weight 'thin
                       :height (face-attribute 'default :height)
-                      :background (face-background 'default)
+                      :background (face-attribute 'default :background)
                       :family (face-attribute 'cc-font :family))
 #+END_SRC
 *** Scaling as text-scaling happens
@@ -2363,8 +2364,7 @@ Pin posfram to left-bottom
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'telega)
   (with-eval-after-load 'telega
-    (define-key telega-chat-mode-map [remap telega-msg-resend] 'telega-msg-forward-marked-or-at-point)
-    (define-key telega-chat-mode-map (kbd "k") 'meow-prev))
+    (define-key telega-chat-mode-map [remap telega-msg-resend] 'telega-msg-forward-marked-or-at-point))
   (if (bound-and-true-p init/local-proxies)
       (let ((http_proxy (cdr (assoc "http" init/local-proxies))))
         (if http_proxy
@@ -2405,6 +2405,8 @@ Pin posfram to left-bottom
 #+end_src
 ** Meow
 #+begin_src emacs-lisp
+  (setq meow-use-clipboard t)
+  (add-hook 'meow-insert-exit-hook 'corfu-quit)
   (defun meow-setup ()
     (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
     (meow-motion-overwrite-define-key

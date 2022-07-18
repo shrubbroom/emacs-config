@@ -372,9 +372,9 @@ Enable ~escape~ as quit in ivy
 
 ** Project manager
 
-The default project manager is built-in =project.el=.  The default
-project finder is =find=.  We replece it with =fd= to speed up the
-searching.
+The default project manager is built-in =project.el=.
+The default project finder is =find=.
+We replece it with =fd= to speed up the searching.
 
 #+begin_src emacs-lisp
   (defun my/project-files-in-directory (dir)
@@ -577,14 +577,14 @@ Spend time on important things.*
     (dolist (charset '(kana han cjk-misc bopomofo))
       (set-fontset-font t charset
                         (font-spec :family "LXGW Bright")))
-    (set-frame-font "Latin Modern Mono" nil t))
+    (set-frame-font "Sarasa Term SC" nil t))
 #+END_SRC
 *** prog-mode font
 
 Use separate font for ~prog-mode~
 #+BEGIN_SRC emacs-lisp
   (defface cc-font
-    '((t :family "Latin Modern Mono"))
+    '((t :family "Sarasa Term SC"))
     "program fonts"
     :group 'basic-faces)
   (set-face-attribute 'fixed-pitch nil
@@ -703,7 +703,7 @@ Setup theme.
 
 *** Tone down fringe
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (set-face-attribute 'fringe nil
                       :foreground (face-foreground 'default)
                       :background (face-background 'default))
@@ -716,7 +716,7 @@ Setup theme.
 #+end_src
 *** Tone down headerline
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (set-face-attribute 'header-line nil
                       :background (face-background 'default))
 #+end_src
@@ -944,7 +944,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
    (setq awesome-tray-date-format "%H:%M %a")
    (setq awesome-tray-active-modules '("date" "location" "pdf-view-page" "belong"
                                        "file-path" "buffer-read-only" "git" "mode-name" "input-method"))
-   (setq awesome-tray-info-padding-right 1)
+   (setq awesome-tray-info-padding-right 0)
    (set-face-attribute 'mode-line nil
                        :foreground (face-background 'mode-line))
    (set-face-attribute 'mode-line-inactive nil
@@ -954,9 +954,10 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
    (setq-default mode-line-format '(" "))
    (awesome-tray-mode 1))
 
+
   (unless (display-graphic-p)
-    (init/ensure-package 'minions)
-    (minions-mode))
+   (init/ensure-package 'minions)
+   (minions-mode))
 #+end_src
 ** Line number & Highlight current line
 #+BEGIN_SRC emacs-lisp
@@ -967,12 +968,13 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+END_SRC
 
 *** Tone down background, modify font
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (set-face-attribute 'line-number-current-line
                       nil
                       :weight 'bold
                       :height (face-attribute 'default :height)
                       :background (face-background 'hl-line nil t)
+                      :foreground (face-foreground 'hl-line nil t)
                       :family (face-attribute 'cc-font :family))
   (set-face-attribute 'line-number
                       nil
@@ -1375,7 +1377,7 @@ The hook for =variable-pitch-mode= is moved to session [[*Beautify]] since the s
 
 #+BEGIN_SRC emacs-lisp
   (defface lt-font
-    '((t :family "Latin Modern Roman"))
+    '((t :family "Sarasa Term Slab SC"))
     "Font for literature"
     :group 'basic-faces)
   (set-face-attribute 'variable-pitch nil
@@ -2366,7 +2368,9 @@ Pin posfram to left-bottom
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'telega)
   (with-eval-after-load 'telega
-    (define-key telega-chat-mode-map [remap telega-msg-resend] 'telega-msg-forward-marked-or-at-point))
+    (define-key telega-chat-mode-map [remap telega-msg-resend] 'telega-msg-forward-marked-or-at-point)
+    (define-key telega-msg-button-map (kbd "SPC") nil)
+    (define-key telega-msg-button-map (kbd "k") nil))
   (if (bound-and-true-p init/local-proxies)
       (let ((http_proxy (cdr (assoc "http" init/local-proxies))))
         (if http_proxy

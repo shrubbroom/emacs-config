@@ -182,7 +182,7 @@ These actions are done with package =pulse.el=.
 *** Set cursor style and enable blinking
 
 #+begin_src emacs-lisp
-  ;; (add-hook-lambda org-mode-hook (setq cursor-type '(bar . 3)))
+  (add-hook-lambda org-mode-hook (setq cursor-type '(bar . 3)))
   (blink-cursor-mode -1)
 #+end_src
 
@@ -326,7 +326,7 @@ Enable ~escape~ as quit in ivy
 
 *** Config ctrlf
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
   (define-key isearch-mode-map
     [remap isearch-delete-char]
     #'isearch-del-char)
@@ -335,7 +335,7 @@ Enable ~escape~ as quit in ivy
   (setq lazy-highlight-cleanup t)
 #+END_SRC
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (init/ensure-package-lazy 'ctrlf)
   (ctrlf-mode +1)
 #+end_src
@@ -959,7 +959,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
    (init/ensure-package 'minions)
    (minions-mode))
 #+end_src
-** Line number & Highlight current line
+** Line number & highlight current line
 #+BEGIN_SRC emacs-lisp
   (require 'hl-line)
   (add-hook-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
@@ -1249,6 +1249,14 @@ Setup conda
   (when (executable-find "python3")
     (setq lsp-pyright-python-executable-cmd "python3"))
 #+END_SRC
+*** Highlight Indentation
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'highlight-indentation)
+  (with-eval-after-load 'highlight-indentation
+   (set-face-background 'highlight-indentation-face "#e3e3d3")
+   (set-face-background 'highlight-indentation-current-column-face "#c3b3b3"))
+  (add-hook 'python-mode-hook 'highlight-indent)
+#+end_src
 ** C/C++
 Installing ~ccls~ if ccls exists.
 #+BEGIN_SRC emacs-lisp :tangle (if (executable-find "ccls") "yes" "no")
@@ -1329,7 +1337,7 @@ Install ~yaml-mode~
   (with-eval-after-load 'rime
     (add-hook 'kill-emacs-hook #'rime-lib-finalize) ;; avoid crash on exit
     (set-face-attribute 'rime-highlight-candidate-face nil :weight 'bold)
-    ;; (define-key rime-mode-map [escape] #'rime-inline-ascii)
+    (define-key rime-mode-map [escape] #'rime-inline-ascii)
     (advice-add 'rime-inline-ascii :after
                 #'(lambda ()
                     (interactive)
@@ -1359,9 +1367,10 @@ Install ~yaml-mode~
           rime-predicate-punctuation-line-begin-p
           rime-predicate-space-after-cc-p
           rime-predicate-tex-math-or-command-p
-          meow-normal-mode-p
-          meow-motion-mode-p
-          meow-keypad-mode-p))
+          ;; meow-normal-mode-p
+          ;; meow-motion-mode-p
+          ;; meow-keypad-mode-p
+          ))
 
   (setq rime-posframe-properties
         (list :font "LXGW WenKai"
@@ -2367,10 +2376,13 @@ Pin posfram to left-bottom
 ** Telega
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'telega)
+  (setq telega-symbol-telegram nil)
   (with-eval-after-load 'telega
     (define-key telega-chat-mode-map [remap telega-msg-resend] 'telega-msg-forward-marked-or-at-point)
     (define-key telega-msg-button-map (kbd "SPC") nil)
-    (define-key telega-msg-button-map (kbd "k") nil))
+    (define-key telega-msg-button-map (kbd "k") nil)
+    (define-key telega-msg-button-map (kbd "h") nil)
+    (define-key telega-msg-button-map (kbd "l") nil))
   (if (bound-and-true-p init/local-proxies)
       (let ((http_proxy (cdr (assoc "http" init/local-proxies))))
         (if http_proxy
@@ -2386,7 +2398,6 @@ Pin posfram to left-bottom
                    (setq-local company-minimum-prefix-length 1)
                    (add-to-list (make-local-variable 'completion-at-point-functions)
                                 (cape-company-to-capf 'telega-company-username)))
-
 #+end_src
 ** Wonderlust
 
@@ -2404,13 +2415,13 @@ Pin posfram to left-bottom
 #+end_src
 ** Vterm
 #+begin_src emacs-lisp
-  (init/ensure-package 'vterm)
-  (define-key vterm-mode-map (kbd "C-y") 'vterm-send-C-S-v)
-  (define-key vterm-mode-map (kbd "C-x C-q") 'vterm-copy-mode)
-  (setq telega-symbol-telegram nil)
+      (init/ensure-package 'vterm)
+      (define-key vterm-mode-map (kbd "C-y") 'vterm-send-C-S-v)
+      (define-key vterm-mode-map (kbd "C-x C-q") 'vterm-copy-mode)
+      
 #+end_src
 ** Meow
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (setq meow-use-clipboard t)
   (add-hook 'meow-insert-exit-hook 'corfu-quit)
   (defun meow-setup ()

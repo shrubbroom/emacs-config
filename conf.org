@@ -2163,16 +2163,14 @@ Restore session
   (with-eval-after-load 'ebib
     (require 'org-ebib)
     (setq ebib-file-associations nil)
-    (if (not (bound-and-true-p init/enable-eaf))
-        (cl-case system-type
-          ('gnu/linux (setq ebib-file-associations '(("pdf" . "okular"))))
-          ;; ('darwin (setq ebib-file-associations '(("pdf" . "open"))))
-          (otherwise t)))
+    (setq ebib-pdf-external
+          (cl-case system-type
+            ('darwin "open")
+            ('gnu/linux "xdg-open")
+            (t nil)))
     (define-key ebib-index-mode-map (kbd "F") (lambda () (interactive)
-                                                 (let ((ebib-file-associations '(("pdf" . "open"))))
+                                                 (let ((ebib-file-associations '(("pdf" . ebib-pdf-external))))
                                                    (call-interactively 'ebib-view-file)))))
-
-  ;; (setq ebib-file-associations '(("pdf" . "okular")))
   (global-set-key (kbd "C-c e i") 'ebib-insert-citation)
   (switch-to-tab-before ebib "ebib")
   (execute-command-in ebib (car init/ebib-file-search-dirs))

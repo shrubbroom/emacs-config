@@ -24,6 +24,22 @@
        (add-hook (quote ,hook) (lambda ()
                                  ,arg
                                  ,@rest-args))))
+
+  (defmacro switch-to-tab-before (action tab-name)
+    `(advice-add (quote ,action) :before
+                 (lambda (&rest _)
+                   (if (member ,tab-name (mapcar (lambda (tab)
+                                                   (alist-get 'name tab))
+                                                 (tab-bar-tabs)))
+                       (tab-bar-switch-to-tab ,tab-name)
+                     (tab-bar-new-tab)
+                     (tab-bar-rename-tab ,tab-name)))))
+
+  (defmacro execute-command-in (action directory)
+    `(advice-add (quote ,action) :around
+                 (lambda (origin-fun &rest args)
+                   (let ((default-directory ,directory))
+                     (apply origin-fun args)))))
 #+end_src
 ** User defined actions
 
@@ -79,6 +95,7 @@ User defined actions begin with =init=.
   (defun init/find-conf ()
     "Find default `conf.org' file"
     (interactive) (find-file "~/.config/emacs/conf.org"))
+  (switch-to-tab-before init/find-conf "emacs")
 #+END_SRC
 
 *** Open file in external applications
@@ -391,6 +408,14 @@ We replece it with =fd= to speed up the searching.
     (mapcan #'my/project-files-in-directory
             (or dirs (list (project-root project)))))
 
+  (define-key ivy-mode-map
+    [remap switch-to-buffer]
+    (lambda ()
+      (interactive)
+      (if (or current-prefix-arg
+              (not (project-current nil)))
+          (call-interactively 'ivy-switch-buffer)
+        (call-interactively 'project-switch-to-buffer))))
 #+end_src
 
 The keymap starts with =C-c=.
@@ -2149,7 +2174,8 @@ Restore session
 
   ;; (setq ebib-file-associations '(("pdf" . "okular")))
   (global-set-key (kbd "C-c e i") 'ebib-insert-citation)
-
+  (switch-to-tab-before ebib "ebib")
+  (execute-command-in ebib (car init/ebib-file-search-dirs))
 #+END_SRC
 ** Org Roam
 #+BEGIN_SRC emacs-lisp :tangle (if (boundp 'init/org-roam-directory) "yes" "no")
@@ -2507,6 +2533,8 @@ Pin posfram to left-bottom
                    (setq-local company-minimum-prefix-length 1)
                    (add-to-list (make-local-variable 'completion-at-point-functions)
                                 (cape-company-to-capf 'telega-company-username)))
+  (switch-to-tab-before telega "telega")
+  (execute-command-in telega "~/.telega/")
 #+end_src
 ** Wonderlust
 

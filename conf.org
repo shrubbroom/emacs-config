@@ -1934,6 +1934,18 @@ This is just for ~shell~ command
         (eshell-toggle--new-buffer eshell-name))
       (switch-to-buffer eshell-name)))
 #+END_SRC
+** Compile
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'compile
+    (require 'ansi-color)
+    (defun colorize-compilation-buffer ()
+      (toggle-read-only)
+      (ansi-color-apply-on-region compilation-filter-start (point))
+      (toggle-read-only))
+    (add-hook 'compilation-filter-hook 'colorize-compilation-buffer))
+#+end_src
+
 ** Shell
 #+begin_src emacs-lisp
   (add-hook-lambda shell-mode-hook

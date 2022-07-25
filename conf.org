@@ -2051,9 +2051,8 @@ Use native search method
 #+end_src
 
 *** Pdf-tools
-This package is only used in OS X
 
-#+begin_src emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
+#+begin_src emacs-lisp :tangle
   (init/ensure-package-lazy 'pdf-tools)
   (pdf-loader-install)
   (setq pdf-view-use-scaling t)
@@ -2069,7 +2068,7 @@ This package is only used in OS X
 
 Restore session
 
-#+begin_src emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
+#+begin_src emacs-lisp :tangle
   ;; workaround for pdf-tools not reopening to last-viewed page of the pdf:
   ;; https://github.com/politza/pdf-tools/issues/18#issuecomment-269515117
   (defun brds/pdf-set-last-viewed-bookmark ()

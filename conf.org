@@ -416,6 +416,15 @@ We replece it with =fd= to speed up the searching.
               (not (project-current nil)))
           (call-interactively 'ivy-switch-buffer)
         (call-interactively 'project-switch-to-buffer))))
+
+  (define-key counsel-mode-map
+    [remap find-file]
+    (lambda ()
+      (interactive)
+      (if (or current-prefix-arg
+              (not (project-current nil)))
+          (call-interactively 'counsel-find-file)
+        (call-interactively 'project-find-file))))
 #+end_src
 
 The keymap starts with =C-c=.
@@ -940,6 +949,9 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
         tab-bar-tab-name-format-function '+tab-bar-tab-format-function
         tab-bar-format '(tab-bar-format-tabs tab-bar-right)
         tab-bar-tab-name-truncated-max 10)
+  (set-face-attribute 'tab-bar-tab-inactive nil
+                      :background (face-background 'tab-bar)
+                      :box nil)
   (tab-bar-mode)
 #+end_src
 *** centaur tabs
@@ -1144,7 +1156,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+END_SRC
 *** Display HEX/RGB color
 #+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'rainbow-mode)
+  (init/ensure-package-lazy 'rainbow-mode)
 #+END_SRC
 * Languages
 ** Completion system
@@ -1388,7 +1400,7 @@ Add lsp to cc-mode hook
 #+END_SRC
 ** Rust
 #+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'rust-mode)
+  (init/ensure-package-lazy 'rust-mode)
   (setq lsp-rust-server 'rust-analyzer)
   (setq lsp-rust-analyzer-cargo-watch-enable nil)
   (cl-defmethod lsp-clients-extract-signature-on-hover (contents (_server-id (eql rust-analyzer)))
@@ -1427,17 +1439,17 @@ Use =paredit= in =elisp-mode=.  Configure =smartparen= mode.
 ** Shell
 Install ~fish-mode~ and config keybindings
 #+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'fish-mode)
+  (init/ensure-package-lazy 'fish-mode)
 #+END_SRC
 ** Matlab
 Install ~matlab-mode~
 #+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'matlab-mode)
+  (init/ensure-package-lazy 'matlab-mode)
 #+END_SRC
 ** YAML
 Install ~yaml-mode~
 #+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'yaml-mode)
+  (init/ensure-package-lazy 'yaml-mode)
 #+END_SRC
 * Documentation
 ** Spell Check
@@ -2134,11 +2146,11 @@ Restore session
 #+end_src
 ** lua-mode
 #+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'lua-mode)
+  (init/ensure-package-lazy 'lua-mode)
 #+END_SRC
 ** scala-mode
 #+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'scala-mode)
+  (init/ensure-package-lazy 'scala-mode)
 #+END_SRC
 ** markdown-mode
 #+begin_src emacs-lisp

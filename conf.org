@@ -512,11 +512,21 @@ The keymap starts with =C-c=.
 *** Window switching
 
 #+begin_src emacs-lisp
-  (init/ensure-package 'ace-window)
-  (global-set-key [remap other-window] 'ace-window)
-  (add-to-list 'aw-ignored-buffers "*sort-tab*")
-  (add-to-list 'aw-ignored-buffers " SPEEDBAR")
-  (setq aw-ignore-current nil)
+  (defun transient-switch-window ()
+    "Transient switch window by window's number"
+    (interactive)
+    (if (length> (window-list) 1)
+        (let ((echo-keystrokes nil))
+          (call-interactively 'other-window)
+          (message "transient other window")
+          (set-transient-map
+           (let ((map (make-sparse-keymap)))
+             (define-key map "o" (lambda () (interactive)
+                                   (call-interactively 'other-window)))
+             map)
+           t))
+      (message "No other window to select")))
+  (global-set-key [remap other-window] 'transient-switch-window)
 #+end_src
 
 #+begin_src emacs-lisp :tangle no

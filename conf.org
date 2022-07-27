@@ -916,14 +916,36 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
        'face
        'bold)))
 
+  (defun time ()
+    (let* ((now (current-time))
+           (time (current-time-string now))
+           (load (display-time-update--load))
+           (mail (display-time-update--mail))
+           (24-hours (substring time 11 13))
+           (hour (string-to-number 24-hours))
+           (12-hours (int-to-string (1+ (% (+ hour 11) 12))))
+           (am-pm (if (>= hour 12) "pm" "am"))
+           (minutes (substring time 14 16))
+           (seconds (substring time 17 19))
+           (time-zone (car (cdr (current-time-zone now))))
+           (day (substring time 8 10))
+           (year (format-time-string "%Y" now))
+           (monthname (substring time 4 7))
+           (month
+            (cdr
+             (assoc
+              monthname
+              '(("Jan" . "1") ("Feb" . "2") ("Mar" . "3") ("Apr" . "4")
+                ("May" . "5") ("Jun" . "6") ("Jul" . "7") ("Aug" . "8")
+                ("Sep" . "9") ("Oct" . "10") ("Nov" . "11") ("Dec" . "12")))))
+           (dayname (substring time 0 3)))
+      (concat monthname " " day ", " 12-hours ":" minutes " " am-pm)))
+
   (defun tab-bar-right ()
-    (let* ((p (cdr (project-current)))
-           (vc (vc-branch-name))
-           (w (string-width (concat p " " vc))))
+    (let* ((time (time))
+           (w (string-width time)))
       (concat (propertize " " 'display `((space :align-to (- (+ right right-fringe right-margin) ,w 1))))
-              p
-              " "
-              vc)))
+              time)))
 
 
   (defun tab-bar-switch-project ()
@@ -959,9 +981,9 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
         tab-bar-tab-name-format-function '+tab-bar-tab-format-function
         tab-bar-format '(tab-bar-format-tabs tab-bar-right)
         tab-bar-tab-name-truncated-max 10)
-  (set-face-attribute 'tab-bar-tab-inactive nil
-                      :background (face-background 'tab-bar)
-                      :box nil)
+  ;; (set-face-attribute 'tab-bar-tab-inactive nil
+  ;;                     :background (face-background 'tab-bar)
+  ;;                     :box nil)
   (tab-bar-mode)
 #+end_src
 *** centaur tabs
@@ -1038,7 +1060,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
             (not (file-name-extension name)))
        )))
 #+end_src
-** Modeline(awesome-tray)
+** COMMENT Modeline(awesome-tray)
 
 #+begin_src emacs-lisp :tangle no
   (when (display-graphic-p)
@@ -1070,7 +1092,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
    (minions-mode))
 #+end_src
 
-** Modeline (doom)
+** COMMENT Modeline (doom)
 
 #+begin_src emacs-lisp :tangle (if (not (eq system-type 'darwin)) "yes" "no")
   (defun my-doom-modeline--font-height ()
@@ -1097,6 +1119,12 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (add-hook 'after-init-hook 'doom-modeline-mode)
 #+end_src
 
+** Modeline
+
+#+begin_src emacs-lisp
+  (init/ensure-package 'minions)
+  (minions-mode)
+#+end_src
 ** Line number & highlight current line
 #+BEGIN_SRC emacs-lisp
   (require 'hl-line)
@@ -2190,7 +2218,7 @@ Restore session
             ('gnu/linux "xdg-open")
             (t nil)))
     (define-key ebib-index-mode-map (kbd "F") (lambda () (interactive)
-                                                 (let ((ebib-file-associations '(("pdf" . ebib-pdf-external))))
+                                                 (let ((ebib-file-associations `(("pdf" . ,ebib-pdf-external))))
                                                    (call-interactively 'ebib-view-file)))))
   (global-set-key (kbd "C-c e i") 'ebib-insert-citation)
   (switch-to-tab-before ebib "ebib")

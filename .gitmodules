@@ -37,3 +37,6 @@
 [submodule "site-packages/emacs-popon"]
 	path = site-packages/emacs-popon
 	url = https://codeberg.org/akib/emacs-popon.git
+[submodule "site-packages/lsp-bridge"]
+	path = site-packages/lsp-bridge
+	url = https://github.com/manateelazycat/lsp-bridge.git

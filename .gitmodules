@@ -1,42 +1,18 @@
-[submodule "site-packages/sort-tab"]
-	path = site-packages/sort-tab
-	url = https://github.com/manateelazycat/sort-tab.git
-[submodule "site-packages/company-english-helper"]
-	path = site-packages/company-english-helper
-	url = https://github.com/manateelazycat/company-english-helper.git
 [submodule "site-packages/ligature"]
 	path = site-packages/ligature
 	url = https://github.com/mickeynp/ligature.el.git
 [submodule "site-packages/auto-save"]
 	path = site-packages/auto-save
 	url = https://github.com/manateelazycat/auto-save.git
-[submodule "site-packages/grammatical-edit"]
-	path = site-packages/grammatical-edit
-	url = https://github.com/manateelazycat/grammatical-edit.git
 [submodule "site-packages/org-bars"]
 	path = site-packages/org-bars
 	url = https://github.com/tonyaldon/org-bars.git
 [submodule "site-packages/eaf"]
 	path = site-packages/eaf
 	url = https://github.com/emacs-eaf/emacs-application-framework.git
-[submodule "site-packages/awesome-tray"]
-	path = site-packages/awesome-tray
-	url = https://github.com/manateelazycat/awesome-tray.git
-[submodule "site-packages/corfu-english-helper"]
-	path = site-packages/corfu-english-helper
-	url = https://github.com/manateelazycat/corfu-english-helper.git
-[submodule "site-packages/lambda-themes"]
-	path = site-packages/lambda-themes
-	url = https://github.com/Lambda-Emacs/lambda-themes.git
 [submodule "rime"]
 	path = rime
 	url = git@github.com:shrubbroom/rime-config.git
-[submodule "site-packages/emacs-corfu-terminal"]
-	path = site-packages/emacs-corfu-terminal
-	url = https://codeberg.org/akib/emacs-corfu-terminal.git
-[submodule "site-packages/emacs-popon"]
-	path = site-packages/emacs-popon
-	url = https://codeberg.org/akib/emacs-popon.git
 [submodule "site-packages/lsp-bridge"]
 	path = site-packages/lsp-bridge
 	url = https://github.com/manateelazycat/lsp-bridge.git

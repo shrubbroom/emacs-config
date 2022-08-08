@@ -347,7 +347,7 @@ Enable ~escape~ as quit in ivy
   (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
 #+END_SRC
 
-*** Config ctrlf
+*** Config isearch
 
 #+BEGIN_SRC emacs-lisp
   (define-key isearch-mode-map
@@ -358,10 +358,6 @@ Enable ~escape~ as quit in ivy
   (setq lazy-highlight-cleanup t)
 #+END_SRC
 
-#+begin_src emacs-lisp :tangle no
-  (init/ensure-package-lazy 'ctrlf)
-  (ctrlf-mode +1)
-#+end_src
 *** Configure counsel
 
 **** Hook at startup
@@ -535,13 +531,6 @@ The most useful functions among them are listed here.
            t))
       (message "No other window to select")))
   (global-set-key [remap other-window] 'transient-switch-window)
-#+end_src
-
-#+begin_src emacs-lisp :tangle no
-  (init/ensure-package 'switch-window)
-  (global-set-key [remap other-window] 'switch-window)
-  (setq switch-window-threshold 2)
-  (setq switch-window-shortcut-appearance 'image)
 #+end_src
 
 *** Resize
@@ -734,15 +723,6 @@ changed in runtime.
   (advice-add 'load-theme :around #'load-theme-hook-wrapper)
 #+END_SRC
 *** Setup theme
-
-Install themes
-
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/lambda-themes"))
-  (require 'lambda-themes)
-#+END_SRC
-
 Setup theme.
 
 #+BEGIN_SRC emacs-lisp
@@ -753,32 +733,10 @@ Setup theme.
         (load-theme init/theme-light 1)))
 #+END_SRC
 
-*** Tone down fringe
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (set-face-attribute 'fringe nil
-                      :foreground (face-foreground 'default)
-                      :background (face-background 'default))
-#+END_SRC
-
 *** Add fringe indicators
 #+begin_src emacs-lisp
   (add-hook-lambda (prog-mode-hook text-mode-hook telega-chat-mode-hook wl-summary-mode-hook)
                         (setq indicate-buffer-boundaries 'right))
-#+end_src
-*** Tone down headerline
-
-#+begin_src emacs-lisp :tangle no
-  (set-face-attribute 'header-line nil
-                      :background (face-background 'default))
-#+end_src
-
-** Dimmer
-
-#+begin_src emacs-lisp :tangle no
-  (init/ensure-package 'dimmer)
-  (dimmer-configure-posframe)
-  (dimmer-mode 1)
 #+end_src
 
 ** Icon
@@ -788,124 +746,6 @@ Set up all-the-icons
 #+END_SRC
 I do not manually install the fonts of ~all-the-icons~. System package manager (~pacman~) maintains the font.
 ** Tabs
-*** COMMENT Sort-tab
-
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/sort-tab"))
-  (require 'sort-tab)
-  (sort-tab-mode +1)
-  (global-set-key (kbd "<S-left>") 'sort-tab-select-prev-tab)
-  (global-set-key (kbd "<S-right>") 'sort-tab-select-next-tab)
-  (with-eval-after-load 'org
-    (define-key org-mode-map (kbd "<S-left>") 'sort-tab-select-prev-tab)
-    (define-key org-mode-map (kbd "<S-right>") 'sort-tab-select-next-tab))
-  (defun sort-tab-refresh (&optional args)
-    (interactive)
-    (if sort-tab-mode
-        (progn (sort-tab-mode -1)
-               (sort-tab-mode 1))))
-#+END_SRC
-
-**** Override hide behavior
-#+BEGIN_SRC emacs-lisp
-  (advice-add 'sort-tab-buffer-need-hide-p
-              :around #'(lambda (origin buf)
-                          (let ((name (buffer-name buf)))
-                            (cond
-                             ((string-equal name "*eshell*")
-                              nil)
-                             ((string-equal name "TAGS")
-                              t)
-                             ((string-suffix-p "syntex.gz" name)
-                              t)
-                             ((string-prefix-p "*eww" name)
-                              nil)
-                             (t (apply origin `(,buf)))))))
-  
-#+END_SRC
-
-**** Tone down background color
-#+begin_src emacs-lisp
-  (set-face-attribute 'sort-tab-current-tab-face
-                      nil
-                      :background (face-background 'mode-line)
-                      :foreground (face-foreground 'mode-line))
-  ;; (set-face-attribute 'sort-tab-separator-face
-  ;;                     nil
-  ;;                     :foreground (face-foreground 'mode-line))
-  ;; (setq-default sort-tab-separator "⦚")
-  #+end_src
-**** Save and revert buffer state
-
-#+BEGIN_SRC emacs-lisp
-  (defun sort-tab-get-session-and-kill-all-buffers ()
-    (let* ((buffer-list (sort-tab-get-buffer-list))
-           (session-list (mapcar #'(lambda (buf) (with-current-buffer buf
-                                                   (if buffer-file-name
-                                                       `("file" ,buffer-file-name ,sort-tab-buffer-freq)
-                                                     (cond ((derived-mode-p 'eshell-mode)
-                                                            `("eshell" ,(eshell/pwd) ,sort-tab-buffer-freq ,(buffer-name)))
-                                                           ((derived-mode-p 'dired-mode)
-                                                            `("dired" ,dired-directory ,sort-tab-buffer-freq))
-                                                           (t nil)))))
-                                 buffer-list)))
-      (mapcar #'kill-buffer buffer-list)
-      session-list))
-
-  (defun sort-tab-revert-session (session-list)
-    (mapcar #'(lambda (pair)
-                (let ((mode (car pair))
-                      (file (cadr pair))
-                      (freq (caddr pair)))
-                  (cond ((equal mode "file") (with-current-buffer (find-file file)
-                                               (setq-local sort-tab-buffer-freq freq)))
-                        ((equal mode "eshell") (let ((default-directory file))
-                                                 (with-current-buffer (eshell 17)
-                                                   (rename-buffer (cadddr pair))
-                                                   (setq-local sort-tab-buffer-freq freq))))
-                        ((equal mode "dired") (with-current-buffer (dired file)
-                                                (setq-local sort-tab-buffer-freq freq))))))
-            session-list)
-    (if sort-tab-mode
-        (progn (sort-tab-mode -1)
-               (sort-tab-mode 1))))
-
-  (defun act/save-session (session-file)
-    "Save current session into a session file."
-    (interactive
-     (list (read-file-name "Session file to save: " "~/.emacs.d/sessions/")))
-    (with-temp-file session-file
-      (prin1 (sort-tab-get-session-and-kill-all-buffers) (current-buffer)))
-    (switch-to-buffer "*scratch*"))
-
-  (defun act/load-session (session-file)
-    "Load session from session file, clear current session."
-    (interactive
-     (list (read-file-name "Session file to load: " "~/.emacs.d/sessions/")))
-    (act/save-session "/dev/null")
-    (sort-tab-revert-session
-     (with-temp-buffer
-       (insert-file-contents session-file)
-       (cl-assert (eq (point) (point-min)))
-       (read (current-buffer)))))
-
-  (defun act/exchange-session (session-file)
-    "Exchange session with session from file."
-    (interactive
-     (list (read-file-name "Session file to interchange: " "~/.emacs.d/sessions/")))
-    (let ((session (with-temp-buffer
-                     (insert-file-contents session-file)
-                     (cl-assert (eq (point) (point-min)))
-                     (read (current-buffer)))))
-      (sort-tab-save-session session-file)
-      (sort-tab-revert-session session)))
-
-  (defun act/kill-session ()
-    "Clear current session"
-    (interactive)
-    (act/save-session "/dev/null"))
-#+END_SRC
 *** tab bar
 #+begin_src emacs-lisp
   (global-set-key (kbd "<S-left>")  'tab-bar-switch-to-prev-tab)
@@ -994,139 +834,6 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   ;;                     :box nil)
   (tab-bar-mode)
 #+end_src
-*** centaur tabs
-#+begin_src emacs-lisp :tangle no
-  (init/ensure-package 'centaur-tabs)
-  (global-set-key (kbd "<S-left>")  'centaur-tabs-backward-tab)
-  (global-set-key (kbd "<S-right>") 'centaur-tabs-forward-tab)
-  (with-eval-after-load 'org
-      (define-key org-mode-map (kbd "<S-left>") 'centaur-tabs-backward-tab)
-      (define-key org-mode-map (kbd "<S-right>") 'centaur-tabs-forward-tab))
-  (setq centaur-tabs-style "bar")
-  (centaur-tabs-mode t)
-  (centaur-tabs-headline-match)
-  (defun centaur-tabs-buffer-groups ()
-    "`centaur-tabs-buffer-groups' control buffers' group rules.
-      Group centaur-tabs with mode if buffer is derived from `eshell-mode' `emacs-lisp-mode' `dired-mode' `org-mode' `magit-mode'.
-      All buffer name start with * will group to \"Emacs\".
-      Other buffer group by `centaur-tabs-get-group-name' with project name."
-    (list
-     (cond
-      ((memq major-mode '(telega-chat-mode
-                          telega-root-mode
-                          telega-image-mode))
-       "Telega")
-      ((memq major-mode '(ebib-index-mode
-                          ebib-entry-mode))
-       "Ebib")
-      ((memq major-mode '(helpful-mode
-                          help-mode))
-       "Help")
-      ((or (string-equal "*" (substring (buffer-name) 0 1))
-           (memq major-mode '(magit-process-mode
-                              magit-status-mode
-                              magit-diff-mode
-                              magit-log-mode
-                              magit-file-mode
-                              magit-blob-mode
-                              magit-blame-mode
-                              )))
-       "Emacs")
-      (t
-       (centaur-tabs-get-group-name (current-buffer))))))
-
-  (defun centaur-tabs-hide-tab (x)
-    "Do no to show buffer X in tabs."
-    (let ((name (format "%s" x)))
-      (or
-       ;; Current window is not dedicated window.
-       (window-dedicated-p (selected-window))
-
-       ;; Buffer name not match below blacklist.
-       (string-prefix-p "*epc" name)
-       (string-prefix-p "*helm" name)
-       (string-prefix-p "*Helm" name)
-       (string-prefix-p "*Compile-Log*" name)
-       (string-prefix-p "*lsp" name)
-       (string-prefix-p "*company" name)
-       (string-prefix-p "*Flycheck" name)
-       (string-prefix-p "*tramp" name)
-       (string-prefix-p " *Mini" name)
-       ;; (string-prefix-p "*help" name)
-       (string-prefix-p "*straight" name)
-       (string-prefix-p " *temp" name)
-       ;; (string-prefix-p "*Help" name)
-       (string-prefix-p "*mybuf" name)
-       (string-prefix-p "*Calc" name)
-       (string-prefix-p "*Ebib" name)
-       (string-prefix-p "*et" name)
-       (string-prefix-p "*Telegram Sticker Set" name)
-       (string-prefix-p "*Org Preview" name)
-
-       ;; Is not magit buffer.
-       (and (string-prefix-p "magit" name)
-            (not (file-name-extension name)))
-       )))
-#+end_src
-** COMMENT Modeline(awesome-tray)
-
-#+begin_src emacs-lisp :tangle no
-  (when (display-graphic-p)
-   (add-to-list 'load-path
-                (concat user-emacs-directory "site-packages/awesome-tray"))
-   (setq awesome-tray-mode-line-active-color (face-background 'mode-line))
-   (setq awesome-tray-mode-line-inactive-color (face-background 'mode-line-inactive))
-   (require 'awesome-tray)
-   (setq awesome-tray-input-method-en-style "")
-   (setq awesome-tray-input-method-zh-style "ㄓ")
-   (setq awesome-tray-file-name-max-length 40)
-   (setq awesome-tray-git-update-duration 1)
-   (setq awesome-tray-date-format "%H:%M %a")
-   (setq awesome-tray-active-modules '("date" "location" "pdf-view-page" "belong"
-                                       "file-path" "buffer-read-only" "git" "mode-name" "input-method"))
-   (setq awesome-tray-info-padding-right 0)
-   (set-face-attribute 'mode-line nil
-                       :foreground (face-background 'mode-line))
-   (set-face-attribute 'mode-line-inactive nil
-                       :foreground (face-background 'mode-line-inactive))
-   (set-face-attribute 'mode-line-buffer-id nil
-                       :foreground (face-background 'mode-line))
-   (setq-default mode-line-format '(" "))
-   (awesome-tray-mode 1))
-
-
-  (unless (display-graphic-p)
-   (init/ensure-package 'minions)
-   (minions-mode))
-#+end_src
-
-** COMMENT Modeline (doom)
-
-#+begin_src emacs-lisp :tangle (if (not (eq system-type 'darwin)) "yes" "no")
-  (defun my-doom-modeline--font-height ()
-    "Calculate the actual char height of the mode-line."
-    (+ (/ (* (frame-char-height) 1080) (display-pixel-height)) 2))
-#+end_src
-
-#+begin_src emacs-lisp :tangle (if (eq system-type 'darwin) "yes" "no")
-  (defun my-doom-modeline--font-height ()
-    "Calculate the actual char height of the mode-line."
-    (+ (frame-char-height) 2))
-#+end_src
-
-#+begin_src emacs-lisp
-  (init/ensure-package 'doom-modeline)
-  (setq doom-modeline-icon nil
-        doom-modeline-unicode-fallback nil
-        doom-modeline-height 1
-        doom-modeline-buffer-modification-icon nil
-        doom-modeline-project-detection 'project)
-  (display-time-mode +1)
-  (column-number-mode +1)
-  (advice-add #'doom-modeline--font-height :override #'my-doom-modeline--font-height)
-  (add-hook 'after-init-hook 'doom-modeline-mode)
-#+end_src
-
 ** Modeline
 
 #+begin_src emacs-lisp
@@ -1149,22 +856,6 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
                    (hl-line-mode))
 #+END_SRC
 
-*** Tone down background, modify font
-#+BEGIN_SRC emacs-lisp :tangle no
-  (set-face-attribute 'line-number-current-line
-                      nil
-                      :weight 'bold
-                      :height (face-attribute 'default :height)
-                      :background (face-background 'hl-line nil t)
-                      :foreground (face-foreground 'hl-line nil t)
-                      :family (face-attribute 'cc-font :family))
-  (set-face-attribute 'line-number
-                      nil
-                      :weight 'thin
-                      :height (face-attribute 'default :height)
-                      :background (face-attribute 'default :background)
-                      :family (face-attribute 'cc-font :family))
-#+END_SRC
 *** Scaling as text-scaling happens
 #+begin_src emacs-lisp
   (defun post-text-scale-callback ()
@@ -1220,93 +911,10 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (yas-reload-all)
   (yas-global-mode)
 #+end_src
-*** COMMENT Corfu
-Install ~corfu~ and globally enable corfu
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package 'corfu)
-  (init/ensure-package 'cape)
-  (init/ensure-package 'yasnippet)
-  (yas-reload-all)
-  (yas-global-mode)
-  (global-corfu-mode)
-#+END_SRC
-
-Configurations
-
-#+BEGIN_SRC emacs-lisp
-  (setq corfu-auto t
-        corfu-auto-prefix 1
-        corfu-auto-delay 0
-        corfu-quit-at-boundary t
-        corfu-quit-no-match nil)
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  ;; (add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
-  (setq dabbrev-ignored-buffer-regexps
-        (rx (or (seq bos (any " *"))
-                (seq ".pdf" eos))))
-#+END_SRC
-**** Enable Corfu in minibuffer
-#+BEGIN_SRC emacs-lisp
-  (defun corfu-enable-in-minibuffer ()
-    "Enable Corfu in the minibuffer if `completion-at-point' is bound."
-    (when (where-is-internal #'completion-at-point (list (current-local-map)))
-      (corfu-mode 1)))
-  (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
-#+END_SRC
-**** Teminal Corfu
-#+begin_src emacs-lisp
-  (unless (display-graphic-p)
-    (add-to-list 'load-path
-                 (concat user-emacs-directory "site-packages/emacs-corfu-terminal"))
-    (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/emacs-popon"))
-    (require 'corfu-terminal)
-    (corfu-terminal-mode +1))
-#+end_src
-*** COMMENT LSP
-
-Install ~lsp-mode~.
-
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package-lazy 'lsp-mode)
-#+END_SRC
-
-Enable ~which-key~ help in ~lsp mode~.
-
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'lsp-mode-hook 'lsp-enable-which-key-integration)
-#+END_SRC
-
-We need to set ~idle-delay~ to tell LSP when it can update.
-
-#+BEGIN_SRC emacs-lisp
-  (setq lsp-idle-delay 1)
-#+END_SRC
-
-Disable some annoying feature, tune performance
-
-#+BEGIN_SRC emacs-lisp
-  (setq lsp-diagnostic-package :none)
-  ;; (setq lsp-headerline-breadcrumb-enable nil)
-  (setq lsp-headerline-breadcrumb-enable-diagnostics nil)
-  (setq lsp-lens-enable nil)
-  (setq read-process-output-max (* 1024 1024))
-#+END_SRC
-
-Disable default company completion provider
-
-#+BEGIN_SRC emacs-lisp
-  (setq lsp-completion-provider :none)
-  (defun init/lsp-mode-setup-completion ()
-    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-          '(flex)))
-  (add-hook 'lsp-mode-hook #'init/lsp-mode-setup-completion)
-#+END_SRC
-
 *** LSP Bridge
 #+begin_src emacs-lisp
+  (init/ensure-package 'posframe)
+  (init/ensure-package 'markdown-mode)
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/lsp-bridge"))
   (require 'lsp-bridge)
@@ -1324,48 +932,11 @@ To install tree-sitter.
 
 Enable tree-sitter in =prog-mode=.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
   (add-hook-lambda (c-mode-common-hook c-mode-hook c++-mode-hook python-mode-hook rust-mode-hook shell-mode-hook scala-mode-hook)
                    (tree-sitter-mode 1))
 #+end_src
 
-We require =grammatical-edit= to enable structual editing
-
-#+begin_src emacs-lisp :tangle no
-  (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/grammatical-edit"))
-  (require 'grammatical-edit)
-  (add-hook-lambda (c-mode-common-hook c-mode-hook c++-mode-hook python-mode-hook)
-                   (tree-sitter-mode 1)
-                   (grammatical-edit-mode 1))
-  (define-key grammatical-edit-mode-map (kbd "(") 'grammatical-edit-open-round)
-  (define-key grammatical-edit-mode-map (kbd "[") 'grammatical-edit-open-bracket)
-  (define-key grammatical-edit-mode-map (kbd "{") 'grammatical-edit-open-curly)
-  (define-key grammatical-edit-mode-map (kbd ")") 'grammatical-edit-close-round)
-  (define-key grammatical-edit-mode-map (kbd "]") 'grammatical-edit-close-bracket)
-  (define-key grammatical-edit-mode-map (kbd "}") 'grammatical-edit-close-curly)
-  (define-key grammatical-edit-mode-map (kbd "=") 'grammatical-edit-equal)
-
-  (define-key grammatical-edit-mode-map (kbd "%") 'grammatical-edit-match-paren)
-  (define-key grammatical-edit-mode-map (kbd "\"") 'grammatical-edit-double-quote)
-  (define-key grammatical-edit-mode-map (kbd "'") 'grammatical-edit-single-quote)
-
-  (define-key grammatical-edit-mode-map (kbd "SPC") 'grammatical-edit-space)
-  (define-key grammatical-edit-mode-map (kbd "RET") 'grammatical-edit-newline)
-
-  (define-key grammatical-edit-mode-map (kbd "DEL") 'grammatical-edit-backward-delete)
-  (define-key grammatical-edit-mode-map (kbd "C-d") 'grammatical-edit-forward-delete)
-  (define-key grammatical-edit-mode-map (kbd "C-k") 'grammatical-edit-kill)
-
-  (define-key grammatical-edit-mode-map (kbd "M-\"") 'grammatical-edit-wrap-double-quote)
-  (define-key grammatical-edit-mode-map (kbd "M-'") 'grammatical-edit-wrap-single-quote)
-  (define-key grammatical-edit-mode-map (kbd "M-[") 'grammatical-edit-wrap-bracket)
-  (define-key grammatical-edit-mode-map (kbd "M-{") 'grammatical-edit-wrap-curly)
-  (define-key grammatical-edit-mode-map (kbd "M-(") 'grammatical-edit-wrap-round)
-  (define-key grammatical-edit-mode-map (kbd "M-s") 'grammatical-edit-unwrap)
-
-  (define-key grammatical-edit-mode-map (kbd "C-j") 'grammatical-edit-jump-up)
-#+end_src
 ** Verilog
 Require built-in ~verilog-mode~.
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -1429,21 +1000,6 @@ Setup conda
   (conda-env-initialize-eshell)
   (conda-env-activate 'base)
 #+END_SRC
-*** COMMENT Pyright
-~yapf~ and ~pyright~ are used to format and complete.
-#+BEGIN_SRC emacs-lisp
-  (init/ensure-package-lazy 'lsp-pyright)
-  (defun lsp-pyright-format-buffer ()
-    (interactive)
-    (when (and (executable-find "yapf") buffer-file-name)
-      (call-process "yapf" nil nil nil "-i" buffer-file-name "--style={COLUMN_LIMIT=256}")
-      (revert-buffer t t)))
-  (add-hook-lambda python-mode-hook
-                   (lsp)
-                   (add-hook 'after-save-hook #'lsp-pyright-format-buffer t t))
-  (when (executable-find "python3")
-    (setq lsp-pyright-python-executable-cmd "python3"))
-#+END_SRC
 *** Highlight Indentation
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'highlight-indentation)
@@ -1452,19 +1008,13 @@ Setup conda
    (set-face-background 'highlight-indentation-current-column-face "#c3b3b3"))
   (add-hook 'python-mode-hook 'highlight-indentation-mode)
 #+end_src
-** COMMENT C/C++
-Installing ~ccls~ if ccls exists.
-#+BEGIN_SRC emacs-lisp :tangle (if (executable-find "ccls") "yes" "no")
-  (init/ensure-package-lazy 'ccls)
-  (setq ccls-sem-highlight-method nil)
-#+END_SRC
-Add lsp to cc-mode hook
-#+BEGIN_SRC emacs-lisp
-  (dolist (hook '(c-mode-hook c++-mode-hook))
-    (add-hook hook #'lsp))
-  (setq lsp-clients-clangd-args
-        '("--header-insertion=never"))
-#+END_SRC
+** C/C++
+#+begin_src emacs-lisp
+  (setq lsp-bridge-c-lsp-server "ccls")
+  (add-hook-lambda c-mode-hook
+                   (setq-local lsp-bridge-enable-search-words nil)
+                   (setq-local acm-enable-search-words nil))
+#+end_src
 ** Rust
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'rust-mode)
@@ -2540,27 +2090,7 @@ Make the overlay look nicer
   (put 'dired-find-alternate-file 'disabled nil)
   (put 'narrow-to-region 'disabled nil)
 #+end_src
-** Ivy-posframe
 
-#+begin_src emacs-lisp :tangle no
-  (init/ensure-package-lazy 'ivy-posframe)
-  (ivy-posframe-mode 1)
-  (setq ivy-posframe-parameters
-        '((left-fringe . 8)
-          (right-fringe . 8)))
-  (setq posframe-mouse-banish-function #'posframe-mouse-banish-default)
-  (with-eval-after-load 'ivy-posframe
-    (with-current-buffer ivy-posframe-buffer
-      (face-remap-add-relative 'fringe `(:background
-                                         ,(face-background 'ivy-posframe)))))
-#+end_src
-
-Pin posfram to left-bottom
-
-#+begin_src emacs-lisp :tangle no
-  (setq ivy-posframe-display-functions-alist
-        '((t . ivy-posframe-display-at-frame-bottom-left)))
-#+end_src
 ** Telega
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'telega)
@@ -2614,99 +2144,4 @@ Pin posfram to left-bottom
   (init/ensure-package 'vterm)
   (define-key vterm-mode-map (kbd "C-y") 'vterm-send-C-S-v)
   (define-key vterm-mode-map (kbd "C-x C-q") 'vterm-copy-mode)
-#+end_src
-** Meow
-#+begin_src emacs-lisp :tangle no
-  (setq meow-use-clipboard t)
-  (add-hook 'meow-insert-exit-hook 'corfu-quit)
-  (defun meow-setup ()
-    (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
-    (meow-motion-overwrite-define-key
-     '("j" . meow-next)
-     '("k" . meow-prev)
-     '("<escape>" . ignore))
-    (meow-leader-define-key
-     ;; SPC j/k will run the original command in MOTION state.
-     '("j" . "H-j")
-     '("o" . ace-window)
-     '("k" . kill-current-buffer)
-     '("b" . ivy-switch-buffer)
-     ;; Use SPC (0-9) for digit arguments.
-     '("1" . meow-digit-argument)
-     '("2" . meow-digit-argument)
-     '("3" . meow-digit-argument)
-     '("4" . meow-digit-argument)
-     '("5" . meow-digit-argument)
-     '("6" . meow-digit-argument)
-     '("7" . meow-digit-argument)
-     '("8" . meow-digit-argument)
-     '("9" . meow-digit-argument)
-     '("0" . meow-digit-argument)
-     '("/" . meow-keypad-describe-key)
-     '("?" . meow-cheatsheet))
-    (meow-normal-define-key
-     '("0" . meow-expand-0)
-     '("9" . meow-expand-9)
-     '("8" . meow-expand-8)
-     '("7" . meow-expand-7)
-     '("6" . meow-expand-6)
-     '("5" . meow-expand-5)
-     '("4" . meow-expand-4)
-     '("3" . meow-expand-3)
-     '("2" . meow-expand-2)
-     '("1" . meow-expand-1)
-     '("-" . negative-argument)
-     '(";" . meow-reverse)
-     '("," . meow-inner-of-thing)
-     '("." . meow-bounds-of-thing)
-     '("[" . meow-beginning-of-thing)
-     '("]" . meow-end-of-thing)
-     '("a" . meow-append)
-     '("A" . meow-open-below)
-     '("b" . meow-back-word)
-     '("B" . meow-back-symbol)
-     '("c" . meow-change)
-     '("d" . meow-delete)
-     '("D" . meow-backward-delete)
-     '("e" . meow-next-word)
-     '("E" . meow-next-symbol)
-     '("f" . meow-find)
-     '("g" . meow-cancel-selection)
-     '("G" . meow-grab)
-     '("h" . meow-left)
-     '("H" . meow-left-expand)
-     '("i" . meow-insert)
-     '("I" . meow-open-above)
-     '("j" . meow-next)
-     '("J" . meow-next-expand)
-     '("k" . meow-prev)
-     '("K" . meow-prev-expand)
-     '("l" . meow-right)
-     '("L" . meow-right-expand)
-     '("m" . meow-join)
-     '("n" . meow-search)
-     '("o" . meow-block)
-     '("O" . meow-to-block)
-     '("p" . meow-yank)
-     '("q" . meow-quit)
-     '("Q" . meow-goto-line)
-     '("r" . meow-replace)
-     '("R" . meow-swap-grab)
-     '("s" . meow-kill)
-     '("t" . meow-till)
-     '("u" . meow-undo)
-     '("U" . meow-undo-in-selection)
-     '("v" . meow-visit)
-     '("w" . meow-mark-word)
-     '("W" . meow-mark-symbol)
-     '("x" . meow-line)
-     '("X" . meow-goto-line)
-     '("y" . meow-save)
-     '("Y" . meow-sync-grab)
-     '("z" . meow-pop-selection)
-     '("'" . repeat)
-     '("<escape>" . ignore)))
-  (init/ensure-package 'meow)
-  (meow-setup)
-  (meow-global-mode 1)
 #+end_src

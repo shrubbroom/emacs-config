@@ -1158,9 +1158,10 @@ sequence of mode loading should be well taken care of.
 #+BEGIN_SRC emacs-lisp
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/org-bars"))
-  (require 'org-bars)
-  (add-hook 'org-mode-hook 'org-indent-mode)
-  (add-hook 'org-mode-hook 'org-bars-mode)
+  ;;(require 'org-bars)
+  (with-eval-after-load 'org
+   (add-hook 'org-mode-hook 'org-indent-mode)
+   (add-hook 'org-mode-hook 'org-bars-mode))
 #+END_SRC
 
 *** Quick jump to specific headline via ivy and fuzzy search

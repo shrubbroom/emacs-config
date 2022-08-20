@@ -919,6 +919,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
                (concat user-emacs-directory "site-packages/lsp-bridge"))
   (require 'lsp-bridge)
   (global-lsp-bridge-mode)
+  (setq-default lsp-bridge-enable-search-words nil)
+  (setq-default acm-enable-search-words nil)
 #+end_src
 ** Tree-sitter Integration
 
@@ -934,7 +936,8 @@ Enable tree-sitter in =prog-mode=.
 
 #+begin_src emacs-lisp
   (add-hook-lambda (c-mode-common-hook c-mode-hook c++-mode-hook python-mode-hook rust-mode-hook shell-mode-hook scala-mode-hook)
-                   (tree-sitter-mode 1))
+                   (tree-sitter-mode 1)
+                   (tree-sitter-hl-mode 1))
 #+end_src
 
 ** Verilog
@@ -1011,9 +1014,6 @@ Setup conda
 ** C/C++
 #+begin_src emacs-lisp
   (setq lsp-bridge-c-lsp-server "ccls")
-  (add-hook-lambda c-mode-hook
-                   (setq-local lsp-bridge-enable-search-words nil)
-                   (setq-local acm-enable-search-words nil))
 #+end_src
 ** Rust
 #+BEGIN_SRC emacs-lisp
@@ -1062,7 +1062,7 @@ Install ~yaml-mode~
         ispell-personal-dictionary (expand-file-name "hunspell_dict.txt" user-emacs-directory))
 #+end_src
 ** Emacs Rime
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (init/ensure-package-lazy 'rime)
   (with-eval-after-load 'rime
     (add-hook 'kill-emacs-hook #'rime-lib-finalize) ;; avoid crash on exit
@@ -1107,7 +1107,6 @@ Install ~yaml-mode~
               ;; :background (face-background 'mode-line)
               :internal-border-width 1))
 #+END_SRC
-
 ** Org mode
 
 *** Define seperate font for org mode
@@ -1158,10 +1157,11 @@ sequence of mode loading should be well taken care of.
 #+BEGIN_SRC emacs-lisp
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/org-bars"))
-  ;;(require 'org-bars)
+
   (with-eval-after-load 'org
-   (add-hook 'org-mode-hook 'org-indent-mode)
-   (add-hook 'org-mode-hook 'org-bars-mode))
+    (require 'org-bars)
+    (add-hook 'org-mode-hook 'org-indent-mode)
+    (add-hook 'org-mode-hook 'org-bars-mode))
 #+END_SRC
 
 *** Quick jump to specific headline via ivy and fuzzy search
@@ -1305,8 +1305,6 @@ Disable completion backends other than =company-files=. Turn on yasnippet mode.
   (with-eval-after-load 'org
     (require 'org-tempo))
   (add-hook-lambda org-mode-hook
-                   (setq-local lsp-bridge-enable-search-words nil)
-                   (setq-local acm-enable-search-words nil)
                    (setq-local acm-enable-yas nil)
                    (setq-local yas-indent-line 'fixed))
 #+end_src
@@ -1812,33 +1810,7 @@ Restore session
   (global-set-key (kbd "C-c n i") #'org-roam-node-insert)
   (global-set-key (kbd "C-c n l") #'org-roam-buffer-list)
 #+END_SRC
-*** Advice sort-tab
-#+BEGIN_SRC emacs-lisp
-  (advice-add 'sort-tab-get-tab-name
-              :around #'(lambda (origin buf current-buffer)
-                          (let* ((name (buffer-name buf))
-                                 (short-name (and name
-                                                  (replace-regexp-in-string "20[0-9][0-9][01][0-9][0-3][0-9]+-"
-                                                                            "" name))))
-                            (if (eq (length name) (length short-name))
-                                (apply origin `(,buf ,current-buffer))
-                              (let ((short-name-formatted (concat "roam:"
-                                                                  (string-remove-suffix ".org" short-name))))
-                                (propertize
-                                 (format " %s "
-                                         (let ((ellipsis "..."))
-                                           (if (> (length short-name-formatted) sort-tab-name-max-length)
-                                               (format "%s%s"
-                                                       (substring short-name-formatted
-                                                                  0
-                                                                  (- sort-tab-name-max-length (length ellipsis)))
-                                                       ellipsis)
-                                             short-name-formatted)))
-                                 'face
-                                 (if (eq buf current-buffer)
-                                     'sort-tab-current-tab-face
-                                   'sort-tab-other-tab-face)))))))
-#+END_SRC
+
 ** Org Drill
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'org-drill)

@@ -5,7 +5,6 @@
   `((horizontal-scroll-bars . nil)
     (left-fringe . 8)
     (right-fringe . 8)
-    (tool-bar-lines . 0)
     (vertical-scroll-bars . nil)))
 ;; set up library for native-comp in macos
 (when (eq system-type 'darwin)

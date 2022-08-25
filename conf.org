@@ -10,7 +10,8 @@
 #+BEGIN_SRC emacs-lisp
   (package-initialize)
 #+END_SRC
-   
+
+
 ** Macros
 
 #+begin_src emacs-lisp
@@ -617,7 +618,7 @@ Spend time on important things.*
       (set-fontset-font t 'unicode font nil 'prepend))
     (dolist (charset '(kana han cjk-misc bopomofo))
       (set-fontset-font t charset
-                        (font-spec :family "LXGW Wenkai Mono")))
+                        (font-spec :family "LXGW Wenkai")))
     (set-frame-font "Sarasa Term SC" nil t))
 #+END_SRC
 *** prog-mode font
@@ -1062,7 +1063,7 @@ Install ~yaml-mode~
         ispell-personal-dictionary (expand-file-name "hunspell_dict.txt" user-emacs-directory))
 #+end_src
 ** Emacs Rime
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'rime)
   (with-eval-after-load 'rime
     (add-hook 'kill-emacs-hook #'rime-lib-finalize) ;; avoid crash on exit
@@ -1103,7 +1104,7 @@ Install ~yaml-mode~
           ))
 
   (setq rime-posframe-properties
-        (list :font "LXGW WenKai Mono"
+        (list :font "LXGW WenKai"
               ;; :background (face-background 'mode-line)
               :internal-border-width 1))
 #+END_SRC
@@ -1115,7 +1116,7 @@ The hook for =variable-pitch-mode= is moved to session [[*Beautify]] since the s
 
 #+BEGIN_SRC emacs-lisp
   (defface lt-font
-    '((t :family "LXGW Wenkai Mono"))
+    '((t :family "Sarasa Term SC"))
     "Font for literature"
     :group 'basic-faces)
   (set-face-attribute 'variable-pitch nil
@@ -1147,21 +1148,6 @@ The hook for =variable-pitch-mode= is moved to session [[*Beautify]] since the s
   (add-hook 'org-mode-hook 'org-download-enable)
   (with-eval-after-load 'org
    (define-key org-mode-map (kbd "C-c C-v") 'org-download-clipboard))
-#+END_SRC
-
-*** Org Bars
-
-The hook for =org-bars= is moved to session [[*Beautify]] since the
-sequence of mode loading should be well taken care of.
-
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/org-bars"))
-
-  (with-eval-after-load 'org
-    (require 'org-bars)
-    (add-hook 'org-mode-hook 'org-indent-mode)
-    (add-hook 'org-mode-hook 'org-bars-mode))
 #+END_SRC
 
 *** Quick jump to specific headline via ivy and fuzzy search
@@ -1283,23 +1269,28 @@ I use ~"C-j"~ to invoke jump.
     (setq org-hide-emphasis-markers t
           org-pretty-entities t))
 
+  (with-eval-after-load 'org-indent
+    (set-face-attribute 'org-indent nil
+                        :background (face-background 'line-number)))
+
   (with-eval-after-load 'whitespace
     (dolist (face '(whitespace-space whitespace-tab whitespace-newline))
       (set-face-attribute face nil
                           :background (face-background 'default)
                           :foreground "grey75")))
-  (setq whitespace-style '(face spaces tabs newline space-mark tab-mark newline-mark))
+  (init/ensure-package-lazy 'org-modern)
   (when (display-graphic-p)
-    (add-hook-lambda org-mode-hook
-                     (variable-pitch-mode +1)
-                     (org-bars-mode +1)
-                     (org-bars-indent)))
-  (setq org-ellipsis "  ⇲")
+    (with-eval-after-load 'org
+     (add-hook-lambda org-mode-hook
+                      (variable-pitch-mode)
+                      (org-indent-mode)
+                      (org-modern-mode))))
+  ;; (setq org-ellipsis "  ⇲")
 #+END_SRC
-
 *** Completion
 
-Disable completion backends other than =company-files=. Turn on yasnippet mode.
+Disable completion backends other than =company-files=.
+Turn on yasnippet mode.
 
 #+begin_src emacs-lisp
   (with-eval-after-load 'org

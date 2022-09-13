@@ -790,11 +790,18 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
            (dayname (substring time 0 3)))
       (concat dayname " " day " " monthname ", " 12-hours ":" minutes " " am-pm)))
 
+  (defun rpath ()
+    (let ((project-current (project-current)))
+      (if project-current
+          (file-relative-name default-directory
+                              (project-root project-current))
+        default-directory)))
+
   (defun tab-bar-right ()
-    (let* ((time (time))
-           (w (string-width time)))
+    (let* ((info (rpath))
+           (w (string-width info)))
       (concat (propertize " " 'display `((space :align-to (- (+ right right-fringe right-margin) ,w 1))))
-              time)))
+              info)))
 
 
   (defun tab-bar-switch-project ()
@@ -905,6 +912,17 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (init/ensure-package-lazy 'rainbow-mode)
 #+END_SRC
 * Languages
+** Citre
+#+begin_src emacs-lisp
+  (init/ensure-package 'citre)
+  (require 'citre-config)
+  (setq citre-peek-auto-restore-after-jump nil)
+  (define-key prog-mode-map (kbd "M-.") #'citre-peek)
+  (define-key citre-peek-keymap (kbd "M-.") #'(lambda ()
+                                                (interactive)
+                                                (citre-peek-jump)))
+
+#+end_src
 ** Completion system
 *** Yasnippet
 #+begin_src emacs-lisp
@@ -1170,34 +1188,34 @@ I use ~"C-j"~ to invoke jump.
 
 *** Latex Editing
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (with-eval-after-load 'org
     ;; Linux cannot handle latex fragment properly
     (if (eq system-type 'gnu/linux)
         (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0)))
     (setq org-preview-latex-default-process 'dvisvgm
-          org-image-actual-width 600)
+          org-image-actual-width (list 250))
     (require 'latex))
 
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((latex . t)))
 
-  (if (eq system-type 'gnu/linux)
-   (setq org-latex-create-formula-image-program 'imagemagick))
-  (setq org-highlight-latex-and-related '(latex))
+  ;; (if (eq system-type 'gnu/linux)
+  ;;  (setq org-latex-create-formula-image-program 'imagemagick))
+  ;; (setq org-highlight-latex-and-related '(latex))
 
-  (defun wrap-region-with-added (&optional args)
-    "wrap `region' with [[changes:added][`region']]"
-    (interactive)
-    (when (region-active-p)
-      (let ((BEG (region-beginning))
-            (END (region-end)))
-        (setq mark-active nil)
-        (goto-char END)
-        (insert "]]")
-        (goto-char BEG)
-        (insert "[[changes:added]["))))
+  ;; (defun wrap-region-with-added (&optional args)
+  ;;   "wrap `region' with [[changes:added][`region']]"
+  ;;   (interactive)
+  ;;   (when (region-active-p)
+  ;;     (let ((BEG (region-beginning))
+  ;;           (END (region-end)))
+  ;;       (setq mark-active nil)
+  ;;       (goto-char END)
+  ;;       (insert "]]")
+  ;;       (goto-char BEG)
+  ;;       (insert "[[changes:added]["))))
 #+END_SRC
 
 
@@ -1232,9 +1250,8 @@ I use ~"C-j"~ to invoke jump.
                 (when indent (funcall indent))))))
       ;; otherwise do ordinary fill paragraph
       (fill-paragraph P)))
-  ;; (add-hook 'org-mode-hook (lambda ()
-  ;;                                   (setq-local sentence-end (rx (or "。" "？" "！" "；" ".  " ".\n" "?" "!" ";")))))
-  (define-key org-mode-map (kbd "M-q") 'fill-paragraph-ospl)
+  (with-eval-after-load 'org
+   (define-key org-mode-map (kbd "M-q") 'fill-paragraph-ospl))
 #+END_SRC
 
 *** Local Functions
@@ -1320,7 +1337,8 @@ Define export processes
 *** Preview
 
 #+begin_src emacs-lisp
-  (setq org-latex-create-formula-image-program 'imagemagick)
+  (setq org-latex-create-formula-image-program 'imagemagick
+        org-image-actual-width (list 250))
 #+end_src
 
 *** Babel

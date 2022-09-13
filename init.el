@@ -3,10 +3,7 @@
  'default-frame-alist
  `(menu-bar-lines
    . ,(if (and window-system (eq system-type 'darwin)) 1 0)))
-(add-to-list
- 'default-frame-alist
- `(tool-bar-lines
-   . ,(if (and window-system (eq system-type 'darwin)) 1 0)))
+
 (let ((default-directory user-emacs-directory)
       (file-name-handler-alist nil)
       (read-process-output-max (* 1024 1024)))
@@ -36,9 +33,6 @@
       (require 'ob-tangle)
       (org-babel-tangle-file .org .el "emacs-lisp"))
     (load-file .el))
-
-  ;; Set the working directory to home regardless of where Emacs was started from
-  (cd "~/")
 
   ;; Collect garbage when all else is done
   (garbage-collect))

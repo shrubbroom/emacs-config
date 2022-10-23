@@ -411,23 +411,23 @@ We replece it with =fd= to speed up the searching.
     (mapcan #'my/project-files-in-directory
             (or dirs (list (project-root project)))))
 
-  (define-key ivy-mode-map
-    [remap switch-to-buffer]
-    (lambda ()
-      (interactive)
-      (if (or current-prefix-arg
-              (not (project-current nil)))
-          (call-interactively 'ivy-switch-buffer)
-        (call-interactively 'project-switch-to-buffer))))
+  ;; (define-key ivy-mode-map
+  ;;   [remap switch-to-buffer]
+  ;;   (lambda ()
+  ;;     (interactive)
+  ;;     (if (or current-prefix-arg
+  ;;             (not (project-current nil)))
+  ;;         (call-interactively 'ivy-switch-buffer)
+  ;;       (call-interactively 'project-switch-to-buffer))))
 
-  (define-key counsel-mode-map
-    [remap find-file]
-    (lambda ()
-      (interactive)
-      (if (or current-prefix-arg
-              (not (project-current nil)))
-          (call-interactively 'counsel-find-file)
-        (call-interactively 'project-find-file))))
+  ;; (define-key counsel-mode-map
+  ;;   [remap find-file]
+  ;;   (lambda ()
+  ;;     (interactive)
+  ;;     (if (or current-prefix-arg
+  ;;             (not (project-current nil)))
+  ;;         (call-interactively 'counsel-find-file)
+  ;;       (call-interactively 'project-find-file))))
 #+end_src
 
 The project keymap is built in Emacs and starts with =C-x p=.
@@ -937,7 +937,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/lsp-bridge"))
   (require 'lsp-bridge)
-  (global-lsp-bridge-mode)
+  ;; (global-lsp-bridge-mode)
+  (add-hook 'prog-mode-hook #'lsp-bridge-mode)
   (setq-default lsp-bridge-enable-search-words nil)
   (setq-default acm-enable-search-words nil)
 #+end_src
@@ -958,66 +959,20 @@ Enable tree-sitter in =prog-mode=.
                    (tree-sitter-mode 1)
                    (tree-sitter-hl-mode 1))
 #+end_src
-
-** Verilog
-Require built-in ~verilog-mode~.
-#+BEGIN_SRC emacs-lisp :tangle no
-  (require 'verilog-mode)
-#+END_SRC
-Build completion system with ~ctags~ and ~company-keywords~.
-#+BEGIN_SRC emacs-lisp :tangle no
-  (init/ensure-package 'citre)
-  (setq verilog-imenu-generic-expression
-        '(("*Outputs*" "^\\s-*\\(output\\)\\s-+\\(reg\\|wire\\|logic\\|\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 4)
-          ("*Inputs*" "^\\s-*\\(input\\)\\s-+\\(reg\\|wire\\|logic\\|\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 4)
-          (nil "^\\s-*\\(?:m\\(?:odule\\|acromodule\\)\\|p\\(?:rimitive\\|rogram\\|ackage\\)\\)\\s-+\\([a-zA-Z0-9_.:]+\\)" 1)
-          ("*Wires*" "^\\s-*\\(wire\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 3)
-          ("*Regs*" "^\\s-*\\(reg\\)\\s-+\\(\\|\\[[^]]+\\]\\s-+\\)\\([A-Za-z0-9_]+\\)" 3)
-          ("*Parameters*" "^\\s-*\\(parameter\\)\\s-+\\([A-Za-z0-9_]+\\)" 2)
-          ("*Instances*" "^\\s-*\\(?1:[A-Za-z0-9_]+\\)\\s-+\\1" 1)
-          ("*Classes*" "^\\s-*\\(?:\\(?:virtual\\|interface\\)\\s-+\\)?class\\s-+\\([A-Za-z_][A-Za-z0-9_]+\\)" 1)
-          ("*Tasks*" "^\\s-*\\(?:\\(?:static\\|pure\\|virtual\\|local\\|protected\\)\\s-+\\)*task\\s-+\\(?:\\(?:static\\|automatic\\)\\s-+\\)?\\([A-Za-z_][A-Za-z0-9_:]+\\)" 1)
-          ("*Functions*" "^\\s-*\\(?:\\(?:static\\|pure\\|virtual\\|local\\|protected\\)\\s-+\\)*function\\s-+\\(?:\\(?:static\\|automatic\\)\\s-+\\)?\\(?:\\w+\\s-+\\)?\\(?:\\(?:un\\)signed\\s-+\\)?\\([A-Za-z_][A-Za-z0-9_:]+\\)" 1)
-          ("*Interfaces*" "^\\s-*interface\\s-+\\([a-zA-Z_0-9]+\\)" 1)
-          ("*Types*" "^\\s-*typedef\\s-+.*\\s-+\\([a-zA-Z_0-9]+\\)\\s-*;" 1)))
-  (require 'company-keywords)
-  (add-to-list 'company-keywords-alist (cons 'verilog-mode verilog-keywords))
-  (defun company-citre (-command &optional -arg &rest _ignored)
-    "Completion backend of Citre.  Execute COMMAND with ARG and IGNORED."
-    (interactive (list 'interactive))
-    (cl-case -command
-      (interactive (company-begin-backend 'company-citre))
-      (prefix (and (bound-and-true-p citre-mode)
-                   (or (citre-get-symbol) 'stop)))
-      (meta (citre-get-property 'signature -arg))
-      (annotation (citre-capf--get-annotation -arg))
-      (candidates (all-completions -arg (citre-capf--get-collection -arg)))
-      (ignore-case (not citre-completion-case-sensitive))))
-
-  (defun init/regenerate-tags ()
-    (interactive)
-    (if (and (boundp 'projectile-project-root)
-             (projectile-project-root))
-        (citre-update-this-tags-file t)
-      ))
-  (add-hook 'verilog-mode-hook (lambda ()
-                                 (citre-auto-enable-citre-mode)
-                                 (make-local-variable 'company-backends)
-                                 (setq company-backends '((company-keywords
-                                                           company-citre
-                                                           )))
-                                 (company-mode)
-                                 ;; (make-local-variable 'after-save-hook)
-                                 ;; (add-hook 'after-save-hook 'citre-update-this-tags-file)
-                                 ))
-  (add-to-list 'company-transformers #'delete-dups)
-#+END_SRC
+** Common Lisp
+#+begin_src emacs-lisp
+  (load (expand-file-name "~/.config/quicklisp/slime-helper.el"))
+  (setq inferior-lisp-program "sbcl")
+#+end_src
 ** Python
 *** Conda
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package 'conda)
 #+END_SRC
+
+
 Setup conda
+
 #+BEGIN_SRC emacs-lisp
   (conda-env-initialize-eshell)
   (conda-env-activate 'base)
@@ -1077,8 +1032,9 @@ Install ~yaml-mode~
 
 #+begin_src emacs-lisp
   (setq ispell-dictionary "en_US"
-        ispell-program-name "hunspell"
-        ispell-personal-dictionary (expand-file-name "hunspell_dict.txt" user-emacs-directory))
+        ispell-program-name "aspell"
+        ;; ispell-personal-dictionary (expand-file-name "hunspell_dict.txt" user-emacs-directory)
+        )
 #+end_src
 ** Emacs Rime
 #+BEGIN_SRC emacs-lisp
@@ -1147,10 +1103,10 @@ The hook for =variable-pitch-mode= is moved to session [[*Beautify]] since the s
       (set (make-local-variable 'face-remap-add-relative-cookie) (face-remap-add-relative 'default '(:foreground "#000000")))))
 #+END_SRC
 
-*** Disable Large Titles
+*** Enable Large Titles
 
 #+begin_src emacs-lisp
-  (setq org-level-color-stars-only t)
+  (setq org-level-color-stars-only nil)
 #+end_src
 
 ***  Table Align
@@ -1273,7 +1229,8 @@ I use ~"C-j"~ to invoke jump.
     ;; Make verbatim with highlight text background.
     (add-to-list 'org-emphasis-alist
                  `("=" (:background ,(face-background 'org-block)
-                                    :family ,(face-attribute 'cc-font :family))))
+                                    :family "Latin Modern Mono" ;; ,(face-attribute 'cc-font :family)
+                                    )))
     ;; Make deletion(obsolote) text foreground with dark gray.
     (add-to-list 'org-emphasis-alist
                  '("+" (:foreground "dark gray"
@@ -1286,9 +1243,9 @@ I use ~"C-j"~ to invoke jump.
     (setq org-hide-emphasis-markers t
           org-pretty-entities t))
 
-  (with-eval-after-load 'org-indent
-    (set-face-attribute 'org-indent nil
-                        :background (face-background 'line-number)))
+  ;; (with-eval-after-load 'org-indent
+  ;;   (set-face-attribute 'org-indent nil
+  ;;                       :background (face-background 'line-number)))
 
   (with-eval-after-load 'whitespace
     (dolist (face '(whitespace-space whitespace-tab whitespace-newline))
@@ -1300,7 +1257,7 @@ I use ~"C-j"~ to invoke jump.
     (with-eval-after-load 'org
      (add-hook-lambda org-mode-hook
                       (variable-pitch-mode)
-                      (org-indent-mode)
+                      ;; (org-indent-mode)
                       (org-modern-mode))))
   ;; (setq org-ellipsis "  ⇲")
 #+END_SRC
@@ -1361,14 +1318,14 @@ Define export processes
                                       (pdf . synctex)))
   (setq-default TeX-master nil)
   (with-eval-after-load 'latex
+    (define-key tex-mode-map (kbd "M-q") 'fill-paragraph-ospl)
     (add-to-list
      'TeX-command-list
      '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
     (add-to-list
      'TeX-command-list
      '("Make" "make" TeX-run-compile nil t)))
-  (add-hook 'TeX-mode-hook 'auto-fill-mode)
-  (add-hook 'LaTeX-mode-hook 'auto-fill-mode)
+
 #+END_SRC
 
 ***  External pdf viewer

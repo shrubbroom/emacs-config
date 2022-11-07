@@ -941,6 +941,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   ;; (global-lsp-bridge-mode)
   (add-hook 'prog-mode-hook #'lsp-bridge-mode)
   (setq-default lsp-bridge-enable-search-words nil)
+  (setq lsp-bridge-enable-search-words nil)
+  (setq acm-enable-search-words nil)
   (setq-default acm-enable-search-words nil)
 #+end_src
 ** Tree-sitter Integration

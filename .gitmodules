@@ -16,3 +16,9 @@
 [submodule "site-packages/lsp-bridge"]
 	path = site-packages/lsp-bridge
 	url = https://github.com/manateelazycat/lsp-bridge.git
+[submodule "site-packages/acm-terminal"]
+	path = site-packages/acm-terminal
+	url = https://github.com/twlz0ne/acm-terminal.git
+[submodule "site-packages/popon"]
+	path = site-packages/popon
+	url = https://codeberg.org/akib/emacs-popon.git

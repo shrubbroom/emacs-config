@@ -727,11 +727,12 @@ changed in runtime.
 Setup theme.
 
 #+BEGIN_SRC emacs-lisp
-  (if (and (boundp 'init/theme-dark)
-           (bound-and-true-p init/system-dark-modep))
-      (load-theme init/theme-dark 1)
-    (if (boundp 'init/theme-light)
-        (load-theme init/theme-light 1)))
+  (if (display-graphic-p)
+   (if (and (boundp 'init/theme-dark)
+            (bound-and-true-p init/system-dark-modep))
+       (load-theme init/theme-dark 1)
+     (if (boundp 'init/theme-light)
+         (load-theme init/theme-light 1))))
 #+END_SRC
 
 *** Add fringe indicators
@@ -847,12 +848,12 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+begin_src emacs-lisp
   (init/ensure-package 'minions)
   (minions-mode)
-  (init/ensure-package 'moody)
-  (setq x-underline-at-descent-line t)
-  (moody-replace-mode-line-buffer-identification)
-  (moody-replace-vc-mode)
-  (moody-replace-eldoc-minibuffer-message-function)
-  ;;(moody-replace-element )
+  (if (display-graphic-p)
+   (init/ensure-package 'moody)
+   (setq x-underline-at-descent-line t)
+   (moody-replace-mode-line-buffer-identification)
+   (moody-replace-vc-mode)
+   (moody-replace-eldoc-minibuffer-message-function))
   (column-number-mode 1)
   (size-indication-mode 1)
 #+end_src
@@ -961,7 +962,9 @@ Enable tree-sitter in =prog-mode=.
 #+end_src
 ** Common Lisp
 #+begin_src emacs-lisp
-  (load (expand-file-name "~/.config/quicklisp/slime-helper.el"))
+  (let ((lisp-helper (expand-file-name "~/.config/quicklisp/slime-helper.el")))
+    (if (file-exists-p lisp-helper)
+        (load lisp-helper)))
   (setq inferior-lisp-program "sbcl")
 #+end_src
 ** Python

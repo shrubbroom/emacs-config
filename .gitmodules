@@ -22,3 +22,6 @@
 [submodule "site-packages/popon"]
 	path = site-packages/popon
 	url = https://codeberg.org/akib/emacs-popon.git
+[submodule "site-packages/org-media-note"]
+	path = site-packages/org-media-note
+	url = https://github.com/yuchen-lea/org-media-note.git

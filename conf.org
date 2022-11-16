@@ -616,19 +616,22 @@ Spend time on important things.*
   (when (display-graphic-p)
     (dolist (font '("Symbol" "Apple Color Emoji" "Segoe UI Symbol" "Symbola"))
       (set-fontset-font t 'unicode font nil 'prepend))
-    (dolist (charset '(kana han cjk-misc bopomofo))
-      (set-fontset-font t charset
-                        (font-spec :family "LXGW Wenkai")))
-    (set-frame-font "Sarasa Term SC" nil t))
+    (when (boundp 'cn-font)
+     (dolist (charset '(kana han cjk-misc bopomofo))
+       (set-fontset-font t charset
+                         (font-spec :family cn-font))))
+    (when (boundp 'frame-font)
+     (set-frame-font frame-font nil t)))
 #+END_SRC
 *** prog-mode font
 
 Use separate font for ~prog-mode~
 #+BEGIN_SRC emacs-lisp
-  (defface cc-font
-    '((t :family "Sarasa Term SC"))
-    "program fonts"
-    :group 'basic-faces)
+  (when (boundp 'cc-font)
+   (defface cc-font
+     `((t :family ,cc-font))
+     "program fonts"
+     :group 'basic-faces))
   (set-face-attribute 'fixed-pitch nil
                       :family (face-attribute 'cc-font :family))
 #+END_SRC
@@ -941,9 +944,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   ;; (global-lsp-bridge-mode)
   (add-hook 'prog-mode-hook #'lsp-bridge-mode)
   (setq-default lsp-bridge-enable-search-words nil)
-  (setq lsp-bridge-enable-search-words nil)
-  (setq acm-enable-search-words nil)
   (setq-default acm-enable-search-words nil)
+  (setq-default acm-enable-search-file-words nil)
   (unless (display-graphic-p)
     (add-to-list 'load-path (concat user-emacs-directory "site-packages/acm-terminal"))
     (add-to-list 'load-path (concat user-emacs-directory "site-packages/popon"))
@@ -997,7 +999,7 @@ Setup conda
 #+end_src
 ** C/C++
 #+begin_src emacs-lisp
-  (setq lsp-bridge-c-lsp-server "ccls")
+  (setq lsp-bridge-c-lsp-server "clangd")
 #+end_src
 ** Rust
 #+BEGIN_SRC emacs-lisp
@@ -1099,10 +1101,11 @@ Install ~yaml-mode~
 The hook for =variable-pitch-mode= is moved to session [[*Beautify]] since the sequence of mode loading should be well taken care of.
 
 #+BEGIN_SRC emacs-lisp
-  (defface lt-font
-    '((t :family "Sarasa Term SC"))
-    "Font for literature"
-    :group 'basic-faces)
+  (when (boundp 'lt-font)
+   (defface lt-font
+     `((t :family ,lt-font))
+     "Font for literature"
+     :group 'basic-faces))
   (set-face-attribute 'variable-pitch nil
                       :family (face-attribute 'lt-font :family))
   (defun buffer-toggle-highlight-foreground (&optional args)
@@ -1239,7 +1242,7 @@ I use ~"C-j"~ to invoke jump.
     ;; Make verbatim with highlight text background.
     (add-to-list 'org-emphasis-alist
                  `("=" (:background ,(face-background 'org-block)
-                                    :family "Latin Modern Mono" ;; ,(face-attribute 'cc-font :family)
+                                    ,(face-attribute 'cc-font :family)
                                     )))
     ;; Make deletion(obsolote) text foreground with dark gray.
     (add-to-list 'org-emphasis-alist
@@ -1742,7 +1745,8 @@ Restore session
   (setq ebib-preload-bib-files init/ebib-preload-bib-files)
   (setq ebib-index-columns '(("Entry Key" 20 t)
                              ("Title" 60 t)
-                             ("Author/Editor" 40 t)
+                             ("Author/Editor" 20 t)
+                             ("Journal" 30 t)
                              ("Year" 6 t)))
   (setq ebib-index-column-separator "  ")
   (with-eval-after-load 'ebib

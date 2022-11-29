@@ -311,6 +311,12 @@ of Emacs. For example (this function is not tangled)
 #+begin_src emacs-lisp
   (global-unset-key (kbd "C-z"))
 #+end_src
+
+*** Auto remove trailing whitespaces
+
+#+begin_src emacs-lisp
+  (add-hook 'before-save-hook 'delete-trailing-whitespace)
+#+end_src
 ** Navigation & Searching system
 *** Basic packages
 
@@ -602,14 +608,14 @@ The most useful functions among them are listed here.
                   'transient-shrink-window-horizontally)
   (global-set-key [remap enlarge-window]
                   'transient-enlarge-window)
-  (global-set-key [remap shrink-window]
+  (global-set-key (kbd "C-x &")
                   'transient-shrink-window)
 #+end_src
 * Look and feel
 
 *This part should not be changed frequently.
 Spend time on important things.*
- 
+
 ** Fonts
  Set default font, the font size configuration is moved to ~local-variables.el~
 #+BEGIN_SRC emacs-lisp
@@ -862,10 +868,11 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+end_src
 ** Line number & highlight current line
 #+BEGIN_SRC emacs-lisp
-  (require 'hl-line)
+  ;; (require 'hl-line)
   (add-hook-lambda (prog-mode-hook conf-mode-hook yaml-mode-hook)
                    (display-line-numbers-mode)
-                   (hl-line-mode))
+                   ;;(hl-line-mode)
+                   )
 #+END_SRC
 
 *** Scaling as text-scaling happens
@@ -1033,6 +1040,7 @@ Install ~fish-mode~ and config keybindings
 Install ~matlab-mode~
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'matlab-mode)
+  (setq-default matlab-verify-on-save-flag nil)
 #+END_SRC
 ** YAML
 Install ~yaml-mode~
@@ -1197,7 +1205,7 @@ I use ~"C-j"~ to invoke jump.
   Otherwise split the current paragraph into one sentence per line."
     (interactive "P")
     (if (not P)
-        (save-excursion 
+        (save-excursion
           (let ((fill-column 12345678)) ;; relies on dynamic binding
             (fill-paragraph) ;; this will not work correctly if the paragraph is
             ;; longer than 12345678 characters (in which case the

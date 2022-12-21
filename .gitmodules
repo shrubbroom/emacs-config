@@ -25,3 +25,6 @@
 [submodule "site-packages/org-media-note"]
 	path = site-packages/org-media-note
 	url = https://github.com/yuchen-lea/org-media-note.git
+[submodule "site-packages/lsp-bridge-sb"]
+	path = site-packages/lsp-bridge-sb
+	url = git@github.com:shrubbroom/lsp-bridge.git

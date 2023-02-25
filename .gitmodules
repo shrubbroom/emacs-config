@@ -28,3 +28,6 @@
 [submodule "site-packages/lsp-bridge-sb"]
 	path = site-packages/lsp-bridge-sb
 	url = git@github.com:shrubbroom/lsp-bridge.git
+[submodule "site-packages/screenshot"]
+	path = site-packages/screenshot
+	url = https://github.com/tecosaur/screenshot.git

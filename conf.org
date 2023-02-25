@@ -615,6 +615,33 @@ The most useful functions among them are listed here.
   (global-set-key (kbd "C-x &")
                   'transient-shrink-window)
 #+end_src
+
+** God Mode
+
+#+begin_src emacs-lisp
+  (require 'god-mode)
+  (god-mode)
+  (global-set-key (kbd "<escape>") #'god-local-mode)
+  (defun my-god-mode-update-mode-line ()
+    (cond
+     (god-local-mode
+      (set-face-attribute 'mode-line nil
+                          :foreground "#604000"
+                          :background "#fff29a")
+      (set-face-attribute 'mode-line-inactive nil
+                          :foreground "#3f3000"
+                          :background "#fff3da"))
+     (t
+      (set-face-attribute 'mode-line nil
+                          :foreground "#0a0a0a"
+                          :background "#d7d7d7")
+      (set-face-attribute 'mode-line-inactive nil
+                          :foreground "#404148"
+                          :background "#efefef"))))
+
+  (add-hook 'post-command-hook #'my-god-mode-update-mode-line)
+#+end_src
+
 * Look and feel
 
 *This part should not be changed frequently.
@@ -926,6 +953,12 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'rainbow-mode)
 #+END_SRC
+*** Screenshot
+#+begin_src emacs-lisp
+  (add-to-list 'load-path
+               (concat user-emacs-directory "site-packages/screenshot"))
+  (require 'screenshot)
+#+end_src
 * Languages
 ** Citre
 #+begin_src emacs-lisp
@@ -946,7 +979,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (yas-global-mode)
 #+end_src
 *** LSP Bridge
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (init/ensure-package 'posframe)
   (init/ensure-package 'markdown-mode)
   (add-to-list 'load-path
@@ -969,6 +1002,34 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
    (make-local-variable 'minor-mode-overriding-map-alist)
    (push `(acm-mode . ,acm-mode-map) minor-mode-overriding-map-alist))
 #+end_src
+
+#+begin_src emacs-lisp
+  (init/ensure-package 'corfu)
+  (init/ensure-package 'cape)
+  (init/ensure-package 'yasnippet)
+  (yas-reload-all)
+  (add-hook 'prog-mode-hook 'yas-minor-mode)
+  (global-corfu-mode)
+  (setq corfu-auto t
+        corfu-auto-prefix 1
+        corfu-auto-delay 0
+        corfu-quit-at-boundary t
+        corfu-quit-no-match nil)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  ;; (add-to-list 'completion-at-point-functions #'cape-tex)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  (setq dabbrev-ignored-buffer-regexps
+        (rx (or (seq bos (any " *"))
+                (seq ".pdf" eos))))
+  (defun corfu-enable-in-minibuffer ()
+    "Enable Corfu in the minibuffer if `completion-at-point' is bound."
+    (when (where-is-internal #'completion-at-point (list (current-local-map)))
+      (corfu-mode 1)))
+  (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
+#+end_src
+
+
 ** Tree-sitter Integration
 
 Tree-sitter is helpful in structual editing and grammar highlighting.
@@ -1016,7 +1077,7 @@ Setup conda
 #+end_src
 ** C/C++
 #+begin_src emacs-lisp
-  (setq lsp-bridge-c-lsp-server "clangd")
+  ;; (setq lsp-bridge-c-lsp-server "clangd")
 #+end_src
 ** Rust
 #+BEGIN_SRC emacs-lisp
@@ -1071,8 +1132,7 @@ Install ~yaml-mode~
   (init/ensure-package-lazy 'rime)
   (with-eval-after-load 'rime
     (add-hook 'kill-emacs-hook #'rime-lib-finalize) ;; avoid crash on exit
-    (set-face-attribute 'rime-highlight-candidate-face nil :weight 'bold)
-    (define-key rime-mode-map [escape] #'rime-inline-ascii)
+    ;; (define-key rime-mode-map [escape] #'rime-inline-ascii)
     (advice-add 'rime-inline-ascii :after
                 #'(lambda ()
                     (interactive)
@@ -1082,7 +1142,13 @@ Install ~yaml-mode~
                                          (propertize "enabled" 'face '(:foreground "green"))))
                       (message "%s"
                                (concat "rime inline ascii "
-                                       (propertize "disabled" 'face '(:foreground "red"))))))))
+                                       (propertize "disabled" 'face '(:foreground "red")))))))
+    (set-face-attribute 'rime-default-face nil :height (face-attribute 'default :height))
+    (set-face-attribute 'rime-highlight-candidate-face nil :weight 'bold :height (face-attribute 'default :height))
+    )
+  (defun rime-predicate-god-mode-p ()
+      (and (fboundp 'god-mode)
+           god-local-mode))
   (setq default-input-method "rime")
   (setq rime-show-candidate 'posframe
         rime-librime-root (concat user-emacs-directory "librime/dist/")
@@ -1102,10 +1168,12 @@ Install ~yaml-mode~
           rime-predicate-punctuation-line-begin-p
           rime-predicate-space-after-cc-p
           rime-predicate-tex-math-or-command-p
+          rime-predicate-god-mode-p
           ;; meow-normal-mode-p
           ;; meow-motion-mode-p
           ;; meow-keypad-mode-p
           ))
+
 
   (setq rime-posframe-properties
         (list :font "LXGW WenKai"
@@ -1294,7 +1362,7 @@ I use ~"C-j"~ to invoke jump.
     ;; Make verbatim with highlight text background.
     (add-to-list 'org-emphasis-alist
                  `("=" (:background ,(face-background 'org-block)
-                                    ,(face-attribute 'cc-font :family)
+                                    :family ,(face-attribute 'cc-font :family)
                                     )))
     ;; Make deletion(obsolote) text foreground with dark gray.
     (add-to-list 'org-emphasis-alist

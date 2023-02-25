@@ -28,3 +28,6 @@
 [submodule "site-packages/lsp-bridge-sb"]
 	path = site-packages/lsp-bridge-sb
 	url = git@github.com:shrubbroom/lsp-bridge.git
+[submodule "site-packages/corfu-terminal"]
+	path = site-packages/corfu-terminal
+	url = https://codeberg.org/akib/emacs-corfu-terminal.git

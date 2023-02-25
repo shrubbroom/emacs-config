@@ -740,12 +740,7 @@ changed in runtime.
 Setup theme.
 
 #+BEGIN_SRC emacs-lisp
-  (when (display-graphic-p)
-   (if (and (boundp 'init/theme-dark)
-            (bound-and-true-p init/system-dark-modep))
-       (load-theme init/theme-dark 1)
-     (if (boundp 'init/theme-light)
-         (load-theme init/theme-light 1))))
+  (load-theme init/theme 1)
 #+END_SRC
 
 *** Add fringe indicators
@@ -939,14 +934,53 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 
 #+end_src
 ** Completion system
-*** Yasnippet
+*** Corfu
 #+begin_src emacs-lisp
+  (init/ensure-package 'corfu)
+  (init/ensure-package 'cape)
+  (init/ensure-package 'yasnippet)
+  (yas-reload-all)
+  (yas-global-mode)
+  (global-corfu-mode)
+
+  (setq corfu-auto t
+        corfu-auto-prefix 1
+        corfu-auto-delay 0
+        corfu-quit-at-boundary t
+        corfu-quit-no-match nil)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  ;; (add-to-list 'completion-at-point-functions #'cape-tex)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  (setq dabbrev-ignored-buffer-regexps
+        (rx (or (seq bos (any " *"))
+                (seq ".pdf" eos))))
+  (defun corfu-enable-in-minibuffer ()
+    "Enable Corfu in the minibuffer if `completion-at-point' is bound."
+    (when (where-is-internal #'completion-at-point (list (current-local-map)))
+      (corfu-mode 1)))
+  (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
+  (unless (display-graphic-p)
+    (add-to-list 'load-path
+                 (concat user-emacs-directory "site-packages/corfu-terminal"))
+    (add-to-list 'load-path
+                 (concat user-emacs-directory "site-packages/popon"))
+    (require 'corfu-terminal)
+    (corfu-terminal-mode +1))
+#+end_src
+*** Eglot
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'eglot)
+
+#+end_src
+*** Yasnippet
+#+begin_src emacs-lisp :tangle no
   (init/ensure-package 'yasnippet)
   (yas-reload-all)
   (yas-global-mode)
 #+end_src
 *** LSP Bridge
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (init/ensure-package 'posframe)
   (init/ensure-package 'markdown-mode)
   (add-to-list 'load-path
@@ -1015,8 +1049,15 @@ Setup conda
   (add-hook 'python-mode-hook 'highlight-indentation-mode)
 #+end_src
 ** C/C++
+#+begin_src emacs-lisp :tangle no
+  (setq lsp-bridge-c-lsp-server "ccls")
+#+end_src
 #+begin_src emacs-lisp
-  (setq lsp-bridge-c-lsp-server "clangd")
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs '(c-mode . ("ccls")))
+    (add-to-list 'eglot-server-programs '(c++-mode . ("ccls"))))
+  (add-hook-lambda (c-mode-hook c++-mode-hook)
+                   (eglot-ensure))
 #+end_src
 ** Rust
 #+BEGIN_SRC emacs-lisp
@@ -1331,11 +1372,11 @@ I use ~"C-j"~ to invoke jump.
 
 Disable completion backends other than =company-files=.
 Turn on yasnippet mode.
-
 #+begin_src emacs-lisp
   (with-eval-after-load 'org
     (require 'org-tempo))
   (add-hook-lambda org-mode-hook
+                   (setq-local corfu-auto nil)
                    (setq-local acm-enable-yas nil)
                    (setq-local yas-indent-line 'fixed))
 #+end_src
@@ -1415,25 +1456,6 @@ Define export processes
 ** Eshell
 *** Prompt
 #+BEGIN_SRC emacs-lisp
-  (defun hex-to-hsl (hex)
-    "Convert hex string to hsl digits, the result is returned as list"
-    (eval `(color-rgb-to-hsl ,@(mapcar
-                                (lambda (x)
-                                  (/ (float
-                                      (string-to-number
-                                       (substring hex (car x) (cadr x)) 16)) 256))
-                                '((1 3) (3 5) (5 7))))))
-
-
-  (defun make-color-lighter (hex factor)
-    "Make hex color lighter, return string"
-    (let ((hsl (hex-to-hsl hex)))
-      (eval `(color-rgb-to-hex
-              ,@(color-hsl-to-rgb (car hsl)
-                                  (min (* (cadr hsl) factor) 1)
-                                  (min (* (caddr hsl) factor) 1))
-              2))))
-
   (defun shortened-path (path max-len)
     "Return a modified version of `path', replacing some components
         with single characters starting from the left to try and
@@ -1451,8 +1473,7 @@ Define export processes
               components (cdr components)))
       (concat str (cl-reduce (lambda (a b) (concat a "/" b)) components))))
 
-
-  (setq eshell-prompt-function-light
+  (setq eshell-prompt-function
           #'(lambda nil
               (concat
                (propertize "# "
@@ -1486,11 +1507,6 @@ Define export processes
                            'face `(:background (face-background 'default))))))
 
   (setq eshell-prompt-regexp "^\\\[[#λ]\\\] ")
-  (if (bound-and-true-p init/system-dark-modep)
-      (setq eshell-prompt-function
-            eshell-prompt-function-dark)
-    (setq eshell-prompt-function
-          eshell-prompt-function-light))
 #+END_SRC
 This is just for ~shell~ command
 #+BEGIN_SRC emacs-lisp
@@ -1505,9 +1521,6 @@ This is just for ~shell~ command
                         nil :weight 'bold)
     (set-face-attribute 'eshell-syntax-highlighting-shell-command-face
                         nil :weight 'bold)
-    (unless (bound-and-true-p init/system-dark-modep)
-      (progn (set-face-foreground 'eshell-syntax-highlighting-alias-face "#2E67D3")
-             (set-face-foreground 'eshell-syntax-highlighting-shell-command-face "#2E67D3")))
     (add-hook 'eshell-mode-hook 'eshell-syntax-highlighting-mode))
 #+END_SRC
 *** FZF fuzzy search

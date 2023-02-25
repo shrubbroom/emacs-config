@@ -619,9 +619,9 @@ The most useful functions among them are listed here.
 ** God Mode
 
 #+begin_src emacs-lisp
-  (require 'god-mode)
+  (init/ensure-package 'god-mode)
   (god-mode)
-  (global-set-key (kbd "<escape>") #'god-local-mode)
+  (global-set-key [escape] #'god-local-mode)
   (defun my-god-mode-update-mode-line ()
     (cond
      (god-local-mode
@@ -1183,10 +1183,7 @@ Install ~yaml-mode~
                                          (propertize "enabled" 'face '(:foreground "green"))))
                       (message "%s"
                                (concat "rime inline ascii "
-                                       (propertize "disabled" 'face '(:foreground "red")))))))
-    (set-face-attribute 'rime-default-face nil :height (face-attribute 'default :height))
-    (set-face-attribute 'rime-highlight-candidate-face nil :weight 'bold :height (face-attribute 'default :height))
-    )
+                                       (propertize "disabled" 'face '(:foreground "red"))))))))
   (defun rime-predicate-god-mode-p ()
       (and (fboundp 'god-mode)
            god-local-mode))
@@ -1218,6 +1215,7 @@ Install ~yaml-mode~
 
   (setq rime-posframe-properties
         (list :font "LXGW WenKai"
+              :font-height (face-attribute 'default :height)
               ;; :background (face-background 'mode-line)
               :internal-border-width 1))
 #+END_SRC

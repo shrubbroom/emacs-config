@@ -31,3 +31,6 @@
 [submodule "site-packages/corfu-terminal"]
 	path = site-packages/corfu-terminal
 	url = https://codeberg.org/akib/emacs-corfu-terminal.git
+[submodule "site-packages/screenshot"]
+	path = site-packages/screenshot
+	url = https://github.com/tecosaur/screenshot.git

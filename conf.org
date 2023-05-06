@@ -475,7 +475,7 @@ The most useful functions among them are listed here.
 
 ** Auto Save
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/auto-save"))
   (require 'auto-save)
@@ -646,6 +646,11 @@ The most useful functions among them are listed here.
   (add-hook 'post-command-hook #'my-god-mode-update-mode-line)
 #+end_src
 
+** Encryption
+#+begin_src emacs-lisp
+  (require 'epa-file)
+  (epa-file-enable)
+#+end_src
 * Look and feel
 
 *This part should not be changed frequently.
@@ -789,12 +794,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 ** Tabs
 *** tab bar
 #+begin_src emacs-lisp
-  (global-set-key (kbd "<S-left>")  'tab-bar-switch-to-prev-tab)
-  (global-set-key (kbd "<S-right>") 'tab-bar-switch-to-next-tab)
-  (with-eval-after-load 'org
-        (define-key org-mode-map (kbd "<S-left>") 'tab-bar-switch-to-prev-tab)
-        (define-key org-mode-map (kbd "<S-right>") 'tab-bar-switch-to-next-tab))
-
+  (global-set-key (kbd "C-\"") 'tab-bar-switch-to-next-tab)
+  (global-set-key (kbd "C-:") 'tab-bar-switch-to-prev-tab)
   (defun vc-branch-name ()
     (when vc-mode
       (propertize
@@ -884,7 +885,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+end_src
 ** Modeline
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (init/ensure-package 'minions)
   (minions-mode)
   (when (display-graphic-p)
@@ -1121,7 +1122,7 @@ To install tree-sitter.
 Enable tree-sitter in =prog-mode=.
 
 #+begin_src emacs-lisp
-  (add-hook-lambda (c-mode-common-hook c-mode-hook c++-mode-hook python-mode-hook rust-mode-hook shell-mode-hook scala-mode-hook)
+  (add-hook-lambda (c-mode-common-hook c-mode-hook c++-mode-hook python-mode-hook rust-mode-hook scala-mode-hook)
                    (tree-sitter-mode 1)
                    (tree-sitter-hl-mode 1))
 #+end_src

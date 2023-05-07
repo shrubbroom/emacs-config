@@ -884,16 +884,17 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (tab-bar-mode)
 #+end_src
 ** Modeline
-
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
   (init/ensure-package 'minions)
+  (init/ensure-package 'simple-modeline)
   (minions-mode)
-  (when (display-graphic-p)
-   (init/ensure-package 'moody)
-   (setq x-underline-at-descent-line t)
-   (moody-replace-mode-line-buffer-identification)
-   (moody-replace-vc-mode)
-   (moody-replace-eldoc-minibuffer-message-function))
+  ;; (when (display-graphic-p)
+  ;;  (init/ensure-package 'moody)
+  ;;  (setq x-underline-at-descent-line t)
+  ;;  (moody-replace-mode-line-buffer-identification)
+  ;;  (moody-replace-vc-mode)
+  ;;  (moody-replace-eldoc-minibuffer-message-function))
+  (simple-modeline-mode)
   (column-number-mode 1)
   (size-indication-mode 1)
 #+end_src

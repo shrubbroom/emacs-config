@@ -37,3 +37,4 @@
   ;; Collect garbage when all else is done
   (garbage-collect))
 (put 'list-timers 'disabled nil)
+(put 'magit-edit-line-commit 'disabled nil)

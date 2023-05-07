@@ -884,16 +884,17 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (tab-bar-mode)
 #+end_src
 ** Modeline
-
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
   (init/ensure-package 'minions)
+  (init/ensure-package 'simple-modeline)
   (minions-mode)
-  (when (display-graphic-p)
-   (init/ensure-package 'moody)
-   (setq x-underline-at-descent-line t)
-   (moody-replace-mode-line-buffer-identification)
-   (moody-replace-vc-mode)
-   (moody-replace-eldoc-minibuffer-message-function))
+  ;; (when (display-graphic-p)
+  ;;  (init/ensure-package 'moody)
+  ;;  (setq x-underline-at-descent-line t)
+  ;;  (moody-replace-mode-line-buffer-identification)
+  ;;  (moody-replace-vc-mode)
+  ;;  (moody-replace-eldoc-minibuffer-message-function))
+  (simple-modeline-mode)
   (column-number-mode 1)
   (size-indication-mode 1)
 #+end_src
@@ -998,6 +999,67 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/screenshot"))
   (require 'screenshot)
+#+end_src
+
+*** insert emoticon
+
+#+begin_src emacs-lisp
+  (defvar emoticons-list 
+    '("|∀ﾟ|"
+      "( ´∀`)"
+      "(*´∀`)"
+      "(*ﾟ∇ﾟ)"
+      "( ﾟ 3ﾟ)"
+      "( ﾟ∀。)"
+      "Σ( ﾟдﾟ)"
+      "(ﾉ)`ω´(ヾ)"
+      "(´ﾟДﾟ`)"
+      "(;´Д`)"
+      "(´д`)"
+      "( -д-)"
+      "(>д<)"
+      "(σﾟдﾟ)σ"
+      "(╬ﾟдﾟ)"
+      "(/｡＼)"
+      "(＾o＾)ﾉ"
+      "(ﾟ∀ﾟ)"
+      "(ﾟ∀ﾟ)ノ"
+      "(ﾟДﾟ≡ﾟДﾟ)"
+      "( ﾟ∀ﾟ)"
+      "(TдT)"
+      "･ﾟ( ﾉд`ﾟ)"
+      "⊂彡☆))д`)"
+      "|ω・´)"
+      "(*ﾟーﾟ)"
+      "(｀･ω･)"
+      "( ´ー`)"
+      "( ´_ゝ`)"
+      "( `ー´)"
+      "( `·ω·´)"
+      "( `_っ´)"
+      "( ﾟωﾟ)"
+      "・・?)"
+      "( ·_ゝ·)"
+      "(￣皿￣)"
+      "( ´ρ`)"
+      "ᕕ( ᐛ )ᕗ"
+      "(›´ω`‹)"
+      "(|||ﾟДﾟ)"
+      "(σﾟ∀ﾟ)σ"
+      "(σﾟдﾟ)σ"
+      "( ﾟ∀。)"
+      "( ｣ﾟДﾟ)｣＜"
+      "(ノﾟ∀ﾟ)ノ"
+      "|ー`)"
+      "(・ω・)"
+      "(*´ω`*)"
+      "(ツ)"
+      "(つд⊂)"))
+
+  (defun emoticon-insert ()
+    (interactive)
+    (let ((selected-emoticon (completing-read "select an emoticon: " emoticons-list)))
+      (insert selected-emoticon)))
 #+end_src
 * Languages
 ** Citre
@@ -2279,6 +2341,6 @@ Make the overlay look nicer
 ** Vterm
 #+begin_src emacs-lisp
   (init/ensure-package 'vterm)
-  (define-key vterm-mode-map (kbd "C-y") 'vterm-send-C-S-v)
+  (define-key vterm-mode-map (kbd "C-y") 'vterm-yank)
   (define-key vterm-mode-map (kbd "C-x C-q") 'vterm-copy-mode)
 #+end_src

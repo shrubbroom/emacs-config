@@ -999,6 +999,67 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
                (concat user-emacs-directory "site-packages/screenshot"))
   (require 'screenshot)
 #+end_src
+
+*** insert emoticon
+
+#+begin_src emacs-lisp
+  (defvar emoticons-list 
+    '("|∀ﾟ|"
+      "( ´∀`)"
+      "(*´∀`)"
+      "(*ﾟ∇ﾟ)"
+      "( ﾟ 3ﾟ)"
+      "( ﾟ∀。)"
+      "Σ( ﾟдﾟ)"
+      "(ﾉ)`ω´(ヾ)"
+      "(´ﾟДﾟ`)"
+      "(;´Д`)"
+      "(´д`)"
+      "( -д-)"
+      "(>д<)"
+      "(σﾟдﾟ)σ"
+      "(╬ﾟдﾟ)"
+      "(/｡＼)"
+      "(＾o＾)ﾉ"
+      "(ﾟ∀ﾟ)"
+      "(ﾟ∀ﾟ)ノ"
+      "(ﾟДﾟ≡ﾟДﾟ)"
+      "( ﾟ∀ﾟ)"
+      "(TдT)"
+      "･ﾟ( ﾉд`ﾟ)"
+      "⊂彡☆))д`)"
+      "|ω・´)"
+      "(*ﾟーﾟ)"
+      "(｀･ω･)"
+      "( ´ー`)"
+      "( ´_ゝ`)"
+      "( `ー´)"
+      "( `·ω·´)"
+      "( `_っ´)"
+      "( ﾟωﾟ)"
+      "・・?)"
+      "( ·_ゝ·)"
+      "(￣皿￣)"
+      "( ´ρ`)"
+      "ᕕ( ᐛ )ᕗ"
+      "(›´ω`‹)"
+      "(|||ﾟДﾟ)"
+      "(σﾟ∀ﾟ)σ"
+      "(σﾟдﾟ)σ"
+      "( ﾟ∀。)"
+      "( ｣ﾟДﾟ)｣＜"
+      "(ノﾟ∀ﾟ)ノ"
+      "|ー`)"
+      "(・ω・)"
+      "(*´ω`*)"
+      "(ツ)"
+      "(つд⊂)"))
+
+  (defun emoticon-insert ()
+    (interactive)
+    (let ((selected-emoticon (completing-read "select an emoticon: " emoticons-list)))
+      (insert selected-emoticon)))
+#+end_src
 * Languages
 ** Citre
 #+begin_src emacs-lisp
@@ -2279,6 +2340,6 @@ Make the overlay look nicer
 ** Vterm
 #+begin_src emacs-lisp
   (init/ensure-package 'vterm)
-  (define-key vterm-mode-map (kbd "C-y") 'vterm-send-C-S-v)
+  (define-key vterm-mode-map (kbd "C-y") 'vterm-yank)
   (define-key vterm-mode-map (kbd "C-x C-q") 'vterm-copy-mode)
 #+end_src

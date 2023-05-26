@@ -324,7 +324,7 @@ of Emacs. For example (this function is not tangled)
   (init/ensure-package 'ivy)
   ;; (init/ensure-package 'swiper)
   (init/ensure-package 'counsel)
-  (init/ensure-package 'ivy-prescient)
+  ;; (init/ensure-package 'ivy-prescient) ;; obsolote
 #+END_SRC
 
 *** Configure ivy
@@ -1119,31 +1119,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (yas-reload-all)
   (yas-global-mode)
 #+end_src
-*** LSP Bridge
-#+begin_src emacs-lisp :tangle no
-  (init/ensure-package 'posframe)
-  (init/ensure-package 'markdown-mode)
-  (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/lsp-bridge"))
-  (require 'lsp-bridge)
-  (global-lsp-bridge-mode)
-  (setq-default lsp-bridge-prohibit-completion t)
-  (add-hook-lambda prog-mode-hook
-                   (set (make-local-variable 'lsp-bridge-prohibit-completion) t))
-  (setq-default lsp-bridge-enable-search-words nil)
-  (setq-default acm-enable-search-words nil)
-  (setq-default acm-enable-search-file-words nil)
-  (unless (display-graphic-p)
-    (add-to-list 'load-path (concat user-emacs-directory "site-packages/acm-terminal"))
-    (add-to-list 'load-path (concat user-emacs-directory "site-packages/popon"))
-    (with-eval-after-load 'acm
-      (require 'acm-terminal)))
-  (add-hook-lambda
-   'paredit-mode-hook
-   (make-local-variable 'minor-mode-overriding-map-alist)
-   (push `(acm-mode . ,acm-mode-map) minor-mode-overriding-map-alist))
-#+end_src
-
+*** Corfu
 #+begin_src emacs-lisp
   (init/ensure-package 'corfu)
   (init/ensure-package 'cape)
@@ -1197,14 +1173,8 @@ Enable tree-sitter in =prog-mode=.
 #+end_src
 ** Python
 *** Conda
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle (if (boundp 'conda-anaconda-home) "yes" "no")
   (init/ensure-package 'conda)
-#+END_SRC
-
-
-Setup conda
-
-#+BEGIN_SRC emacs-lisp
   (conda-env-initialize-eshell)
   (conda-env-activate 'base)
 #+END_SRC
@@ -1294,6 +1264,11 @@ Install ~yaml-mode~
   (defun rime-predicate-god-mode-p ()
       (and (fboundp 'god-mode)
            god-local-mode))
+  (defun +rime-predicate-org-latex-mode-p ()
+    "If cursor is inside an org-mode's LaTeX fragment, macro or its arguments."
+    (and (derived-mode-p 'org-mode)
+         (or (texmathp)
+             (org-inside-latex-macro-p))))
   (setq default-input-method "rime")
   (setq rime-show-candidate 'posframe
         rime-librime-root (concat user-emacs-directory "librime/dist/")
@@ -1305,6 +1280,8 @@ Install ~yaml-mode~
         '(
           rime-predicate-prog-in-code-p
           rime-predicate-org-in-src-block-p
+          rime-predicate-org-latex-mode-p
+          +rime-predicate-org-latex-mode-p
           rime-predicate-current-uppercase-letter-p
           rime-predicate-after-alphabet-char-p
           rime-predicate-after-ascii-char-p
@@ -1319,10 +1296,8 @@ Install ~yaml-mode~
           ;; meow-keypad-mode-p
           ))
 
-
   (setq rime-posframe-properties
-        (list :font "LXGW WenKai"
-              :font-height (face-attribute 'default :height)
+        (list :font-height (face-attribute 'default :height)
               ;; :background (face-background 'mode-line)
               :internal-border-width 1))
 #+END_SRC
@@ -1817,68 +1792,6 @@ This is just for ~shell~ command
                         (symbol-overlay-mode))
 #+END_SRC
 
-
-** EAF
-
-Install all packages.
-
-#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
-  (add-to-list 'load-path
-               (concat user-emacs-directory
-                       "site-packages/eaf"))
-  (setq eaf-python-command "/usr/bin/python3")
-  (require 'eaf)
-  (require 'eaf-pdf-viewer)
-  ;; (require 'eaf-system-monitor)
-  (require 'eaf-image-viewer)
-  ;; (require 'eaf-markdown-previewer)
-  ;; (require 'eaf-org-previewer)
-  ;; (require 'eaf-file-manager)
-  (require 'eaf-all-the-icons)
-  ;; (require 'eaf-browser)
-  (require 'eaf-org)
-#+end_src
-
-Configure the package with a more emacs-like keybindings.
-
-#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
-  (eaf-bind-key scroll_to_begin "M-<" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key scroll_to_end "M->" eaf-pdf-viewer-keybinding)
-#+end_src
-
-*** Configure pdf-viewer
-
-Configure latex preview.
-
-#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
-  (with-eval-after-load 'latex
-   (add-to-list 'TeX-view-program-list '("eaf" eaf-pdf-synctex-forward-view))
-   (add-to-list 'TeX-view-program-selection '(output-pdf "eaf")))
-#+end_src
-
-Change background color.
-
-#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
-  (setq eaf-pdf-dark-mode nil)
-  (setq eaf-buffer-background-color (face-background 'default))
-#+end_src
-
-Emacs style keybindings
-#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
-  (eaf-bind-key scroll_to_begin "M-<" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key scroll_to_end "M->" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key scroll_up "n" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key scroll_down "p" eaf-pdf-viewer-keybinding)
-  (eaf-bind-key jump_to_page "j" eaf-pdf-viewer-keybinding)
-#+end_src
-
-Use native search method
-
-#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-eaf) "yes" "no")
-  (add-hook-lambda eaf-mode-hook
-                   (ctrlf-local-mode -1))
-#+end_src
-
 *** Pdf-tools
 
 #+begin_src emacs-lisp
@@ -2291,7 +2204,7 @@ Make the overlay look nicer
 #+end_src
 
 ** Telega
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-telega) "yes" "no")
   (init/ensure-package-lazy 'telega)
   (setq telega-symbol-telegram nil)
   (with-eval-after-load 'telega
@@ -2326,7 +2239,7 @@ Make the overlay look nicer
 #+end_src
 ** Wonderlust
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-wl) "yes" "no")
   (init/ensure-package-lazy 'wanderlust)
   (if (boundp 'mail-user-agent)
       (setq mail-user-agent 'wl-user-agent))

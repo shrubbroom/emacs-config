@@ -7,27 +7,12 @@
 [submodule "site-packages/org-bars"]
 	path = site-packages/org-bars
 	url = https://github.com/tonyaldon/org-bars.git
-[submodule "site-packages/eaf"]
-	path = site-packages/eaf
-	url = https://github.com/emacs-eaf/emacs-application-framework.git
 [submodule "rime"]
 	path = rime
 	url = git@github.com:shrubbroom/rime-config.git
-[submodule "site-packages/lsp-bridge"]
-	path = site-packages/lsp-bridge
-	url = https://github.com/manateelazycat/lsp-bridge.git
-[submodule "site-packages/acm-terminal"]
-	path = site-packages/acm-terminal
-	url = https://github.com/twlz0ne/acm-terminal.git
 [submodule "site-packages/popon"]
 	path = site-packages/popon
 	url = https://codeberg.org/akib/emacs-popon.git
-[submodule "site-packages/org-media-note"]
-	path = site-packages/org-media-note
-	url = https://github.com/yuchen-lea/org-media-note.git
-[submodule "site-packages/lsp-bridge-sb"]
-	path = site-packages/lsp-bridge-sb
-	url = git@github.com:shrubbroom/lsp-bridge.git
 [submodule "site-packages/corfu-terminal"]
 	path = site-packages/corfu-terminal
 	url = https://codeberg.org/akib/emacs-corfu-terminal.git

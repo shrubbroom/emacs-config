@@ -2257,3 +2257,19 @@ Make the overlay look nicer
   (define-key vterm-mode-map (kbd "C-y") 'vterm-yank)
   (define-key vterm-mode-map (kbd "C-x C-q") 'vterm-copy-mode)
 #+end_src
+** WSL Integration
+
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-wsl) "yes" "no")
+  (advice-add 'kill-ring-save
+              :before (lambda (BEG END &optional REGION)
+                        (interactive (list (mark) (point) 'region))
+                        (when (use-region-p)
+                          (call-process-region BEG END "clip.exe" nil 0))))
+  (advice-add 'cua-copy-region
+              :before (lambda (arg)
+                        (interactive "P")
+                        (when (use-region-p)
+                          (call-process-region (mark) (point) "clip.exe" nil 0))))
+  ;; override `x-display-mm-height', see https://emacs-china.org/t/wslg-x-display-mm-height-0/22547
+  ;; (setq display-mm-dimensions-alist '(("wayland-0" . (598 . 336))))
+#+end_src

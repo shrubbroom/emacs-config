@@ -995,6 +995,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 #+begin_src emacs-lisp
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/screenshot"))
+  (init/ensure-package-lazy 'posframe)
   (require 'screenshot)
 #+end_src
 

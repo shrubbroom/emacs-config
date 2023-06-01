@@ -1246,7 +1246,7 @@ Install ~yaml-mode~
         )
 #+end_src
 ** Emacs Rime
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle (if (bound-and-true-p init/enable-rime) "yes" "no")
   (init/ensure-package-lazy 'rime)
   (with-eval-after-load 'rime
     (add-hook 'kill-emacs-hook #'rime-lib-finalize) ;; avoid crash on exit
@@ -1495,7 +1495,8 @@ I use ~"C-j"~ to invoke jump.
                                           :color "grey75"
                                           :style released-button))))
     (setq org-hide-emphasis-markers t
-          org-pretty-entities t))
+          org-pretty-entities t
+          org-pretty-entities-include-sub-superscripts nil))
 
   ;; (with-eval-after-load 'org-indent
   ;;   (set-face-attribute 'org-indent nil
@@ -1589,7 +1590,7 @@ Define export processes
 
 =EAF= may be broken when the output file is being compiled.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (setq TeX-source-correlate-mode t)
   (setq TeX-source-correlate-start-server t)
   (setq TeX-view-program-selection
@@ -1794,7 +1795,7 @@ This is just for ~shell~ command
 
 *** Pdf-tools
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-pdf) "yes" "no")
   (init/ensure-package-lazy 'pdf-tools)
   (pdf-loader-install)
   (setq pdf-view-use-scaling t)
@@ -1811,7 +1812,7 @@ This is just for ~shell~ command
 
 Restore session
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-pdf) "yes" "no")
   ;; workaround for pdf-tools not reopening to last-viewed page of the pdf:
   ;; https://github.com/politza/pdf-tools/issues/18#issuecomment-269515117
   (defun brds/pdf-set-last-viewed-bookmark ()
@@ -2252,7 +2253,7 @@ Make the overlay look nicer
         'mail-send-hook))
 #+end_src
 ** Vterm
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-vterm) "yes" "no")
   (init/ensure-package 'vterm)
   (define-key vterm-mode-map (kbd "C-y") 'vterm-yank)
   (define-key vterm-mode-map (kbd "C-x C-q") 'vterm-copy-mode)

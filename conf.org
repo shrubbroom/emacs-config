@@ -324,7 +324,7 @@ of Emacs. For example (this function is not tangled)
   (init/ensure-package 'ivy)
   ;; (init/ensure-package 'swiper)
   (init/ensure-package 'counsel)
-  ;; (init/ensure-package 'ivy-prescient) ;; obsolote
+  (init/ensure-package 'ivy-prescient)
 #+END_SRC
 
 *** Configure ivy

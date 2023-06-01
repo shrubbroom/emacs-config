@@ -615,7 +615,7 @@ The most useful functions among them are listed here.
 
 ** God Mode
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (init/ensure-package 'god-mode)
   (add-to-list 'god-exempt-major-modes 'vterm-mode)
   (add-to-list 'god-exempt-major-modes 'ebib-index-mode)
@@ -1247,7 +1247,7 @@ Install ~yaml-mode~
   (init/ensure-package-lazy 'rime)
   (with-eval-after-load 'rime
     (add-hook 'kill-emacs-hook #'rime-lib-finalize) ;; avoid crash on exit
-    ;; (define-key rime-mode-map [escape] #'rime-inline-ascii)
+    (define-key rime-mode-map [escape] #'rime-inline-ascii)
     (advice-add 'rime-inline-ascii :after
                 #'(lambda ()
                     (interactive)

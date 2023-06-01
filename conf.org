@@ -49,13 +49,18 @@ User defined actions begin with =init=.
 *** Auto install packages
 
 #+BEGIN_SRC emacs-lisp
+  (defcustom init/package-update-p
+    nil
+    "indicate if package has been updated in init file")
   (defun init/ensure-package (pkg)
     "ensure that package is installed, require it"
     (if (ignore-errors (require pkg))
         t
       (progn
         (unless (package-installed-p pkg)
-          (package-refresh-contents)
+          (unless init/package-update-p
+           (package-refresh-contents)
+           (setq init/package-update-p t))
           (package-install pkg))
         (unless (ignore-errors (require pkg))
           nil
@@ -65,7 +70,9 @@ User defined actions begin with =init=.
   (defun init/ensure-package-lazy (pkg)
     "ensure package is installed, donot require"
     (unless (package-installed-p pkg)
-      (package-refresh-contents)
+      (unless init/package-update-p
+        (package-refresh-contents)
+        (setq init/package-update-p t))
       (package-install pkg)))
 #+END_SRC
 

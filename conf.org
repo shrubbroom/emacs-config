@@ -473,16 +473,6 @@ The most useful functions among them are listed here.
   (define-key help-mode-map (kbd "p") #'previous-line)
 #+END_SRC
 
-** Auto Save
-
-#+begin_src emacs-lisp :tangle no
-  (add-to-list 'load-path
-               (concat user-emacs-directory "site-packages/auto-save"))
-  (require 'auto-save)
-  (auto-save-enable)
-  (setq auto-save-silent t)
-#+end_src
-
 ** Window management
 
 *** Buffer management

@@ -1,9 +1,6 @@
 [submodule "site-packages/ligature"]
 	path = site-packages/ligature
 	url = https://github.com/mickeynp/ligature.el.git
-[submodule "site-packages/auto-save"]
-	path = site-packages/auto-save
-	url = https://github.com/manateelazycat/auto-save.git
 [submodule "site-packages/org-bars"]
 	path = site-packages/org-bars
 	url = https://github.com/tonyaldon/org-bars.git

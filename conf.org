@@ -97,10 +97,18 @@ User defined actions begin with =init=.
 
 *** Find ~init.el~
 
+#+begin_src emacs-lisp
+  (setq init/init-dir (or (and (file-exists-p "~/.config/emacs")
+                          "~/.config/emacs")
+                     (and (file-exists-p "~/.emacs.d")
+                          "~/.emacs.d")))
+#+end_src
+
 #+BEGIN_SRC emacs-lisp
   (defun init/find-init ()
     "Find default `init.el' file"
-    (interactive) (find-file "~/.config/emacs/init.el"))
+    (interactive)
+    (find-file (concat init/init-dir "/init.el")))
 #+END_SRC
 
 *** Find ~conf.org~
@@ -108,7 +116,8 @@ User defined actions begin with =init=.
 #+BEGIN_SRC emacs-lisp
   (defun init/find-conf ()
     "Find default `conf.org' file"
-    (interactive) (find-file "~/.config/emacs/conf.org"))
+    (interactive)
+    (find-file (concat init/init-dir "/conf.org")))
   (switch-to-tab-before init/find-conf "emacs")
 #+END_SRC
 
@@ -324,7 +333,15 @@ of Emacs. For example (this function is not tangled)
 #+begin_src emacs-lisp
   ;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
 #+end_src
+
+*** Disable GC on font
+
+#+begin_src emacs-lisp
+(setq inhibit-compacting-font-caches t)
+#+end_src
+
 ** Navigation & Searching system
+
 *** Basic packages
 
 #+BEGIN_SRC emacs-lisp
@@ -525,20 +542,40 @@ The most useful functions among them are listed here.
 
 #+begin_src emacs-lisp
   (defun transient-switch-window ()
-    "Transient switch window by window's number"
+    "Transient switch window, forward"
     (interactive)
     (if (length> (window-list) 1)
         (let ((echo-keystrokes nil))
           (call-interactively 'other-window)
-          (message "transient other window")
+          (message "transient other window forward")
           (set-transient-map
            (let ((map (make-sparse-keymap)))
              (define-key map "o" (lambda () (interactive)
                                    (call-interactively 'other-window)))
+             (define-key map "O" (lambda () (interactive)
+                                   (other-window -1)))
+             map)
+           t))
+      (message "No other window to select")))
+
+  (defun transient-switch-window-backward ()
+    "Transient switch window, backward"
+    (interactive)
+    (if (length> (window-list) 1)
+        (let ((echo-keystrokes nil))
+          (other-window -1)
+          (message "transient other window backward")
+          (set-transient-map
+           (let ((map (make-sparse-keymap)))
+             (define-key map "o" (lambda () (interactive)
+                                   (call-interactively 'other-window)))
+             (define-key map "O" (lambda () (interactive)
+                                   (other-window -1)))
              map)
            t))
       (message "No other window to select")))
   (global-set-key [remap other-window] 'transient-switch-window)
+  (global-set-key (kbd "C-x O") 'transient-switch-window-backward)
 #+end_src
 
 *** Resize
@@ -657,8 +694,9 @@ Spend time on important things.*
  Set default font, the font size configuration is moved to ~local-variables.el~
 #+BEGIN_SRC emacs-lisp
   (when (display-graphic-p)
-    (dolist (font '("Symbol" "Apple Color Emoji" "Segoe UI Symbol" "Symbola"))
-      (set-fontset-font t 'unicode font nil 'prepend))
+    (unless (eq system-type 'windows-nt)
+     (dolist (font '("Symbol" "Apple Color Emoji" "Segoe UI Symbol" "Symbola"))
+       (set-fontset-font t 'unicode font nil 'prepend)))
     (when (boundp 'cn-font)
      (dolist (charset '(kana han cjk-misc bopomofo))
        (set-fontset-font t charset
@@ -937,10 +975,10 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
          "(setq initial-frame-alist\n"
          ;; " '((font . \"" frameg-font "\")\n"
          " '("
-         (format " (top . %d)\n" (max frameg-top 0))
-         (format " (left . %d)\n" (max frameg-left 0))
-         (format " (width . %d)\n" (max frameg-width 0))
-         (format " (height . %d)))\n" (max frameg-height 0)))
+         (format " (top . %d)\n" (max (or (and (numberp frameg-top) frameg-top) 0) 0))
+         (format " (left . %d)\n" (max (or (and (numberp frameg-left) frameg-left) 0) 0))
+         (format " (width . %d)\n" (max (or (and (numberp frameg-width) frameg-width) 0) 0))
+         (format " (height . %d)))\n" (max (or (and (numberp frameg-height) frameg-height) 0) 0)))
         (when (file-writable-p frameg-file)
           (write-file frameg-file)))))
 
@@ -956,14 +994,21 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
         (add-hook 'after-init-hook 'load-frameg)
         (add-hook 'kill-emacs-hook 'save-frameg)))
 #+end_src
-*** Rich ivy
+*** Better looking ivy
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package 'ivy-rich)
   (init/ensure-package 'all-the-icons-ivy-rich)
   (ivy-rich-mode 1)
   (all-the-icons-ivy-rich-mode 1)
   (setq ivy-rich-parse-remote-buffer nil)
+  (init/ensure-package 'ivy-posframe)
+  (ivy-posframe-mode)
+  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-bottom-left)))
+  (setq ivy-posframe-width nil)
+  (setq ivy-posframe-min-width nil)
+  (setq ivy-posframe-height 10)
 #+END_SRC
+
 *** Brackets
 **** Look
 #+BEGIN_SRC emacs-lisp
@@ -1109,7 +1154,7 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 *** Eglot
 #+begin_src emacs-lisp
   (init/ensure-package-lazy 'eglot)
-
+  (setq eglot-ignored-server-capabilities '(:inlayHints))
 #+end_src
 *** Yasnippet
 #+begin_src emacs-lisp :tangle no
@@ -1218,6 +1263,7 @@ Use =paredit= in =elisp-mode=.  Configure =smartparen= mode.
   (dolist (mode '(emacs-lisp-mode elisp-mode))
     (sp-local-pair mode "'" nil :actions nil))
 #+END_SRC
+
 ** Shell
 Install ~fish-mode~ and config keybindings
 #+BEGIN_SRC emacs-lisp
@@ -1234,6 +1280,28 @@ Install ~yaml-mode~
 #+BEGIN_SRC emacs-lisp
   (init/ensure-package-lazy 'yaml-mode)
 #+END_SRC
+
+** FSharp
+
+#+begin_src emacs-lisp
+  (init/ensure-package-lazy 'fsharp-mode)
+  (init/ensure-package-lazy 'eglot-fsharp)
+  (with-eval-after-load 'fsharp-mode
+    (require 'eglot-fsharp))
+  (setq eglot-fsharp-server-install-dir
+        (if (eq system-type 'windows-nt)
+            (format "C:/Users/%s/.dotnet/tools/" user-login-name)
+          (expand-file-name "~/.dotnet/tools")))
+  (defun eglot-fsharp--path-to-server ()
+    "Return FsAutoComplete path."
+    (file-truename (concat eglot-fsharp-server-install-dir "fsautocomplete" (if (eq system-type 'windows-nt) ".exe" ""))))
+  (add-hook-lambda fsharp-mode-hook
+                   (eglot-ensure)
+                   (setq-local eglot-ignored-server-capabilities
+                               '(:inlayHintProvider))
+                   (setq-local compile-command
+                               "dotnet run"))
+#+end_src
 * Documentation
 ** Spell Check
 

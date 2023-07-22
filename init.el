@@ -26,10 +26,14 @@
   ;; Tangle and compile if necessary only, then load the configuration
   (let* ((.org "conf.org")
          (.el (concat (file-name-sans-extension .org) ".el"))
+         (.var "local-variables.el")
          (modification-time
-          (file-attribute-modification-time (file-attributes .org))))
+          (file-attribute-modification-time (file-attributes .org)))
+         (var-modification-time
+          (file-attribute-modification-time (file-attributes .var))))
     (require 'org-macs)
-    (unless (org-file-newer-than-p .el modification-time)
+    (unless (or (org-file-newer-than-p .el modification-time)
+                (org-file-newer-than-p .el var-modification-time))
       (require 'ob-tangle)
       (org-babel-tangle-file .org .el "emacs-lisp"))
     (load-file .el))
@@ -38,3 +42,14 @@
   (garbage-collect))
 (put 'list-timers 'disabled nil)
 (put 'magit-edit-line-commit 'disabled nil)
+(defun retangle-org-file ()
+  "tangle org file manually"
+  (interactive)
+  (let* ((default-directory user-emacs-directory)
+         (.org "conf.org")
+         (.el (concat (file-name-sans-extension .org) ".el"))
+         (modification-time
+          (file-attribute-modification-time (file-attributes .org))))
+    (require 'org-macs)
+    (require 'ob-tangle)
+    (org-babel-tangle-file .org .el "emacs-lisp")))

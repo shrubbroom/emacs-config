@@ -1327,9 +1327,7 @@ Install ~yaml-mode~
                       (message "%s"
                                (concat "rime inline ascii "
                                        (propertize "disabled" 'face '(:foreground "red"))))))))
-  (defun rime-predicate-god-mode-p ()
-      (and (fboundp 'god-mode)
-           god-local-mode))
+
   (defun +rime-predicate-org-latex-mode-p ()
     "If cursor is inside an org-mode's LaTeX fragment, macro or its arguments."
     (and (derived-mode-p 'org-mode)
@@ -1337,7 +1335,7 @@ Install ~yaml-mode~
              (org-inside-latex-macro-p))))
   (setq default-input-method "rime")
   (setq rime-show-candidate 'posframe
-        rime-librime-root (concat user-emacs-directory "librime/dist/")
+        ;; rime-librime-root (concat user-emacs-directory "librime/dist/")
         rime-user-data-dir (concat user-emacs-directory "rime/")
         rime-translate-keybindings
         '("C-f" "C-b" "C-n" "C-p" "C-g" "C-`")
@@ -1356,7 +1354,6 @@ Install ~yaml-mode~
           rime-predicate-punctuation-line-begin-p
           rime-predicate-space-after-cc-p
           rime-predicate-tex-math-or-command-p
-          rime-predicate-god-mode-p
           ;; meow-normal-mode-p
           ;; meow-motion-mode-p
           ;; meow-keypad-mode-p
@@ -1560,8 +1557,8 @@ I use ~"C-j"~ to invoke jump.
                  '("~" (:box (:line-width 1
                                           :color "grey75"
                                           :style released-button))))
-    (setq org-hide-emphasis-markers t
-          org-pretty-entities t
+    (setq org-hide-emphasis-markers nil
+          org-pretty-entities nil
           org-pretty-entities-include-sub-superscripts nil))
 
   ;; (with-eval-after-load 'org-indent

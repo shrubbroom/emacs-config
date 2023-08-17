@@ -32,8 +32,8 @@
          (var-modification-time
           (file-attribute-modification-time (file-attributes .var))))
     (require 'org-macs)
-    (unless (or (org-file-newer-than-p .el modification-time)
-                (org-file-newer-than-p .el var-modification-time))
+    (unless (and (org-file-newer-than-p .el modification-time)
+                 (org-file-newer-than-p .el var-modification-time))
       (require 'ob-tangle)
       (org-babel-tangle-file .org .el "emacs-lisp"))
     (load-file .el))

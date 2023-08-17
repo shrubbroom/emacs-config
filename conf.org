@@ -91,7 +91,7 @@ User defined actions begin with =init=.
                                "@" (file-remote-p sudo-buffer-name 'host) "|"
                                "sudo::"
                                (file-remote-p sudo-buffer-name 'localname)))
-          (find-file (concat "/sudo:root@localhost:/" (buffer-file-name sudo-buffer))))
+          (find-file (concat "/sudo::" (buffer-file-name sudo-buffer))))
         (kill-buffer sudo-buffer))))
 #+END_SRC
 
@@ -693,16 +693,19 @@ Spend time on important things.*
 ** Fonts
  Set default font, the font size configuration is moved to ~local-variables.el~
 #+BEGIN_SRC emacs-lisp
-  (when (display-graphic-p)
+  (defun init/set-font (&rest args)
+    "set Editor font"
     (unless (eq system-type 'windows-nt)
-     (dolist (font '("Symbol" "Apple Color Emoji" "Segoe UI Symbol" "Symbola"))
-       (set-fontset-font t 'unicode font nil 'prepend)))
+      (dolist (font '("Symbol" "Apple Color Emoji" "Segoe UI Symbol" "Symbola"))
+        (set-fontset-font t 'unicode font nil 'prepend)))
     (when (boundp 'cn-font)
-     (dolist (charset '(kana han cjk-misc bopomofo))
-       (set-fontset-font t charset
-                         (font-spec :family cn-font))))
+      (dolist (charset '(kana han cjk-misc bopomofo))
+        (set-fontset-font t charset
+                          (font-spec :family cn-font))))
     (when (boundp 'frame-font)
-     (set-frame-font frame-font nil t)))
+      (set-frame-font frame-font nil t)))
+  (add-hook 'after-init-hook 'init/set-font)
+  (add-hook 'after-make-frame-functions 'init/set-font)
 #+END_SRC
 *** prog-mode font
 
@@ -805,13 +808,18 @@ changed in runtime.
     (run-hook-with-args 'load-theme-before-hook theme)
     (apply origin-func theme args)
     (run-hook-with-args 'load-theme-after-hook theme))
-  (advice-add 'load-theme :around #'load-theme-hook-wrapper)
+  ;; (advice-add 'load-theme :around #'load-theme-hook-wrapper)
 #+END_SRC
 *** Setup theme
 Setup theme.
 
 #+BEGIN_SRC emacs-lisp
-  (load-theme init/theme 1)
+  ;; (load-theme init/theme 1)
+  (add-hook 'after-init-hook (lambda ()
+                               (load-theme init/theme 1)))
+  (add-hook 'after-make-frame-functions (lambda (&rest args)
+                                          (load-theme init/theme 1)
+                                          (set-face-attribute 'default nil :height 190)))
 #+END_SRC
 
 *** Add fringe indicators
@@ -829,8 +837,11 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
 ** Tabs
 *** tab bar
 #+begin_src emacs-lisp
-  (global-set-key (kbd "C-\"") 'tab-bar-switch-to-next-tab)
-  (global-set-key (kbd "C-:") 'tab-bar-switch-to-prev-tab)
+  (global-set-key (kbd "<S-right>") 'tab-bar-switch-to-next-tab)
+  (global-set-key (kbd "<S-left>") 'tab-bar-switch-to-prev-tab)
+  (with-eval-after-load 'org
+    (define-key org-mode-map (kbd "<S-left>") 'tab-bar-switch-to-prev-tab)
+    (define-key org-mode-map (kbd "<S-right>") 'tab-bar-switch-to-next-tab))
   (defun vc-branch-name ()
     (when vc-mode
       (propertize
@@ -896,22 +907,17 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
           (tab-bar-close-tab)))))
   (global-set-key [remap project-other-tab-command] 'tab-bar-switch-project)
   (defun +tab-bar-tab-format-function (tab i)
-    (let ((current-p (eq (car tab) 'current-tab)))
-      (concat
-       (propertize (concat
-                    " "
-                    (alist-get 'name tab)
-                    " ")
-                   'face
-                   (funcall tab-bar-tab-face-function tab))
-       " ")))
+    (propertize (concat
+                 " "
+                 (alist-get 'name tab)
+                 " ")
+                'face
+                (funcall tab-bar-tab-face-function tab)))
 
-  (setq tab-bar-border nil
-        tab-bar-close-button nil
-        tab-bar-back-button nil
-        tab-bar-new-button nil
+  (setq tab-bar-border 0
+        tab-bar-close-button-show nil
+        tab-bar-new-button-show nil
         tab-bar-tab-name-format-function '+tab-bar-tab-format-function
-        tab-bar-format '(tab-bar-format-tabs tab-bar-right)
         tab-bar-tab-name-truncated-max 10)
   ;; (set-face-attribute 'tab-bar-tab-inactive nil
   ;;                     :background (face-background 'tab-bar)
@@ -1041,7 +1047,8 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
   (add-to-list 'load-path
                (concat user-emacs-directory "site-packages/screenshot"))
   (init/ensure-package-lazy 'posframe)
-  (require 'screenshot)
+  ;; (package-generate-autoloads "screenshot" (concat user-emacs-directory "site-packages/screenshot"))
+  (load (concat user-emacs-directory "site-packages/screenshot/screenshot-autoloads.el"))
 #+end_src
 
 *** insert emoticon
@@ -1143,13 +1150,13 @@ I do not manually install the fonts of ~all-the-icons~. System package manager (
     (when (where-is-internal #'completion-at-point (list (current-local-map)))
       (corfu-mode 1)))
   (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
-  (unless (display-graphic-p)
-    (add-to-list 'load-path
-                 (concat user-emacs-directory "site-packages/corfu-terminal"))
-    (add-to-list 'load-path
-                 (concat user-emacs-directory "site-packages/popon"))
-    (require 'corfu-terminal)
-    (corfu-terminal-mode +1))
+  ;; (unless (display-graphic-p)
+  ;;   (add-to-list 'load-path
+  ;;                (concat user-emacs-directory "site-packages/corfu-terminal"))
+  ;;   (add-to-list 'load-path
+  ;;                (concat user-emacs-directory "site-packages/popon"))
+  ;;   (require 'corfu-terminal)
+  ;;   (corfu-terminal-mode +1))
 #+end_src
 *** Eglot
 #+begin_src emacs-lisp
@@ -2269,7 +2276,11 @@ Make the overlay look nicer
 
 ** Telega
 #+begin_src emacs-lisp :tangle (if (bound-and-true-p init/enable-telega) "yes" "no")
-  (init/ensure-package-lazy 'telega)
+  (add-to-list 'load-path
+               (concat user-emacs-directory "site-packages/telega"))
+  ;; Remember to generate autoload file with
+  ;; `(package-generate-autoloads "telega" (concat user-emacs-directory "site-packages/telega"))'
+  (load (concat user-emacs-directory "site-packages/telega/telega-autoloads.el"))
   (setq telega-symbol-telegram nil)
   (with-eval-after-load 'telega
     (add-hook 'telega-root-mode-hook 'hl-line-mode)
